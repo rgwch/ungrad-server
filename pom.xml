@@ -11,6 +11,7 @@
     <properties>
         <vertx-version>3.3.0</vertx-version>
         <kotlin.version>1.0.3</kotlin.version>
+        <rgwutility-version>3.3.6</rgwutility-version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -34,6 +35,11 @@
                 <artifactId>kotlin-test</artifactId>
                 <version>${kotlin.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>ch.rgw</groupId>
+                <artifactId>utility</artifactId>
+                <version>${rgwutility-version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

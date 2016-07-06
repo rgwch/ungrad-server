@@ -46,6 +46,19 @@
             <artifactId>kotlin-stdlib</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-hazelcast</artifactId>
+            <version>${vertx-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.rgw</groupId>
+            <artifactId>utility</artifactId>
+        </dependency>
     </dependencies>
     <properties>
         <kotlin.version>1.0.3</kotlin.version>
