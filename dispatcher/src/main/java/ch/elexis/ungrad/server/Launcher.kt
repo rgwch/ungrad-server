@@ -83,6 +83,7 @@ fun main(args:Array<String>){
                 override fun run() {
                     println("Shutdown signal received")
                     vertx.undeploy(restpointID)
+                    vertx.undeploy(selftestID)
                     vertx.close()
                 }
             })

@@ -18,11 +18,12 @@ class SelfTest: AbstractVerticle() {
         super.start()
         vertx.eventBus().consumer<JsonObject>(MY_ADDRESS){msg ->
             val cmd=msg.body()
-            val parm=cmd.getString("parm")
-            msg.reply(JsonObject().put("Answer:","Pong, ${parm}"))
+            val plus=cmd.getString("plus")
+            val minus=cmd.getString("minus")
+            msg.reply(JsonObject().put("Answer:","Pong, ${plus}, ${minus}"))
 
         }
-        val registerMsg=JsonObject().put("rest","1.0/ping/:parm")
+        val registerMsg=JsonObject().put("rest","1.0/ping/:plus/:minus")
         .put("ebaddress",MY_ADDRESS)
         .put("method","get");
         vertx.eventBus().send<JsonObject>(REGISTER_ADDRESS,registerMsg) { reply ->
