@@ -59,6 +59,11 @@
             <groupId>ch.rgw</groupId>
             <artifactId>utility</artifactId>
         </dependency>
+        <dependency>
+            <groupId>ch.rgw</groupId>
+            <artifactId>ungrad-server-tester</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <properties>
         <kotlin.version>1.0.3</kotlin.version>

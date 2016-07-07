@@ -1,13 +1,16 @@
 package main.java.ch.elexis.ungrad.server
 
+import ch.elexis.ungrad.server_test.SelfTest
 import ch.rgw.tools.CmdLineParser
 import ch.rgw.tools.Configuration
 import ch.rgw.tools.net.NetTool
 import com.hazelcast.config.Config
+import elexis.ungrad.server.Restpoint
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
+import org.slf4j.LoggerFactory
 
 
 /**
@@ -15,11 +18,13 @@ import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
  */
 
 val config=Configuration()
-var vertx:Vertx?=null
 var ip:String=""
+val log=LoggerFactory.getLogger("Ungrad Launcher")
 
 fun main(args:Array<String>){
-    var mothersID=""
+    var restpointID=""
+    var selftestID=""
+    var consoleID=""
     var cmdline = CmdLineParser(switches = "client,ip,rescan,config,daemon")
     if (!cmdline.parse(args)) {
         println(cmdline.errmsg)
@@ -51,20 +56,40 @@ fun main(args:Array<String>){
     val mgr = HazelcastClusterManager(hazel)
 
     Vertx.clusteredVertx(vertxOptions.setClusterManager(mgr)) { result ->
-        vertx = result.result()
-        if (cmdline.parsed.containsKey("config")) {
-            config.merge(Configuration(cmdline.get("config")))
-        } else {
-            config.merge(Configuration("default.cfg", "user.cfg"))
+        if(result.succeeded()) {
+            val vertx = result.result()
+            if (cmdline.parsed.containsKey("config")) {
+                config.merge(Configuration(cmdline.get("config")))
+            } else {
+                config.merge(Configuration("default.cfg", "user.cfg"))
+            }
+            vertx.deployVerticle(Restpoint(config)) { rpResult ->
+                if (rpResult.succeeded()) {
+                    restpointID=rpResult.result()
+                    log.info("Launched Restpoint")
+                    vertx.deployVerticle(SelfTest()) { stResult ->
+                        if(stResult.succeeded()){
+                            log.info("launched SelfTest")
+
+                        }else{
+                            log.error("Could not launch SelfTest: ${stResult.cause().message}")
+                        }
+                    }
+                }else{
+                    log.error("Could not launch Restpoint: ${rpResult.cause().message}")
+                }
+            }
+            Runtime.getRuntime().addShutdownHook(object : Thread() {
+                override fun run() {
+                    println("Shutdown signal received")
+                    vertx.undeploy(restpointID)
+                    vertx.close()
+                }
+            })
+        }else{
+            log.error("Could not set up vertx cluster: ${result.cause().message}")
         }
 
     }
-    Runtime.getRuntime().addShutdownHook(object : Thread() {
-        override fun run() {
-            println("Shutdown signal received")
-            vertx?.undeploy(mothersID)
-            vertx?.close()
-        }
-    })
 
 }
