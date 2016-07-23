@@ -51,6 +51,21 @@ class Restpoint(val cfg: Configuration) : AbstractVerticle() {
                             }
                         }
                     }
+                    "post" -> router.post("/api/${rest}").handler { context ->
+                        context.request().bodyHandler { buffer ->
+                            val cmd= buffer.toJsonObject()
+                            vertx.eventBus().send<JsonObject>(ebmsg,cmd) { response ->
+                                if(response.succeeded()){
+                                    val res=response.result().body()
+                                    context.response().setStatusCode(200)
+                                            .putHeader("content-type", "application/json; charset=utf-8")
+                                            .end(Json.encode(res))
+
+
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

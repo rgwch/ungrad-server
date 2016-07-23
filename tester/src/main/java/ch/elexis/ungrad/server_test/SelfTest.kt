@@ -1,3 +1,6 @@
+/**
+ *
+ */
 package ch.elexis.ungrad.server_test
 
 import io.vertx.core.AbstractVerticle
@@ -6,6 +9,7 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
 /**
+ * This module tests the basic functionality of the Dispatcher. It is launched automatically and always.
  * Created by gerry on 07.07.16.
  */
 class SelfTest: AbstractVerticle() {
@@ -16,6 +20,11 @@ class SelfTest: AbstractVerticle() {
 
     override fun start() {
         super.start()
+        /**
+         * we'll listen to MY_ADDRESS. The Dispatcher will convert REST calls to "1.0/ping/:plus/:minus" to
+         * EventBus messages with the parameters "plus" and "minus". We reply with "pong" and echo the
+         * parameters.
+         */
         vertx.eventBus().consumer<JsonObject>(MY_ADDRESS){msg ->
             val cmd=msg.body()
             val plus=cmd.getString("plus")
@@ -23,6 +32,10 @@ class SelfTest: AbstractVerticle() {
             msg.reply(JsonObject().put("Answer:","Pong, ${plus}, ${minus}"))
 
         }
+        /**
+         * On startup, register our EventBus address with the dispatcher and tell him, that we are
+         * interested in "get" requests with the given address scheme.
+         */
         val registerMsg=JsonObject().put("rest","1.0/ping/:plus/:minus")
         .put("ebaddress",MY_ADDRESS)
         .put("method","get");

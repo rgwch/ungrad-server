@@ -23,11 +23,13 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
         <module name="dispatcher" />
+        <module name="lucinda" />
         <module name="tester" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="dispatcher" target="1.5" />
+      <module name="lucinda" target="1.5" />
       <module name="tester" target="1.5" />
       <module name="ungrad-server" target="1.5" />
     </bytecodeTargetLevel>
