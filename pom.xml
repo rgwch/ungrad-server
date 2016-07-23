@@ -11,7 +11,14 @@
     <properties>
         <vertx-version>3.3.0</vertx-version>
         <kotlin.version>1.0.3</kotlin.version>
+        <toolbox-version>4.0.0</toolbox-version>
     </properties>
+    <repositories>
+        <repository>
+            <id>ch.rgw</id>
+            <url>https://dl.bintray.com/rgwch/maven</url>
+        </repository>
+    </repositories>
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -34,6 +41,11 @@
                 <artifactId>kotlin-test</artifactId>
                 <version>${kotlin.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>rgwch</groupId>
+                <artifactId>rgw-toolbox</artifactId>
+                <version>${toolbox-version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
