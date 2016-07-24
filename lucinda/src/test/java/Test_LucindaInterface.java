@@ -18,13 +18,11 @@ import org.junit.runner.RunWith;
  */
 @RunWith(VertxUnitRunner.class)
 public class Test_LucindaInterface {
-    static HttpClient htc;
     static Vertx vertx;
 
     @BeforeClass
     public static void createClient(TestContext ctx){
         vertx= Vertx.vertx();
-        htc=vertx.createHttpClient();
         Configuration cfg=new Configuration();
         Async async=ctx.async();
         vertx.deployVerticle(new Communicator(cfg), test -> {
@@ -35,25 +33,82 @@ public class Test_LucindaInterface {
 
     @AfterClass
     public static void shutDown(){
-        htc.close();
         vertx.close();
     }
     @Test
     public void testPing(TestContext ctx){
-        /*
-        htc.getNow(2016,"localhost","/api/1.0/lucinda/ping/one", response -> {
-           response.bodyHandler(buffer -> {
-               JsonObject resp=buffer.toJsonObject();
-               Assert.assertEquals("one",resp.getString("var"));
-           });
-        });
-        */
         Async async=ctx.async();
         vertx.eventBus().send("ch.rgw.lucinda.ping", new JsonObject().put("var","testvar"), response -> {
-            Assert.assertTrue(response.succeeded());
+            ctx.assertTrue(response.succeeded());
             JsonObject msg= (JsonObject) response.result().body();
-            Assert.assertEquals("ok",msg.getString("status"));
-            Assert.assertEquals("testvar",msg.getString("pong"));
+            ctx.assertEquals("ok",msg.getString("status"));
+            ctx.assertEquals("testvar",msg.getString("pong"));
+            async.complete();
+        });
+    }
+
+    @Test
+    public void testImport(TestContext ctx){
+        JsonObject parm=new JsonObject();
+        parm.put("dry-run",true).put("_id","123").put("payload",new byte[]{1,2,3}).put("filename","testfile");
+        Async async=ctx.async();
+        vertx.eventBus().send("ch.rgw.lucinda.import", parm, response -> {
+            ctx.assertTrue(response.succeeded());
+            JsonObject msg= (JsonObject) response.result().body();
+            ctx.assertEquals("ok",msg.getString("status"));
+            ctx.assertEquals("import",msg.getString("method"));
+            async.complete();
+        });
+    }
+
+    @Test
+    public void testIndex(TestContext ctx){
+        JsonObject parm=new JsonObject();
+        parm.put("dry-run",true);
+
+        Async async=ctx.async();
+        vertx.eventBus().send("ch.rgw.lucinda.index", parm, response -> {
+            ctx.assertTrue(response.succeeded());
+            JsonObject msg= (JsonObject) response.result().body();
+            async.complete();
+        });
+    }
+
+    @Test
+    public void testGet(TestContext ctx){
+        JsonObject parm=new JsonObject();
+        parm.put("dry-run",true);
+
+        Async async=ctx.async();
+        vertx.eventBus().send("ch.rgw.lucinda.get", parm, response -> {
+            ctx.assertTrue(response.succeeded());
+            JsonObject msg= (JsonObject) response.result().body();
+            async.complete();
+        });
+    }
+
+    @Test
+    public void testFind(TestContext ctx){
+        JsonObject parm=new JsonObject();
+        parm.put("dry-run",true);
+
+        Async async=ctx.async();
+        vertx.eventBus().send("ch.rgw.lucinda.find", parm, response -> {
+            ctx.assertTrue(response.succeeded());
+            JsonObject msg= (JsonObject) response.result().body();
+            async.complete();
+        });
+    }
+
+    @Test
+    public void testUpdate(TestContext ctx){
+        JsonObject parm=new JsonObject();
+        parm.put("dry-run",true);
+
+        Async async=ctx.async();
+        vertx.eventBus().send("ch.rgw.lucinda.update", parm, response -> {
+            ctx.assertTrue(response.succeeded());
+            JsonObject msg= (JsonObject) response.result().body();
             async.complete();
         });
     }

@@ -39,7 +39,7 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
 
     init {
         config.merge(cfg)
-        indexManager=IndexManager(config.get("fs_indexdir","target/store"))
+        indexManager = IndexManager(config.get("fs_indexdir", "target/store"))
     }
 
     override fun start() {
@@ -70,95 +70,156 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
         eb.consumer<JsonObject>(BASEADDR + FUNC_IMPORT.addr) { message ->
             val j = message.body()
             log.info("got message ${FUNC_IMPORT.addr} ${j.getString("title")}")
-            try {
+            if (!checkRequired(j, "_id", "payload", "filename")) {
+                message.reply(makeJson("status:error", "message:bad parameters for ${FUNC_IMPORT.addr}"))
+            } else {
+                if (j.getBoolean("dry-run")) {
+                    j.put("status", "ok").put("method", "import")
+                    message.reply(j);
+                } else {
+                    try {
+                        dispatcher.indexAndStore(j, object : Handler<AsyncResult<Int>> {
+                            override fun handle(result: AsyncResult<Int>) {
+                                if (result.succeeded()) {
+                                    log.info("imported ${j.getString("url")}")
+                                    message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
+                                } else {
+                                    log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
+                                    message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
+                                }
+                            }
 
-                dispatcher.indexAndStore(j, object : Handler<AsyncResult<Int>> {
-                    override fun handle(result: AsyncResult<Int>) {
-                        if (result.succeeded()) {
-                            log.info("imported ${j.getString("url")}")
-                            message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                        } else {
-                            log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
-                            message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
-                        }
+                        })
+                    } catch(e: Exception) {
+                        e.printStackTrace()
+                        log.error("import failed " + e.message)
+                        fail("", e)
                     }
-
-                })
-            } catch(e: Exception) {
-                e.printStackTrace()
-                log.error("import failed " + e.message)
-                fail("", e)
+                }
             }
-
         }
 
         eb.consumer<JsonObject>(BASEADDR + FUNC_INDEX.addr) { msg ->
             val j = msg.body()
             log.info("got message ADDR_INDEX " + Json.encodePrettily(j))
+            if (checkRequired(j, "payload")) {
+                if (j.getBoolean("dry-run")) {
+                    j.put("status", "ok").put("method", "index");
+                    msg.reply(j)
+                } else {
+                    try {
+                        dispatcher.addToIndex(j, object : Handler<AsyncResult<Int>> {
+                            override fun handle(result: AsyncResult<Int>) {
+                                if (result.succeeded()) {
+                                    log.info("indexed ${j.getString("title")}")
+                                    msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
+                                } else {
+                                    log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
+                                    msg.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
+                                }
+                            }
 
-            try {
-                dispatcher.addToIndex(j, object : Handler<AsyncResult<Int>> {
-                    override fun handle(result: AsyncResult<Int>) {
-                        if (result.succeeded()) {
-                            log.info("indexed ${j.getString("title")}")
-                            msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                        } else {
-                            log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
-                            msg.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
-                        }
+                        })
+                        msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")));
+                    } catch(e: Exception) {
+                        fail("can't index", e)
                     }
-
-                })
-                msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")));
-            } catch(e: Exception) {
-                fail("can't index", e)
+                }
+            } else {
+                msg.reply(makeJson("status:error", "message:bad parameters for addToIndex"))
             }
         }
 
         eb.consumer<JsonObject>(BASEADDR + FUNC_GETFILE.addr) { message ->
             val j = message.body()
             log.info("got message ADDR_GETFILE " + Json.encodePrettily(j))
-
-            try {
-                val bytes = dispatcher.get(j.getString("_id"))
-                if (bytes == null) {
-                    fail("could not read ${j.getString("url")}")
+            if (checkRequired(j, "_id")) {
+                if (j.getBoolean("dry-run")) {
+                    j.put("status", "ok").put("method", "get")
+                    message.reply(j)
                 } else {
-                    val result = JsonObject().put("status", "ok").put("result", bytes)
-                    message.reply(result)
+                    try {
+                        val bytes = dispatcher.get(j.getString("_id"))
+                        if (bytes == null) {
+                            fail("could not read ${j.getString("url")}")
+                        } else {
+                            val result = JsonObject().put("status", "ok").put("result", bytes)
+                            message.reply(result)
+                        }
+
+                    } catch(e: Exception) {
+                        fail("could not load file; ${e.message}", e)
+                    }
                 }
 
-            } catch(e: Exception) {
-                fail("could not load file; ${e.message}", e)
+            } else {
+                message.reply(makeJson("status:error", "message:bad parameters for get"))
+
             }
 
         }
         eb.consumer<JsonObject>(BASEADDR + FUNC_FINDFILES.addr) { msg ->
             val j = msg.body()
             log.info("got message ADDR_FINDFILES " + Json.encodePrettily(j))
+            if (checkRequired(j, "query")) {
+                if (j.getBoolean("dry-run")) {
+                    j.put("status", "ok").put("method", "find")
+                    msg.reply(j)
+                } else {
+                    try {
+                        val result = dispatcher.find(j)
+                        msg.reply(JsonObject().put("status", "ok").put("result", result))
+                    } catch(e: Exception) {
 
-            try {
-                val result = dispatcher.find(j)
-                msg.reply(JsonObject().put("status", "ok").put("result", result))
-            } catch(e: Exception) {
-
-                fail("", e)
+                        fail("", e)
+                    }
+                }
+            } else {
+                msg.reply(makeJson("status:error", "message:bad parameters for find"))
             }
         }
         eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_UPDATE.addr) { msg ->
             val j = msg.body() as JsonObject
             log.info("got message ADDR_UPDATE " + Json.encodePrettily(j))
+            if (checkRequired(j, "_id", "payload")) {
+                if (j.getBoolean("dry-run")) {
+                    j.put("status", "ok").put("method", "update")
+                    msg.reply(j)
+                } else {
 
-            try {
-                val result = dispatcher.update(j)
-                msg.reply(JsonObject().put("status", "ok").put("result", result))
-            } catch(e: Exception) {
+                    try {
+                        val result = dispatcher.update(j)
+                        msg.reply(JsonObject().put("status", "ok").put("result", result))
+                    } catch(e: Exception) {
 
-                fail("", e)
+                        fail("", e)
+                    }
+                }
+            } else {
+                msg.reply(makeJson("status:error", "message:bad parameters for update"))
+
             }
         }
 
 
+    }
+
+    fun makeJson(vararg args: String): JsonObject {
+        val ret = JsonObject()
+        for (arg in args) {
+            val parm = arg.split(":")
+            ret.put(parm[0], parm[1])
+        }
+        return ret
+    }
+
+    fun checkRequired(cmd: JsonObject, vararg required: String): Boolean {
+        for (arg in required) {
+            if (cmd.getString(arg).isNullOrBlank()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     fun success(msg: Message<Any>, result: JsonObject = JsonObject()) {
