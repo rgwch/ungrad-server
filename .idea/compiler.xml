@@ -17,21 +17,33 @@
       <profile default="true" name="Default" enabled="false">
         <processorPath useClasspath="true" />
       </profile>
-      <profile default="false" name="Maven default annotation processors profile" enabled="true">
+      <profile default="false" name="Annotation profile for dispatcher" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
         <module name="dispatcher" />
+      </profile>
+      <profile default="false" name="Annotation profile for lucinda" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
         <module name="lucinda" />
+      </profile>
+      <profile default="false" name="Annotation profile for tester" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
         <module name="tester" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="dispatcher" target="1.5" />
-      <module name="lucinda" target="1.5" />
-      <module name="tester" target="1.5" />
-      <module name="ungrad-server" target="1.5" />
+      <module name="dispatcher" target="1.8" />
+      <module name="lucinda" target="1.8" />
+      <module name="tester" target="1.8" />
+      <module name="ungrad-server" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

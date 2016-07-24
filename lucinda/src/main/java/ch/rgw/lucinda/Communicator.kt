@@ -32,28 +32,38 @@ import org.slf4j.LoggerFactory
 
 
 class Communicator(cfg: Configuration) : AbstractVerticle() {
-    val API="1.0"
+    val API = "1.0"
     val eb: EventBus by lazy {
         vertx.eventBus()
     }
 
     init {
-        config=cfg
+        config.merge(cfg)
+        indexManager=IndexManager(config.get("fs_indexdir","target/store"))
     }
+
     override fun start() {
         super.start()
         val dispatcher = Dispatcher(vertx)
 
-        fun makeRegMsg(func:RegSpec)=JsonObject()
-            .put("ebaddress", BASEADDR +func.addr).put("rest","/${API}/${func.rest}").put("method",func.method)
+        fun register(func: RegSpec) {
+            eb.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
+                    .put("ebaddress", BASEADDR + func.addr)
+                    .put("rest", "${API}/${func.rest}").put("method", func.method), RegHandler(func))
+        }
 
-        eb.send<JsonObject>(REGISTER_ADDRESS,makeRegMsg(FUNC_IMPORT), RegHandler(FUNC_IMPORT))
 
+        register(FUNC_IMPORT)
+        register(FUNC_FINDFILES)
+        register(FUNC_GETFILE)
+        register(FUNC_INDEX)
+        register(FUNC_UPDATE)
+        register(FUNC_PING)
 
         eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_PING.addr) { reply ->
             log.info("we got a Ping!")
-            val msg=reply.body().body()
-            val parm=msg.getString("var")
+            val msg = reply.body().body()
+            val parm = msg.getString("var")
             reply.reply(JsonObject().put("status", "ok").put("pong", parm))
         }
 
@@ -139,8 +149,8 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
                 fail("", e)
             }
         }
-        eb.consumer<Message<JsonObject>>(BASEADDR +FUNC_UPDATE.addr) { msg ->
-            val j=msg.body() as JsonObject
+        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_UPDATE.addr) { msg ->
+            val j = msg.body() as JsonObject
             log.info("got message ADDR_UPDATE " + Json.encodePrettily(j))
 
             try {
@@ -151,8 +161,6 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
                 fail("", e)
             }
         }
-
-
 
 
     }
@@ -174,41 +182,41 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
     }
 
 
-
     companion object {
-        const val REGISTER_ADDRESS="ch.elexis.ungrad.server.register"
-        const val BASEADDR ="ch.rgw.lucinda"
+        const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
+        const val BASEADDR = "ch.rgw.lucinda"
 
         /** reply address for error messages */
-        val FUNC_ERROR = RegSpec(".error","lucinda/error","get")
+        val FUNC_ERROR = RegSpec(".error", "lucinda/error", "get")
         /** Add a file to the storage */
-        val FUNC_IMPORT = RegSpec(".import","lucinda/import","post")
+        val FUNC_IMPORT = RegSpec(".import", "lucinda/import", "post")
         /** Index a file in-place (don't add it to the storage) */
-        val FUNC_INDEX = RegSpec(".index","lucinda/index/:url","get")
+        val FUNC_INDEX = RegSpec(".index", "lucinda/index/:url", "get")
         /** Retrieve a file by _id*/
-        val FUNC_GETFILE = RegSpec(".get","lucinda/get/:id","get")
+        val FUNC_GETFILE = RegSpec(".get", "lucinda/get/:id", "get")
         /** Get Metadata of files matching a search query */
-        val FUNC_FINDFILES = RegSpec(".find","lucinda/find/:spec","get")
+        val FUNC_FINDFILES = RegSpec(".find", "lucinda/find/:spec", "get")
         /** Update Metadata of a file by _id*/
-        val FUNC_UPDATE = RegSpec(".update","lucinda/update","post")
+        val FUNC_UPDATE = RegSpec(".update", "lucinda/update", "post")
         /** Connection check */
-        val FUNC_PING = RegSpec(".ping","lucinda/ping/:var","get")
+        val FUNC_PING = RegSpec(".ping", "lucinda/ping/:var", "get")
         val log = LoggerFactory.getLogger("lucinda.Communicator")
 
-        var indexManager : IndexManager?=null;
-        var config : Configuration? = null;
+        var indexManager: IndexManager? = null;
+        val config: Configuration = Configuration();
 
     }
-    class RegHandler(val func: RegSpec) : AsyncResultHandler<Message<JsonObject>>{
+
+    class RegHandler(val func: RegSpec) : AsyncResultHandler<Message<JsonObject>> {
         override fun handle(result: AsyncResult<Message<JsonObject>>) {
-            if(result.failed()){
-             log.error("could not register ${func.addr} for ${func.rest}")
+            if (result.failed()) {
+                log.error("could not register ${func.addr} for ${func.rest}")
             }
         }
 
     }
 
-    data class RegSpec(val addr:String, val rest:String, val method:String)
+    data class RegSpec(val addr: String, val rest: String, val method: String)
 
 }
 

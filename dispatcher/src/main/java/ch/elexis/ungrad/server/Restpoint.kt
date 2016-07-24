@@ -1,4 +1,4 @@
-package elexis.ungrad.server
+package ch.elexis.ungrad.server
 
 import ch.rgw.tools.Configuration
 import io.vertx.core.AbstractVerticle

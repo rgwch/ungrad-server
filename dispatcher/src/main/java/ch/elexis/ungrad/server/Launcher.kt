@@ -1,11 +1,11 @@
-package main.java.ch.elexis.ungrad.server
+package ch.elexis.ungrad.server
 
 import ch.elexis.ungrad.server_test.SelfTest
+import ch.rgw.lucinda.Communicator
 import ch.rgw.tools.CmdLineParser
 import ch.rgw.tools.Configuration
 import ch.rgw.tools.net.NetTool
 import com.hazelcast.config.Config
-import elexis.ungrad.server.Restpoint
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
@@ -24,6 +24,7 @@ val log=LoggerFactory.getLogger("Ungrad Launcher")
 fun main(args:Array<String>){
     var restpointID=""
     var selftestID=""
+    var lucindaID=""
     var consoleID=""
     var cmdline = CmdLineParser(switches = "client,ip,rescan,config,daemon")
     if (!cmdline.parse(args)) {
@@ -70,6 +71,15 @@ fun main(args:Array<String>){
                     vertx.deployVerticle(SelfTest()) { stResult ->
                         if(stResult.succeeded()){
                             log.info("launched SelfTest")
+                            vertx.deployVerticle(Communicator(config)) { lucindaResult ->
+                                if(lucindaResult.succeeded()){
+                                    log.info("launched Lucinda")
+                                    lucindaID=lucindaResult.result()
+                                }else{
+                                    log.error("lucinda launch failed")
+                                }
+
+                            }
 
                         }else{
                             log.error("Could not launch SelfTest: ${stResult.cause().message}")
@@ -84,6 +94,7 @@ fun main(args:Array<String>){
                     println("Shutdown signal received")
                     vertx.undeploy(restpointID)
                     vertx.undeploy(selftestID)
+                    vertx.undeploy(lucindaID)
                     vertx.close()
                 }
             })

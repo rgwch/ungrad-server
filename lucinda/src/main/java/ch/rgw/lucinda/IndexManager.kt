@@ -51,7 +51,7 @@ class IndexManager(directory: String) {
     //val dir: Path =
     val log = Logger.getLogger("lucinda.indexManager")
 
-    val analyzer = when (Communicator.config!!.get("default_language", "de")) {
+    val analyzer = when (Communicator.config.get("default_language", "de")) {
         "de" -> GermanAnalyzer()
         "fr" -> FrenchAnalyzer()
         "it" -> ItalianAnalyzer()
