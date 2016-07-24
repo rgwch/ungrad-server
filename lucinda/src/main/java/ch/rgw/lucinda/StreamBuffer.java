@@ -1,4 +1,4 @@
-package main.java.ch.rgw.lucinda;
+package ch.rgw.lucinda;
 
 /**
  * Created by gerry on 03.07.15.

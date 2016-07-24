@@ -14,7 +14,7 @@
 
 package ch.rgw.lucinda
 
-import ch.rgw.crypt.makeHash
+import ch.rgw.tools.crypt.makeHash
 import ch.rgw.io.FileTool
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -24,11 +24,11 @@ import org.apache.lucene.document.TextField
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectImage
+import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import java.util.logging.Logger
 
 /**
  * This is a Handler<Future> which is called from the indexing process to import a new file.
@@ -37,27 +37,27 @@ import java.util.logging.Logger
 
 class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Future<Int>> {
     val temppath: String by lazy {
-        val checkDir = File(config.get("fs_basedir", "target/store"), "tempfiles")
+        val checkDir = File(Communicator.config?.get("fs_basedir", "target/store"), "tempfiles")
         if (checkDir.exists()) {
             if (checkDir.isFile) {
-                log.severe("temporary directory exists but is a file")
+                log.error("temporary directory exists but is a file")
             }
         } else {
             if (!checkDir.mkdirs()) {
-                log.severe("Can't create tempdir")
+                log.error("Can't create tempdir")
             }
         }
         checkDir.absolutePath
     }
     val failures: String by lazy {
-        val checkDir = File(config.get("fs_basedir", System.getenv("java.io.tmpdir")), "failures")
+        val checkDir = File(Communicator.config?.get("fs_basedir", System.getenv("java.io.tmpdir")), "failures")
         if (checkDir.exists()) {
             if (checkDir.isFile) {
-                log.severe("failure directory exists but is a file")
+                log.error("failure directory ${checkDir} exists but is a file")
             }
         } else {
             if (!checkDir.mkdirs()) {
-                log.severe("Can't create failure directory")
+                log.error("Can't create directory ${checkDir}")
             }
         }
         checkDir.absolutePath
@@ -72,7 +72,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         var retryCount = 0
         var errmsg = ""
         while (retryCount < 2) {
-            log.fine("handle: ${file.fileName}")
+            log.debug("handle: ${file.fileName}")
             errmsg = process();
             if (errmsg.isEmpty()) {
                 future.complete()
@@ -87,7 +87,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                 retryCount++
             }
         }
-        log.warning("${file.toAbsolutePath()} failed.")
+        log.warn("${file.toAbsolutePath()} failed.")
         future.fail("Failed: ${file.toFile().absolutePath}; ${errmsg}")
     }
 
@@ -107,7 +107,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
             if (fileMetadata.getString("_id").isNullOrBlank()) {
                 fileMetadata.put("_id", Autoscanner.makeID(file))
             }
-            val doc = indexManager.addDocument(ByteArrayInputStream(payload), fileMetadata);
+            val doc = Communicator.indexManager!!.addDocument(ByteArrayInputStream(payload), fileMetadata);
             val text = doc.getField("text").stringValue()
             if ( (text.length < 15) and (doc.get("content-type").equals("application/pdf"))) {
                 if (text == "unparseable") {
@@ -140,10 +140,10 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                                         if (plaintext.exists() and plaintext.canRead() and (plaintext.length() > 10L)) {
                                             val newtext = FileTool.readTextFile(plaintext)
                                             doc.add(TextField("text", newtext, Field.Store.NO))
-                                            indexManager.updateDocument(doc)
+                                            Communicator.indexManager!!.updateDocument(doc)
                                             plaintext.delete()
                                         } else {
-                                            log.warning("no text content found in ${filename}")
+                                            log.warn("no text content found in ${filename}")
                                         }
                                     } else {
                                         failed = true
@@ -161,7 +161,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
 
                     } catch(ex: Exception) {
                         ex.printStackTrace()
-                        log.severe("Fatal error in pdf file ${filename}: ${ex.message}")
+                        log.error("Fatal error in pdf file ${filename}: ${ex.message}")
                         return ("Exception thrown: ${ex.message}")
                     }
                 }
@@ -173,7 +173,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
 
         } catch(ex: Exception) {
             ex.printStackTrace()
-            log.severe("fatal error reading ${filename}")
+            log.error("fatal error reading ${filename}")
             return ("read error ${ex.message}")
         }
     }
@@ -188,10 +188,11 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
     fun doOCR(source: String, dest: String): Boolean {
         val process = Runtime.getRuntime().exec(listOf("tesseract", source, dest).toTypedArray())
         if (process == null) {
-            log.severe("Could not launch tesseract!")
+            log.error("Could not launch tesseract!")
             throw IllegalArgumentException("tesseract setting wrong")
         }
         val errmsg = StringBuilder()
+
         val err = StreamBuffer(process.errorStream, errmsg);
         val output = StringBuilder()
         val out = StreamBuffer(process.inputStream, output);
@@ -202,14 +203,14 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
             log.info("tesseract ${source} ended, " + output.toString())
             return exitValue == 0
         } else {
-            log.severe("Tesseract process hangs")
+            log.error("Tesseract process hangs")
             process.destroy()
             return false
         }
     }
 
     companion object {
-        val log = Logger.getLogger("lucinda.fileImporter")
+        val log = LoggerFactory.getLogger("lucinda.fileImporter")
 
     }
 

@@ -18,41 +18,48 @@ package ch.rgw.lucinda
 import ch.rgw.tools.Configuration
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
+import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
-import java.util.logging.Level
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Created by gerry on 20.03.16.
  */
 
-class Communicator(val cfg: Configuration) : AbstractVerticle() {
 
-    val log = Logger.getLogger("lucinda.Communicator")
+class Communicator(cfg: Configuration) : AbstractVerticle() {
+    val API="1.0"
     val eb: EventBus by lazy {
         vertx.eventBus()
     }
 
+    init {
+        config=cfg
+    }
     override fun start() {
         super.start()
-        val dispatcher = Dispatcher(cfg, vertx)
+        val dispatcher = Dispatcher(vertx)
 
-        eb.consumer<Message<JsonObject>>(baseaddr + ADDR_PING) { msg ->
+        fun makeRegMsg(func:RegSpec)=JsonObject()
+            .put("ebaddress", BASEADDR +func.addr).put("rest","/${API}/${func.rest}").put("method",func.method)
+
+        eb.send<JsonObject>(REGISTER_ADDRESS,makeRegMsg(FUNC_IMPORT), RegHandler(FUNC_IMPORT))
+
+
+        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_PING.addr) { reply ->
             log.info("we got a Ping!")
-            msg.reply(JsonObject().put("status", "ok").put("pong", ip).put("rest","1.0").put("port",cfg.get("rest_port","2016")))
+            val msg=reply.body().body()
+            val parm=msg.getString("var")
+            reply.reply(JsonObject().put("status", "ok").put("pong", parm))
         }
-        /*
-         * address defaulting to 'ch.rgw.lucinda.import':
-          * fields in message.body():
-          *
-         */
-        eb.consumer<Message<JsonObject>>(baseaddr + ADDR_IMPORT) { message ->
-            val j = message.body() as JsonObject
-            log.info("got message ADDR_IMPORT ${j.getString("title")}")
+
+        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_IMPORT.addr) { message ->
+            val j = message.body().body()
+            log.info("got message ${FUNC_IMPORT.addr} ${j.getString("title")}")
             try {
 
                 dispatcher.indexAndStore(j, object : Handler<AsyncResult<Int>> {
@@ -61,7 +68,7 @@ class Communicator(val cfg: Configuration) : AbstractVerticle() {
                             log.info("imported ${j.getString("url")}")
                             message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
                         } else {
-                            log.warning("failed to import ${j.getString("url")}; ${result.cause().message}")
+                            log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
                             message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
                         }
                     }
@@ -73,14 +80,14 @@ class Communicator(val cfg: Configuration) : AbstractVerticle() {
                */
             } catch(e: Exception) {
                 e.printStackTrace()
-                log.severe("import failed " + e.message)
+                log.error("import failed " + e.message)
                 fail("", e)
             }
 
         }
 
-        eb.consumer<Message<JsonObject>>(baseaddr + ADDR_INDEX) { msg ->
-            val j = msg.body() as JsonObject
+        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_INDEX.addr) { msg ->
+            val j = msg.body().body()
             log.info("got message ADDR_INDEX " + Json.encodePrettily(j))
 
             try {
@@ -90,7 +97,7 @@ class Communicator(val cfg: Configuration) : AbstractVerticle() {
                             log.info("indexed ${j.getString("title")}")
                             msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
                         } else {
-                            log.warning("failed to import ${j.getString("url")}; ${result.cause().message}")
+                            log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
                             msg.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
                         }
                     }
@@ -102,8 +109,8 @@ class Communicator(val cfg: Configuration) : AbstractVerticle() {
             }
         }
 
-        eb.consumer<Message<JsonObject>>(baseaddr + ADDR_GETFILE) { message ->
-            val j = message.body() as JsonObject
+        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_GETFILE.addr) { message ->
+            val j = message.body().body()
             log.info("got message ADDR_GETFILE " + Json.encodePrettily(j))
 
             try {
@@ -120,7 +127,7 @@ class Communicator(val cfg: Configuration) : AbstractVerticle() {
             }
 
         }
-        eb.consumer<Message<JsonObject>>(baseaddr + ADDR_FINDFILES) { msg ->
+        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_FINDFILES.addr) { msg ->
             val j = msg.body() as JsonObject
             log.info("got message ADDR_FINDFILES " + Json.encodePrettily(j))
 
@@ -132,7 +139,7 @@ class Communicator(val cfg: Configuration) : AbstractVerticle() {
                 fail("", e)
             }
         }
-        eb.consumer<Message<JsonObject>>(baseaddr+ADDR_UPDATE) { msg ->
+        eb.consumer<Message<JsonObject>>(BASEADDR +FUNC_UPDATE.addr) { msg ->
             val j=msg.body() as JsonObject
             log.info("got message ADDR_UPDATE " + Json.encodePrettily(j))
 
@@ -145,13 +152,7 @@ class Communicator(val cfg: Configuration) : AbstractVerticle() {
             }
         }
 
-        val reg=JsonObject().put("ebaddress", baseaddr+ ADDR_FINDFILES)
-        .put("method","post")
-        eb.send<JsonObject>(REGISTER_ADDRESS,reg){ reply ->
-            if(!reply.succeeded()){
 
-            }
-        }
 
 
     }
@@ -162,38 +163,52 @@ class Communicator(val cfg: Configuration) : AbstractVerticle() {
 
     fun fail(msg: String, ex: Exception? = null) {
         val j = JsonObject().put("message", msg)
-        log.warning("failed " + ex)
+        log.warn("failed " + ex)
         if (ex == null) {
             j.put("status", "failed")
         } else {
             j.put("status", "exception").put("message", ex.message)
-            log.log(Level.WARNING, ex.message + "\n\n" + ex.stackTrace.toString())
+            log.warn(ex.message + "\n\n" + ex.stackTrace.toString())
         }
-        eb.send(ADDR_ERROR, j)
+        eb.send(FUNC_ERROR.addr, j)
     }
 
 
 
     companion object {
         const val REGISTER_ADDRESS="ch.elexis.ungrad.server.register"
+        const val BASEADDR ="ch.rgw.lucinda"
 
-        val BASEADDR = config.get("msg_prefix", "ch.rgw.lucinda")
         /** reply address for error messages */
-        const val ADDR_ERROR = ".error"
+        val FUNC_ERROR = RegSpec(".error","lucinda/error","get")
         /** Add a file to the storage */
-        const val ADDR_IMPORT = ".import"
+        val FUNC_IMPORT = RegSpec(".import","lucinda/import","post")
         /** Index a file in-place (don't add it to the storage) */
-        const val ADDR_INDEX = ".index"
+        val FUNC_INDEX = RegSpec(".index","lucinda/index/:url","get")
         /** Retrieve a file by _id*/
-        const val ADDR_GETFILE = ".get"
+        val FUNC_GETFILE = RegSpec(".get","lucinda/get/:id","get")
         /** Get Metadata of files matching a search query */
-        const val ADDR_FINDFILES = ".find"
+        val FUNC_FINDFILES = RegSpec(".find","lucinda/find/:spec","get")
         /** Update Metadata of a file by _id*/
-        const val ADDR_UPDATE = ".update"
+        val FUNC_UPDATE = RegSpec(".update","lucinda/update","post")
         /** Connection check */
-        const val ADDR_PING = ".ping"
+        val FUNC_PING = RegSpec(".ping","lucinda/ping/:var","get")
+        val log = LoggerFactory.getLogger("lucinda.Communicator")
+
+        var indexManager : IndexManager?=null;
+        var config : Configuration? = null;
 
     }
+    class RegHandler(val func: RegSpec) : AsyncResultHandler<Message<JsonObject>>{
+        override fun handle(result: AsyncResult<Message<JsonObject>>) {
+            if(result.failed()){
+             log.error("could not register ${func.addr} for ${func.rest}")
+            }
+        }
+
+    }
+
+    data class RegSpec(val addr:String, val rest:String, val method:String)
 
 }
 

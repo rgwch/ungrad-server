@@ -25,19 +25,21 @@ import io.vertx.core.json.JsonObject
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.TextField
+import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.logging.Logger
 
 /**
  * Created by gerry on 22.03.16.
  */
-class Dispatcher(val cfg: Configuration, val vertx: Vertx) {
-    val log = Logger.getLogger("lucinda")
+class Dispatcher(val vertx: Vertx) {
+    val log = LoggerFactory.getLogger("lucinda")
     val fs = vertx.fileSystem()
+    val cfg=Communicator.config!!
+    val indexManager=Communicator.indexManager!!
 
     fun makeDirPath(parms: JsonObject): File {
         val fname = parms.getString("filename")
