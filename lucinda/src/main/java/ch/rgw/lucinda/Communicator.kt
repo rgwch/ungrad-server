@@ -60,15 +60,15 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
         register(FUNC_UPDATE)
         register(FUNC_PING)
 
-        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_PING.addr) { reply ->
+        eb.consumer<JsonObject>(BASEADDR + FUNC_PING.addr) { reply ->
             log.info("we got a Ping!")
-            val msg = reply.body().body()
+            val msg = reply.body()
             val parm = msg.getString("var")
             reply.reply(JsonObject().put("status", "ok").put("pong", parm))
         }
 
-        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_IMPORT.addr) { message ->
-            val j = message.body().body()
+        eb.consumer<JsonObject>(BASEADDR + FUNC_IMPORT.addr) { message ->
+            val j = message.body()
             log.info("got message ${FUNC_IMPORT.addr} ${j.getString("title")}")
             try {
 
@@ -84,10 +84,6 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
                     }
 
                 })
-
-                /*
-                        }
-               */
             } catch(e: Exception) {
                 e.printStackTrace()
                 log.error("import failed " + e.message)
@@ -96,8 +92,8 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
 
         }
 
-        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_INDEX.addr) { msg ->
-            val j = msg.body().body()
+        eb.consumer<JsonObject>(BASEADDR + FUNC_INDEX.addr) { msg ->
+            val j = msg.body()
             log.info("got message ADDR_INDEX " + Json.encodePrettily(j))
 
             try {
@@ -119,8 +115,8 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
             }
         }
 
-        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_GETFILE.addr) { message ->
-            val j = message.body().body()
+        eb.consumer<JsonObject>(BASEADDR + FUNC_GETFILE.addr) { message ->
+            val j = message.body()
             log.info("got message ADDR_GETFILE " + Json.encodePrettily(j))
 
             try {
@@ -137,8 +133,8 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
             }
 
         }
-        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_FINDFILES.addr) { msg ->
-            val j = msg.body() as JsonObject
+        eb.consumer<JsonObject>(BASEADDR + FUNC_FINDFILES.addr) { msg ->
+            val j = msg.body()
             log.info("got message ADDR_FINDFILES " + Json.encodePrettily(j))
 
             try {
