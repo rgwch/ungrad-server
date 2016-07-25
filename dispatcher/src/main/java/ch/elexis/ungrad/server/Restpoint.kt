@@ -17,6 +17,7 @@ import java.util.*
 
 class Restpoint(val cfg: Configuration) : AbstractVerticle() {
     val handlers = HashMap<String, String>()
+    val servers = HashMap<String,String>()
     val log=LoggerFactory.getLogger(this.javaClass)
     val params="\\/:[a-z]+".toRegex()
 
@@ -28,6 +29,8 @@ class Restpoint(val cfg: Configuration) : AbstractVerticle() {
             val rest = j.getString("rest")
             val ebmsg = j.getString("ebaddress")
             val method = j.getString("method")
+            val sname=j.getString("server-id")
+            val admin=j.getString("server-control")
             if (handlers.containsKey(rest)) {
                 msg.reply(JsonObject().put("status", "error").put("message", "REST address already registered"))
             } else if (handlers.containsValue(ebmsg)) {
