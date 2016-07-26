@@ -51,7 +51,7 @@ class IndexManager(directory: String) {
     //val dir: Path =
     val log = Logger.getLogger("lucinda.indexManager")
 
-    val analyzer = when (Communicator.config.get("default_language", "de")) {
+    val analyzer = when (config.get("default_language", "de")) {
         "de" -> GermanAnalyzer()
         "fr" -> FrenchAnalyzer()
         "it" -> ItalianAnalyzer()
@@ -233,8 +233,8 @@ class IndexManager(directory: String) {
 
     fun removeDocument(id: String) {
         require(id.isNotBlank())
-        val query=idParser.parse("_id: ${id}")
-        writer.deleteDocuments(query)
+        val term = Term("_id", id)
+        writer.deleteDocuments(term)
         writer.flush()
         writer.commit()
         searcherManager.maybeRefreshBlocking()

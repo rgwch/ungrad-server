@@ -51,7 +51,7 @@ class Autoscanner : AbstractVerticle() {
     override fun start() {
         super.start()
 
-        eb.consumer<Message<JsonObject>>(Communicator.BASEADDR + ADDR_START) { msg ->
+        eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_START) { msg ->
             val j = msg.body() as JsonObject
             log.fine("got start message ${Json.encodePrettily(j)}")
             register(j.getJsonArray("dirs"))
@@ -66,13 +66,13 @@ class Autoscanner : AbstractVerticle() {
             }
             msg.reply(JsonObject().put("status", "ok"))
         }
-        eb.consumer<Message<JsonObject>>(Communicator.BASEADDR + ADDR_STOP) {
+        eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_STOP) {
             log.fine("got stop message")
             if (timer > 0L) {
                 vertx.cancelTimer(timer)
             }
         }
-        eb.consumer<Message<String>>(Communicator.BASEADDR + ADDR_RESCAN) {
+        eb.consumer<Message<String>>(BASEADDR + ADDR_RESCAN) {
             log.info("got rescan message")
             watchedDirs.forEach {
                 rescan(it)
@@ -195,7 +195,7 @@ class Autoscanner : AbstractVerticle() {
                 val absolute = file.toFile().absolutePath
                 log.info("checking ${absolute}")
                 val id = makeID(file)
-                val doc = Communicator.indexManager?.getDocument(id)
+                val doc = indexManager?.getDocument(id)
                 if (doc == null) {
                     log.fine("did not find ${file}/${id} in index. Adding")
                     addFile(file)
@@ -232,7 +232,7 @@ class Autoscanner : AbstractVerticle() {
                         if (result.failed()) {
                             val errmsg = "import ${file.toAbsolutePath()} failed." + result.cause().message
                             log.severe(errmsg)
-                            vertx.eventBus().publish(Communicator.FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
+                            vertx.eventBus().publish(FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
                         }
                     }
                 })
@@ -245,7 +245,7 @@ class Autoscanner : AbstractVerticle() {
             val absolute = file.toFile().absolutePath
             log.info("removing ${absolute}")
             val id = makeID(file)
-            Communicator.indexManager?.removeDocument(id)
+            indexManager?.removeDocument(id)
         }
     }
 

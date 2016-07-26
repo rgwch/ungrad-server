@@ -38,14 +38,13 @@ import java.nio.file.Paths
 class Dispatcher(val vertx: Vertx) {
     val log = LoggerFactory.getLogger("lucinda")
     val fs = vertx.fileSystem()
-    val cfg=Communicator.config!!
-    val indexManager=Communicator.indexManager!!
+    val iMgr=indexManager!!
 
     fun makeDirPath(parms: JsonObject): File {
         val fname = parms.getString("filename")
         val concern = parms.getString("concern")
         val key = parms.getBinary("key")
-        val dir = cfg.get("fs_import", "target/store") + (if (concern != null) {
+        val dir = config.get("fs_import", "target/store") + (if (concern != null) {
             File.separator + concern
         } else "")
         return File(dir, fname)
@@ -112,12 +111,12 @@ class Dispatcher(val vertx: Vertx) {
      */
     fun find(parm: JsonObject): JsonArray {
         val ret =
-                indexManager.queryDocuments(parm.getString("query"), parm.getInteger("numhits") ?: 100)
+                iMgr.queryDocuments(parm.getString("query"), parm.getInteger("numhits") ?: 100)
         return ret
     }
 
     fun get(id: String): ByteArray? {
-        val doc: Document? = indexManager.getDocument(id)
+        val doc: Document? = iMgr.getDocument(id)
         if (doc != null) {
             val file = File(doc.get("url"))
             if (file.exists() && file.canRead()) {
@@ -130,7 +129,7 @@ class Dispatcher(val vertx: Vertx) {
     }
 
     fun update(o: JsonObject) {
-        val doc: Document? = indexManager.getDocument(o.getString("_id"))
+        val doc: Document? = iMgr.getDocument(o.getString("_id"))
         if (doc != null) {
             o.map.forEach {
                 if(it.key!="_id" && it.key!="payload") {
@@ -141,7 +140,7 @@ class Dispatcher(val vertx: Vertx) {
                     doc.add(TextField(it.key, it.value.toString(), Field.Store.YES))
                 }
             }
-            indexManager.updateDocument(doc)
+            iMgr.updateDocument(doc)
         }
     }
 }

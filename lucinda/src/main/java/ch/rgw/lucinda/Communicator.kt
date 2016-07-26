@@ -238,32 +238,6 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
         eb.send(FUNC_ERROR.addr, j)
     }
 
-
-    companion object {
-        const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
-        const val BASEADDR = "ch.rgw.lucinda"
-
-        /** reply address for error messages */
-        val FUNC_ERROR = RegSpec(".error", "lucinda/error", "get")
-        /** Add a file to the storage */
-        val FUNC_IMPORT = RegSpec(".import", "lucinda/import", "post")
-        /** Index a file in-place (don't add it to the storage) */
-        val FUNC_INDEX = RegSpec(".index", "lucinda/index/:url", "get")
-        /** Retrieve a file by _id*/
-        val FUNC_GETFILE = RegSpec(".get", "lucinda/get/:id", "get")
-        /** Get Metadata of files matching a search query */
-        val FUNC_FINDFILES = RegSpec(".find", "lucinda/find/:spec", "get")
-        /** Update Metadata of a file by _id*/
-        val FUNC_UPDATE = RegSpec(".update", "lucinda/update", "post")
-        /** Connection check */
-        val FUNC_PING = RegSpec(".ping", "lucinda/ping/:var", "get")
-        val log = LoggerFactory.getLogger("lucinda.Communicator")
-
-        var indexManager: IndexManager? = null;
-        val config: Configuration = Configuration();
-
-    }
-
     class RegHandler(val func: RegSpec) : AsyncResultHandler<Message<JsonObject>> {
         override fun handle(result: AsyncResult<Message<JsonObject>>) {
             if (result.failed()) {
