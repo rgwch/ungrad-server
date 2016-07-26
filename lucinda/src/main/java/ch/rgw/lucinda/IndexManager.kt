@@ -148,18 +148,6 @@ class IndexManager(directory: String) {
         return doc
     }
 
-    /*
-    fun insertDocument(doc: Document){
-        synchronized(insertLock) {
-
-            writer.addDocument(doc)
-            writer.flush()
-            writer.commit()
-            searcherManager.maybeRefreshBlocking()
-        }
-    }
-*/
-
     fun updateDocument(doc: Document){
         require(doc.get("_id")!=null)
         synchronized(insertLock) {

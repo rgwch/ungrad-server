@@ -23,8 +23,6 @@ val log=LoggerFactory.getLogger("Ungrad Launcher")
 
 fun main(args:Array<String>){
     var restpointID=""
-    var selftestID=""
-    var lucindaID=""
     var consoleID=""
     var cmdline = CmdLineParser(switches = "client,ip,rescan,config,daemon")
     if (!cmdline.parse(args)) {
@@ -66,35 +64,28 @@ fun main(args:Array<String>){
             }
             vertx.deployVerticle(Restpoint(config)) { rpResult ->
                 if (rpResult.succeeded()) {
-                    restpointID=rpResult.result()
-                    log.info("Launched Restpoint")
-                    vertx.deployVerticle(SelfTest()) { stResult ->
-                        if(stResult.succeeded()){
-                            log.info("launched SelfTest")
-                            vertx.deployVerticle(Communicator(config)) { lucindaResult ->
-                                if(lucindaResult.succeeded()){
-                                    log.info("launched Lucinda")
-                                    lucindaID=lucindaResult.result()
-                                }else{
-                                    log.error("lucinda launch failed")
-                                }
-
-                            }
-
+                    fun deployResult(isOk:Boolean, message:String): Unit{
+                        if(isOk){
+                            log.info(message)
                         }else{
-                            log.error("Could not launch SelfTest: ${stResult.cause().message}")
+                            log.error(message)
                         }
                     }
+
+                    restpointID=rpResult.result()
+                    log.info("Launched Restpoint")
+                    ch.elexis.ungrad.server_test.start(vertx,config,::deployResult)
+                    ch.rgw.lucinda.start(vertx,config,::deployResult)
                 }else{
-                    log.error("Could not launch Restpoint: ${rpResult.cause().message}")
+                    log.error("Could not launch Verticles: ${rpResult.cause().message}")
                 }
             }
             Runtime.getRuntime().addShutdownHook(object : Thread() {
                 override fun run() {
                     println("Shutdown signal received")
                     vertx.undeploy(restpointID)
-                    vertx.undeploy(selftestID)
-                    vertx.undeploy(lucindaID)
+                    ch.rgw.lucinda.stop()
+                    ch.elexis.ungrad.server_test.stop()
                     vertx.close()
                 }
             })
