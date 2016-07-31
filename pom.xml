@@ -126,5 +126,6 @@
         <module>dispatcher</module>
         <module>tester</module>
         <module>lucinda</module>
+        <module>console</module>
     </modules>
 </project>

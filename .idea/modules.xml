@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Console/Console.iml" filepath="$PROJECT_DIR$/Console/Console.iml" />
       <module fileurl="file://$PROJECT_DIR$/article/article.iml" filepath="$PROJECT_DIR$/article/article.iml" />
       <module fileurl="file://$PROJECT_DIR$/backup/backup.iml" filepath="$PROJECT_DIR$/backup/backup.iml" />
+      <module fileurl="file://$PROJECT_DIR$/console/console.iml" filepath="$PROJECT_DIR$/console/console.iml" />
       <module fileurl="file://$PROJECT_DIR$/dispatcher/dispatcher.iml" filepath="$PROJECT_DIR$/dispatcher/dispatcher.iml" />
       <module fileurl="file://$PROJECT_DIR$/lucinda/lucinda.iml" filepath="$PROJECT_DIR$/lucinda/lucinda.iml" />
       <module fileurl="file://$PROJECT_DIR$/tester/tester.iml" filepath="$PROJECT_DIR$/tester/tester.iml" />

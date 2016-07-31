@@ -38,8 +38,24 @@
         <processorPath useClasspath="true" />
         <module name="tester" />
       </profile>
+      <profile default="false" name="Annotation profile for Console" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="Console" />
+      </profile>
+      <profile default="false" name="Annotation profile for console" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="console" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="console" target="1.8" />
+      <module name="Console" target="1.8" />
       <module name="dispatcher" target="1.8" />
       <module name="lucinda" target="1.8" />
       <module name="tester" target="1.8" />

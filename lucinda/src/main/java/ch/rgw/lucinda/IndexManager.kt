@@ -14,8 +14,8 @@
 
 package ch.rgw.lucinda
 
-import ch.rgw.tools.crypt.makeHash
 import ch.rgw.tools.TimeTool
+import ch.rgw.tools.crypt.makeHash
 import com.rometools.utils.Strings
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -26,11 +26,10 @@ import org.apache.lucene.analysis.fr.FrenchAnalyzer
 import org.apache.lucene.analysis.it.ItalianAnalyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.*
-import org.apache.lucene.index.IndexWriter
-import org.apache.lucene.index.IndexWriterConfig
-import org.apache.lucene.index.Term
+import org.apache.lucene.index.*
 import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.SearcherManager
+import org.apache.lucene.search.IndexSearcher
+import org.apache.lucene.search.TermQuery
 import org.apache.lucene.search.TopScoreDocCollector
 import org.apache.lucene.store.FSDirectory
 import org.apache.tika.metadata.Metadata
@@ -58,11 +57,24 @@ class IndexManager(directory: String) {
         "en" -> EnglishAnalyzer()
         else -> StandardAnalyzer()
     }
-    val parser= QueryParser("text", analyzer)
-    val idParser=QueryParser("_id", KeywordAnalyzer())
-    val insertLock=true
+    val parser = QueryParser("text", analyzer)
+    val idParser = QueryParser("_id", KeywordAnalyzer())
+    val indexDir = FSDirectory.open(FileSystems.getDefault().getPath(directory))
+    val insertLock = true
 
+    fun createWriter(): IndexWriter {
+        val conf = IndexWriterConfig(analyzer).setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND)
+        conf.maxBufferedDeleteTerms = 1
+        return IndexWriter(indexDir, conf)
 
+    }
+
+    fun createReader(): IndexReader {
+        return DirectoryReader.open(indexDir)
+
+    }
+
+/*
     val writer: IndexWriter by lazy {
         log.info("opening index in create or append mode")
         val conf = IndexWriterConfig(analyzer).setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND)
@@ -70,12 +82,14 @@ class IndexManager(directory: String) {
         val index = FSDirectory.open(FileSystems.getDefault().getPath(directory))
         IndexWriter(index, conf)
     }
+
     val searcherManager : SearcherManager by lazy{
         SearcherManager(writer, true, true, null)
     }
-
+*/
 
     fun shutDown() {
+        /*
         try {
             if (writer.isOpen) {
                 writer.commit()
@@ -86,6 +100,7 @@ class IndexManager(directory: String) {
             ex.printStackTrace()
             log.severe("could not shut down index writer properly "+ex.message)
         }
+        */
     }
 
     /**
@@ -108,7 +123,7 @@ class IndexManager(directory: String) {
 
         try {
             parser.parse(istream, handler, metadata, context)
-        }catch(ex: Exception){
+        } catch(ex: Exception) {
             // e.g. org.apache.tika.sax.WriteLimitReachedException
             // In that case, Data up to the limit (100K) will be available and can be read.
             // so, just write a log entry and continue
@@ -132,29 +147,29 @@ class IndexManager(directory: String) {
                 doc.add(TextField(key, value, Field.Store.YES))
             }
         }
-        val ftDate=FieldType()
+        val ftDate = FieldType()
         ftDate.setStored(true)
         ftDate.setTokenized(false)
         attributes.fieldNames().forEach {
-            doc.add(when(it){
-              "_id","uuid", "birthdate" -> StringField(it, attributes.getString(it), Field.Store.YES)
-              else -> TextField(it, attributes.getString(it),Field.Store.YES)
+            doc.add(when (it) {
+                "_id", "uuid", "birthdate" -> StringField(it, attributes.getString(it), Field.Store.YES)
+                else -> TextField(it, attributes.getString(it), Field.Store.YES)
             })
         }
         doc.removeFields("parseDate")
-        doc.add(StringField("parseDate", TimeTool().toString(TimeTool.DATE_COMPACT),Field.Store.YES))
-        doc.add(TextField("text", if(text.isEmpty()) "unparseable" else text, Field.Store.NO))
+        doc.add(StringField("parseDate", TimeTool().toString(TimeTool.DATE_COMPACT), Field.Store.YES))
+        doc.add(TextField("text", if (text.isEmpty()) "unparseable" else text, Field.Store.NO))
         updateDocument(doc)
         return doc
     }
 
-    fun updateDocument(doc: Document){
-        require(doc.get("_id")!=null)
-        synchronized(insertLock) {
-            val term = Term("_id", doc.get("_id"))
-            writer.updateDocument(term, doc)
-            searcherManager.maybeRefreshBlocking()
-        }
+    fun updateDocument(doc: Document) {
+        require(doc.get("_id") != null)
+        val term = Term("_id", doc.get("_id"))
+        val writer = createWriter();
+        writer.updateDocument(term, doc)
+        writer.close();
+        //searcherManager.maybeRefreshBlocking()
     }
 
     /**
@@ -167,13 +182,15 @@ class IndexManager(directory: String) {
      * @throws ParseException
      * @throws IOException
      */
-    fun queryDocuments(queryExpression: String, numHits: Int=1000): JsonArray {
-        log.level= Level.FINEST
+    fun queryDocuments(queryExpression: String, numHits: Int = 1000): JsonArray {
+        log.level = Level.FINEST
         require(queryExpression.isNotBlank())
         log.finer("querying for ${queryExpression}")
         val query = parser.parse(queryExpression)
-        searcherManager.maybeRefreshBlocking()
-        val searcher=searcherManager.acquire()
+        //searcherManager.maybeRefreshBlocking()
+        //val searcher=searcherManager.acquire()
+        val reader = createReader()
+        val searcher = IndexSearcher(reader)
         val collector = TopScoreDocCollector.create(numHits)
         searcher.search(query, collector)
         val hits = collector.topDocs()
@@ -187,26 +204,31 @@ class IndexManager(directory: String) {
             }
             ret.add(jo)
         }
-        searcherManager.release(searcher)
+        //searcherManager.release(searcher)
+        reader.close()
         return ret
-
     }
 
     fun getDocument(id: String): Document? {
         require(id.isNotBlank())
         try {
-            val query=idParser.parse("_id: ${id}")
-            searcherManager.maybeRefreshBlocking()
-            val searcher = searcherManager.acquire()
-            val result = searcher.search(query,10)
+            //val query=idParser.parse("_id: ${id}")
+            val term = Term("_id", id)
+            val query = TermQuery(term)
+            //searcherManager.maybeRefreshBlocking()
+            //val searcher = searcherManager.acquire()
+            val reader = createReader()
+            val searcher = IndexSearcher(reader)
+            val result = searcher.search(query, 10)
             if (result.totalHits > 1) {
                 log.severe("Lucene index corrupt: Duplicate _id: ${id}")
             }
             if (result.totalHits == 0) {
                 return null
             }
-            val ret= searcher.doc(result.scoreDocs[0].doc)
-            searcherManager.release(searcher)
+            val ret = searcher.doc(result.scoreDocs[0].doc)
+            //searcherManager.release(searcher)
+            reader.close()
             return ret
         } catch(ex: Exception) {
             log.warning("could not open lucene index " + ex.message)
@@ -233,20 +255,26 @@ class IndexManager(directory: String) {
 
     fun removeDocument(id: String) {
         require(id.isNotBlank())
+        val doc = getDocument(id)
         val term = Term("_id", id)
+        val writer = createWriter()
         writer.deleteDocuments(term)
+        writer.close()
+        /*
         writer.flush()
         writer.commit()
+
         searcherManager.maybeRefreshBlocking()
+        */
     }
 
 
-    fun escape(orig: String)=QueryParser.escape(orig)
+    fun escape(orig: String) = QueryParser.escape(orig)
 }
 
-class ID(val source: String){
-    val asString:String by lazy{
-        val chopped=source.replace("[:\\\\\\/\\.0-9_]".toRegex(),"")
+class ID(val source: String) {
+    val asString: String by lazy {
+        val chopped = source.replace("[:\\\\\\/\\.0-9_]".toRegex(), "")
         makeHash(chopped)
     }
 }
