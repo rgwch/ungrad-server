@@ -122,11 +122,7 @@
             <artifactId>ungrad-server-console</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-auth-shiro</artifactId>
-            <version>${vertx-version}</version>
-        </dependency>
+
     </dependencies>
     <properties>
         <kotlin.version>1.0.3</kotlin.version>

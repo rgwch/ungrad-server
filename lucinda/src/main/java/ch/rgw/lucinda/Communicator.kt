@@ -49,7 +49,8 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
         fun register(func: RegSpec) {
             eb.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
                     .put("ebaddress", BASEADDR + func.addr)
-                    .put("rest", "${API}/${func.rest}").put("method", func.method), RegHandler(func))
+                    .put("rest", "${API}/${func.rest}").put("method", func.method).put("role",func.role)
+                    .put("server-id","ch.rgw.lucinda").put("server.control", CONTROL_ADDR), RegHandler(func))
         }
 
 
@@ -59,6 +60,11 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
         register(FUNC_INDEX)
         register(FUNC_UPDATE)
         register(FUNC_PING)
+
+        eb.consumer<String>(CONTROL_ADDR){ reply ->
+            log.info("we've got an admin message!")
+            reply.reply(Admin.handle(reply.body()))
+        }
 
         eb.consumer<JsonObject>(BASEADDR + FUNC_PING.addr) { reply ->
             log.info("we got a Ping!")
@@ -247,7 +253,7 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
 
     }
 
-    data class RegSpec(val addr: String, val rest: String, val method: String)
+    data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
 
 }
 

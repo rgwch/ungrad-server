@@ -1,0 +1,16 @@
+{
+    "webroot": "web", // the webroot
+    "users":{
+        "admin":{
+            "password": "secret",
+            "roles": ["admin","guest"]
+        },
+        "leya":{
+            "password": "han",
+            "roles":["princess","guest"]
+        },
+        "default":{
+            "roles":["guest"]
+        }
+    }
+}

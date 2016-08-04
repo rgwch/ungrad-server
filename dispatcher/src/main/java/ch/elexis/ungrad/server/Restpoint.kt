@@ -14,7 +14,6 @@
 
 package ch.elexis.ungrad.server
 
-import ch.rgw.tools.Configuration
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
@@ -22,9 +21,6 @@ import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import io.vertx.ext.auth.AuthProvider
-import io.vertx.ext.auth.shiro.ShiroAuth
-import io.vertx.ext.auth.shiro.ShiroAuthRealmType
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.RedirectAuthHandler
@@ -53,9 +49,6 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
     val params = "\\/:[a-z]+".toRegex()
     val router: Router by lazy {
         Router.router(vertx)
-    }
-    val authProvider: AuthProvider by lazy {
-        ShiroAuth.create(vertx, ShiroAuthRealmType.PROPERTIES, JsonObject().put("properties_path", "classpath:ungrad-auth.properties"))
     }
 
     override fun start(future: Future<Void>) {

@@ -32,9 +32,13 @@ import java.io.File
  * Created by gerry on 06.07.16.
  */
 
-val config=JsonUtil.load("default.cfg","user.cfg")
+val config=JsonUtil.load("default.json","user.json","default.cfg","user.cfg")
 var ip:String=""
 val log=LoggerFactory.getLogger("Ungrad Launcher")
+val authProvider: AccessController by lazy{
+    val users=config.getJsonObject("users") ?: JsonObject()
+    AccessController(users)
+}
 
 fun main(args:Array<String>){
     var restpointID=""
@@ -52,6 +56,8 @@ fun main(args:Array<String>){
             log.error("tried to replace config with ${file.absolutePath}, but could not read.")
         }
     }
+
+
 
     val net = cmdline.get("ip")
     ip = if (net.isEmpty()) {
