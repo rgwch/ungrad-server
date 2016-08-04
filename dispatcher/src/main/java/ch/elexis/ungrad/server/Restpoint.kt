@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * Copyright (c) 2016 by G. Weirich
+ *
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ *
+ * Contributors:
+ * G. Weirich - initial implementation
+ */
+
 package ch.elexis.ungrad.server
 
 import ch.rgw.tools.Configuration
@@ -7,6 +21,7 @@ import io.vertx.core.eventbus.Message
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.auth.AuthProvider
 import io.vertx.ext.auth.shiro.ShiroAuth
 import io.vertx.ext.auth.shiro.ShiroAuthRealmType
 import io.vertx.ext.web.Router
@@ -36,6 +51,9 @@ class Restpoint(val cfg: Configuration) : AbstractVerticle() {
     val router: Router by lazy {
         Router.router(vertx)
     }
+    val authProvider: AuthProvider by lazy {
+        ShiroAuth.create(vertx, ShiroAuthRealmType.PROPERTIES, JsonObject().put("properties_path", "classpath:ungrad-auth.properties"))
+    }
 
     override fun start(future: Future<Void>) {
         super.start()
@@ -57,31 +75,56 @@ class Restpoint(val cfg: Configuration) : AbstractVerticle() {
                 log.debug("registering /api/${rest} for ${ebmsg}")
                 when (method) {
                     "get" -> router.get("/api/${rest}").handler { context ->
-                        val cmd = JsonObject()
-                        params.findAll(rest).forEach { match ->
-                            val parm = match.value.substring(2)
-                            cmd.put(parm, context.request().getParam(parm))
-                        }
-                        vertx.eventBus().send<JsonObject>(ebmsg, cmd) { response ->
-                            if (response.succeeded()) {
-                                val res = response.result().body()
-                                context.response().setStatusCode(200)
-                                        .putHeader("content-type", "application/json; charset=utf-8")
-                                        .end(Json.encode(res))
+                        context.user().isAuthorised(role) { auth ->
+                            if (auth.succeeded()) {
+                                if (auth.result()) {
+                                    val cmd = JsonObject()
+                                    params.findAll(rest).forEach { match ->
+                                        val parm = match.value.substring(2)
+                                        cmd.put(parm, context.request().getParam(parm))
+                                    }
+                                    vertx.eventBus().send<JsonObject>(ebmsg, cmd) { response ->
+                                        if (response.succeeded()) {
+                                            val res = response.result().body()
+                                            context.response().setStatusCode(200)
+                                                    .putHeader("content-type", "application/json; charset=utf-8")
+                                                    .end(Json.encode(res))
+                                        }
+                                    }
+                                } else {
+                                    // not authorized
+                                    context.response().setStatusCode(403).end("Not authorized for ${role}.")
+                                }
+                            } else {
+                                //internal server error
+                                context.response().setStatusCode(500)
                             }
                         }
+
                     }
                     "post" -> router.post("/api/${rest}").handler { context ->
                         context.request().bodyHandler { buffer ->
-                            val cmd = buffer.toJsonObject()
-                            vertx.eventBus().send<JsonObject>(ebmsg, cmd) { response ->
-                                if (response.succeeded()) {
-                                    val res = response.result().body()
-                                    context.response().setStatusCode(200)
-                                            .putHeader("content-type", "application/json; charset=utf-8")
-                                            .end(Json.encode(res))
+                            context.user().isAuthorised(role) { auth ->
+                                if (auth.succeeded()) {
+                                    if (auth.result()) {
+                                        val cmd = buffer.toJsonObject()
+                                        vertx.eventBus().send<JsonObject>(ebmsg, cmd) { response ->
+                                            if (response.succeeded()) {
+                                                val res = response.result().body()
+                                                context.response().setStatusCode(200)
+                                                        .putHeader("content-type", "application/json; charset=utf-8")
+                                                        .end(Json.encode(res))
 
+                                            }
+                                        }
 
+                                    } else {
+                                        // not authorized
+                                        context.response().setStatusCode(403).end("Not authorized for ${role}.")
+                                    }
+                                } else {
+                                    //internal server error
+                                    context.response().setStatusCode(500)
                                 }
                             }
                         }
@@ -90,12 +133,10 @@ class Restpoint(val cfg: Configuration) : AbstractVerticle() {
             }
         }
         try {
-            val authProvider = ShiroAuth.create(vertx, ShiroAuthRealmType.PROPERTIES, JsonObject().put("properties_path", "classpath:ungrad-auth.properties"))
             router.route().handler(io.vertx.ext.web.handler.CookieHandler.create());
             router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
             router.route().handler(io.vertx.ext.web.handler.UserSessionHandler.create(authProvider));
             val redirectAuthHandler = RedirectAuthHandler.create(authProvider, "/login", "reTo")
-
 
             router.route("/api/*").handler(redirectAuthHandler)
 
@@ -118,16 +159,13 @@ class Restpoint(val cfg: Configuration) : AbstractVerticle() {
                 context.request().endHandler { req ->
                     val usr = context.request().getFormAttribute("username")
                     val pwd = context.request().getFormAttribute("pwd")
-                    val redir=context.request().getFormAttribute("reTo") ?: context.session().get("reTo")
+                    val redir = context.request().getFormAttribute("reTo") ?: context.session().get("reTo")
                     authProvider.authenticate(JsonObject().put("username", usr)
                             .put("password", pwd)) { res ->
                         if (res.succeeded()) {
                             val user = res.result()
                             context.setUser(user)
-                            //context.session().put("user",user)
-
-                            //context.reroute(redir ?: "error.html")
-                            context.response().putHeader("Location",redir ?: "error.html").setStatusCode(302).end()
+                            context.response().putHeader("Location", redir ?: "error.html").setStatusCode(302).end()
                         } else {
                             context.response().end("Bad Username or password")
                         }

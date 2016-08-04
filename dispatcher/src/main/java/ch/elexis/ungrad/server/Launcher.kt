@@ -1,3 +1,17 @@
+/*******************************************************************************
+ * Copyright (c) 2016 by G. Weirich
+ *
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ *
+ * Contributors:
+ * G. Weirich - initial implementation
+ */
+
 package ch.elexis.ungrad.server
 
 import ch.elexis.ungrad.server_test.SelfTest
@@ -76,6 +90,7 @@ fun main(args:Array<String>){
                     log.info("Launched Restpoint")
                     ch.elexis.ungrad.server_test.start(vertx,config,::deployResult)
                     ch.rgw.lucinda.start(vertx,config,::deployResult)
+                    ch.elexis.ungrad.server.console.start(vertx,config,::deployResult)
                 }else{
                     log.error("Could not launch Verticles: ${rpResult.cause().message}")
                 }
