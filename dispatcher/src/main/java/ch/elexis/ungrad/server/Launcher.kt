@@ -25,28 +25,32 @@ import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonObject
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import org.slf4j.LoggerFactory
+import java.io.File
 
 
 /**
  * Created by gerry on 06.07.16.
  */
 
-val config=Configuration()
+val config=JsonUtil.load("default.cfg","user.cfg")
 var ip:String=""
 val log=LoggerFactory.getLogger("Ungrad Launcher")
 
 fun main(args:Array<String>){
     var restpointID=""
-    var consoleID=""
-    var cmdline = CmdLineParser(switches = "client,ip,rescan,config,daemon")
+    var cmdline = CmdLineParser(switches = "ip,config,daemon")
     if (!cmdline.parse(args)) {
         println(cmdline.errmsg)
         System.exit(-1)
     }
-
-    val client = cmdline.parsed.containsKey("client")
     if (cmdline.parsed.containsKey("config")) {
-        config.merge(Configuration(cmdline.get("config")))
+        val file=File(cmdline.get("config"))
+        if(file.exists() && file.canRead()) {
+            log.info("replacing default configuration with ${file.absolutePath}")
+            config.replace(JsonUtil.createFromFile(file))
+        }else{
+            log.error("tried to replace config with ${file.absolutePath}, but could not read.")
+        }
     }
 
     val net = cmdline.get("ip")
@@ -71,11 +75,6 @@ fun main(args:Array<String>){
     Vertx.clusteredVertx(vertxOptions.setClusterManager(mgr)) { result ->
         if(result.succeeded()) {
             val vertx = result.result()
-            if (cmdline.parsed.containsKey("config")) {
-                config.merge(Configuration(cmdline.get("config")))
-            } else {
-                config.merge(Configuration("default.cfg", "user.cfg"))
-            }
             vertx.deployVerticle(Restpoint(config)) { rpResult ->
                 if (rpResult.succeeded()) {
                     fun deployResult(isOk:Boolean, message:String): Unit{

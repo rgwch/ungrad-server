@@ -2,6 +2,7 @@ package ch.elexis.ungrad.server.console
 
 import ch.rgw.tools.Configuration
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
 /**
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory
 var ConsoleID = ""
 var vertx: Vertx? = null
 
-fun start(v: Vertx, config: Configuration, tellResult: (success: Boolean, message: String) -> Unit) {
+fun start(v: Vertx, config: JsonObject, tellResult: (success: Boolean, message: String) -> Unit) {
     vertx = v
     vertx?.deployVerticle(Console(config)) { result ->
         if (result.succeeded()) {

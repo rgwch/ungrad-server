@@ -2,6 +2,7 @@ package ch.rgw.lucinda
 
 import ch.rgw.tools.Configuration
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
 /**
@@ -11,9 +12,10 @@ import org.slf4j.LoggerFactory
 var communicatorID = ""
 var vertx: Vertx? = null
 
-fun start(v: Vertx, config: Configuration, tellResult: (success: Boolean, message: String) -> Unit) {
+fun start(v: Vertx, config: JsonObject, tellResult: (success: Boolean, message: String) -> Unit) {
     vertx = v
-    vertx?.deployVerticle(Communicator(config)) { result ->
+    val vfg=Configuration().merge(config.map)
+    vertx?.deployVerticle(Communicator(vfg)) { result ->
         if (result.succeeded()) {
             communicatorID = result.result()
             tellResult(true, "ok")
@@ -47,4 +49,4 @@ val FUNC_PING = Communicator.RegSpec(".ping", "lucinda/ping/:var", "get")
 val log = LoggerFactory.getLogger("lucinda.Communicator")
 
 var indexManager: IndexManager? = null;
-val config: Configuration = Configuration();
+val config = Configuration();

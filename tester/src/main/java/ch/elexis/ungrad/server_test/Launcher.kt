@@ -16,6 +16,7 @@ package ch.elexis.ungrad.server_test
 
 import ch.rgw.tools.Configuration
 import io.vertx.core.Vertx
+import io.vertx.core.json.JsonObject
 
 /**
  * Created by gerry on 26.07.16.
@@ -24,7 +25,7 @@ import io.vertx.core.Vertx
 var SelfTestID = ""
 var vertx: Vertx? = null
 
-fun start(v: Vertx, config: Configuration, tellResult: (success: Boolean, message: String) -> Unit) {
+fun start(v: Vertx, config: JsonObject, tellResult: (success: Boolean, message: String) -> Unit) {
     vertx = v
     vertx?.deployVerticle(SelfTest()) { result ->
         if (result.succeeded()) {

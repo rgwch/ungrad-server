@@ -12,7 +12,7 @@ import io.vertx.core.json.JsonObject
 /**
  * Created by gerry on 31.07.16.
  */
-class Console(val config:Configuration) : AbstractVerticle() {
+class Console(val config:JsonObject) : AbstractVerticle() {
   val API="1.0/ungrad-server"
     val eb: EventBus by lazy {
         vertx.eventBus()
