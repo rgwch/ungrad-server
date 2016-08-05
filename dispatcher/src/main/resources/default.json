@@ -1,5 +1,6 @@
 {
     "webroot": "web", // the webroot
+    "rest_port": 2016,
     "users":{
         "admin":{
             "password": "secret",

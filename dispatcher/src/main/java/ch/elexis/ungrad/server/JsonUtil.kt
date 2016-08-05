@@ -8,15 +8,17 @@ import java.io.*
 /**
  * Created by gerry on 04.08.16.
  */
-class JsonUtil: JsonObject {
+class JsonUtil : JsonObject {
 
-    constructor(jo: JsonObject=JsonObject()): super(){
-      mergeIn(jo)
+    constructor(jo: JsonObject = JsonObject()) : super() {
+        mergeIn(jo)
     }
-    constructor(json: String) :super(json){
+
+    constructor(json: String) : super(json) {
 
     }
-    fun replace(other: JsonObject){
+
+    fun replace(other: JsonObject) {
         clear()
         mergeIn(other)
     }
@@ -87,6 +89,18 @@ class JsonUtil: JsonObject {
         } else {
             return defaultValue
         }
+    }
+
+    fun getOptional(field: String, defaultValue: Int):Int{
+        return getInteger(field, defaultValue)
+    }
+
+    fun add(vararg elements: String): JsonObject {
+        for (element in elements) {
+            val spl = element.split(":")
+            put(spl[0], spl[1])
+        }
+        return this
     }
 
     /**
@@ -221,12 +235,13 @@ class JsonUtil: JsonObject {
             return ret
 
         }
-        fun load(vararg names: String) : JsonUtil{
-            for(name in names){
-                var file= File(name)
-                if(file.exists() && file.canRead()){
+
+        fun load(vararg names: String): JsonUtil {
+            for (name in names) {
+                var file = File(name)
+                if (file.exists() && file.canRead()) {
                     return createFromFile(file)
-                }else {
+                } else {
                     var ins = ClassLoader.getSystemClassLoader().getResourceAsStream(name)
                     if (ins != null) {
                         return createFromStream(ins)
@@ -236,6 +251,16 @@ class JsonUtil: JsonObject {
             }
             return JsonUtil()
         }
+
+        fun create(vararg elements: String): JsonObject {
+            return JsonUtil().add(*elements)
+
+        }
+
+        fun add(jo: JsonObject, vararg elements: String): JsonObject {
+            return JsonUtil(jo).add(*elements)
+        }
+
     }
 }
 

@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
  * Created by gerry on 26.07.16.
  */
 
-var communicatorID = ""
+var communicatorID: String? = null
 var vertx: Vertx? = null
 
 fun start(v: Vertx, config: JsonObject, tellResult: (success: Boolean, message: String) -> Unit) {
@@ -26,7 +26,10 @@ fun start(v: Vertx, config: JsonObject, tellResult: (success: Boolean, message: 
 }
 
 fun stop() {
-    vertx?.undeploy(communicatorID)
+    if(communicatorID != null) {
+        vertx?.undeploy(communicatorID)
+        communicatorID = null;
+    }
 }
 
 const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"

@@ -55,12 +55,13 @@ If the register message contains entries for "server id" and "server control", t
 present for modifying and should be a JsonObject with a content similar to the following:
   
         {
-            caption: {  
+            name: {  
+                caption: some human readable label
                 type: <one of: boolean, string, number>
                 default: <defaultvalue>
                 range: <allowed range. For String parameters: regexp>
             },
-            otherCaption{
+            otherName{
             }
             ...
         }

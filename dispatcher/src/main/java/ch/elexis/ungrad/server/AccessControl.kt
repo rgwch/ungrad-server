@@ -25,11 +25,11 @@ class AccessController(val bootstrapIdentity: JsonObject) : AuthProvider {
     }
 
 
-    fun hasRole(user:User, role: String?) : Boolean{
-        val entry=bootstrapIdentity.getJsonObject(user.userid)
-        if(entry!=null){
-            val roles=entry.getJsonArray("roles")
-            if(roles.contains(role)){
+    fun hasRole(user: User, role: String?): Boolean {
+        val entry = bootstrapIdentity.getJsonObject(user.userid)
+        if (entry != null) {
+            val roles = entry.getJsonArray("roles")
+            if (roles.contains(role)) {
                 return true
             }
         }
@@ -71,47 +71,26 @@ class User(val userid: String?, ac: AccessController) : AbstractUser() {
         provider = p0 as AccessController
     }
 
-    override fun doIsPermitted(role: String?, handler: Handler<AsyncResult<Boolean>>?) {
-        if(provider.hasRole(this,role)){
-            handler?.handle(object: AsyncResult<Boolean>{
-                override fun cause(): Throwable {
-                    return Exception("operation not permitted")
-                }
+    override fun doIsPermitted(role: String?, handler: Handler<AsyncResult<Boolean>>) {
+        val usr = this
+        handler.handle(object : AsyncResult<Boolean> {
+            override fun cause(): Throwable {
+                return Exception("operation not permitted")
+            }
 
-                override fun failed(): Boolean {
-                    return false;
-                }
+            override fun failed(): Boolean {
+                return false;
+            }
 
-                override fun result(): Boolean {
-                    return true;
-                }
+            override fun result(): Boolean {
+                return provider.hasRole(usr, role);
+            }
 
-                override fun succeeded(): Boolean {
-                    return true
-                }
+            override fun succeeded(): Boolean {
+                return true
+            }
 
-            })
-        }else {
-            handler?.handle(object : AsyncResult<Boolean> {
-                override fun cause(): Throwable {
-                    return Exception("operation not permitted")
-                }
-
-                override fun failed(): Boolean {
-                    return true;
-                }
-
-                override fun result(): Boolean {
-                    return false;
-                }
-
-                override fun succeeded(): Boolean {
-                    return false
-                }
-
-
-            })
-        }
+        })
     }
-
 }
+
