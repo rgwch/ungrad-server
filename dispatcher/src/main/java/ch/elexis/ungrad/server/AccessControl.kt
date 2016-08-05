@@ -20,6 +20,8 @@ class AccessController(val bootstrapIdentity: JsonObject) : AuthProvider {
         } else {
             if (pwd.equals(entry.getString("password"))) {
                 handler?.handle(AuthResult(User(userid, this)))
+            }else{
+                handler?.handle(AuthResult(null))
             }
         }
     }
