@@ -104,7 +104,8 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             val redirectAuthHandler = RedirectAuthHandler.create(authProvider, "/login", "reTo")
             // pass all calls to /api/* through authentication
             router.route("/api/*").handler(redirectAuthHandler)
-
+            // calls to /ui/* go to the web interface
+            router.get("/ui/*").handler(UIHandler())
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
             vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }
@@ -124,7 +125,8 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 context.request().endHandler { req ->
                     val usr = context.request().getFormAttribute("username")
                     val pwd = context.request().getFormAttribute("pwd")
-                    val redir = context.request().getFormAttribute("reTo") ?: context.session().get("reTo")
+                    val srt=context.session().get<String>("reTo") ?: "/index.html"
+                    val redir = context.request().getFormAttribute("reTo") ?: srt
                     authProvider.authenticate(JsonObject().put("username", usr)
                             .put("password", pwd)) { res ->
                         if (res.succeeded()) {
@@ -145,7 +147,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 context.setUser(null)
                 context.response().end("You are logged out")
             }
-            router.get("/getServices").handler { context ->
+            router.get("/api/getServices").handler { context ->
                 checkAuth(context, "admin") {
                     context.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
                             .end(Json.encode(JsonArray(servers.toList())))
@@ -180,17 +182,21 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
      * Check if the current context's user has the given role. If so, call action(), if not, send an error message.
      */
     fun checkAuth(context: RoutingContext, role: String, action: () -> Unit) {
-        context.user().isAuthorised(role) {
-            if (it.succeeded()) {
-                if (it.result()) {
-                    action()
+        if(context.user()==null){
+            context.response().setStatusCode(401).end("please login first")
+        }else {
+            context.user().isAuthorised(role) {
+                if (it.succeeded()) {
+                    if (it.result()) {
+                        action()
+                    } else {
+                        // not authorized
+                        context.response().setStatusCode(403).end("Not authorized for ${role}.")
+                    }
                 } else {
-                    // not authorized
-                    context.response().setStatusCode(403).end("Not authorized for ${role}.")
+                    //internal server error
+                    context.response().setStatusCode(500).end(it.result().toString())
                 }
-            } else {
-                //internal server error
-                context.response().setStatusCode(500).end(it.result().toString())
             }
         }
     }
