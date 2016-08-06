@@ -1,27 +1,40 @@
 import {HttpClient} from 'aurelia-http-client';
 
 export class App {
-
   message = 'Hello World!';
+  someText=function(){
+    return 'ein Text';
+  }
+
   liste=function(){
     return ["eins","zwei","drei"]
   }
 
-  getServices=function(){
+  services = ["pi","pa","po"]
+
+  testme(){
     let client=new HttpClient()
       .configure(x => {
-        x.withBaseUrl("http://localhost:2016") // location.origin
+        x.withBaseUrl(location.origin) // location.origin
       })
-    client.get("/getServices").then(data => {
-      console.log(data)
-    })
-  /*
-    let client = new HttpClient();
+    client.get("/api/getServices").then(data => {
+      if(data['responseType']==="json") {
+        var ans = JSON.parse(data.response);
+        ans.forEach( el => {
+          this.services.push(JSON.stringify(el))
+        })
 
-    client.get('test')
-      .then(data => {
+      }else if(data["responseType"]==="html"){
+        //location.href="/login"
+        client.post("dologin","username=admin&pwd=secret)").then( answer => {
+          debugger
+          console.log(answer)
+        })
+      }else {
         console.log(data)
-      });
-*/
+      }
+    })
+    return "waiting..."
   }
+
 }

@@ -29,7 +29,13 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
         val date = Date()
         ctx.response().putHeader("Date", df.format(Date()))
         ctx.response().putHeader("Server", "Elexis Ungrad Server")
-        val reqpath = ctx.request().path().substring(prefix.length)
+        val rawPath = ctx.request().path()
+        val reqpath=if(rawPath.startsWith(prefix)){
+            rawPath.substring(prefix.length)
+        }else{
+            rawPath
+        }
+
         if (reqpath == "/" || reqpath == "/index.html" || reqpath == "/index.htm") {
             val rnd = UUID.randomUUID().toString()
             var scanner: Scanner? = null
@@ -77,7 +83,7 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
     private fun anyOtherResource(req: RoutingContext) {
         try {
             var rsc: RscObject
-            val addrPath = req.request().path().substring(prefix.length)
+            val addrPath = req.request().path()
             val cOff = addrPath.indexOf("/custom/")
             if (cOff != -1) {
                 rsc = getResource(cfg.getString("customRoot", ""), addrPath.substring(cOff + 8))

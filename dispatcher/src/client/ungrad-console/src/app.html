@@ -1,6 +1,9 @@
 <template>
   <h1>${message}</h1>
+  <p>${someText()}</p>
   <p>Ungrad Server test</p>
   <p repeat.for="element of liste()">${element}</p>
-  <p>${getServices()}</p>
+
+  <p repeat.for="service of services">${service}</p>
+  <button click.trigger="testme()">ok</button>
 </template>

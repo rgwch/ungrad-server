@@ -69,7 +69,9 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 msg.reply(JsonObject().put("status", "error").put("message", "EventBus address already registered"))
             } else {
                 handlers.put(rest, ebmsg)
-                servers.put(sname, admin)
+                if(sname!=null && admin !=null) {
+                    servers.put(sname, admin)
+                }
                 log.debug("registering /api/${rest} for ${ebmsg}")
                 when (method) {
                     "get" -> router.get("/api/${rest}").handler { context ->
@@ -95,7 +97,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             }
         }
         /*
-         * Create the HTTP Server and add some handlers for session management and authentication/authorizastion
+         * Create the Router and HTTP Server and add some handlers for session management and authentication/authorizastion
          */
         try {
             router.route().handler(io.vertx.ext.web.handler.CookieHandler.create());
@@ -104,19 +106,6 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             val redirectAuthHandler = RedirectAuthHandler.create(authProvider, "/login", "reTo")
             // pass all calls to /api/* through authentication
             router.route("/api/*").handler(redirectAuthHandler)
-            // calls to /ui/* go to the web interface
-            router.get(UIHandler.prefix+"/*").handler(UIHandler(cfg))
-            val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
-            vertx.createHttpServer(hso)
-                    .requestHandler { request -> router.accept(request) }
-                    .listen(cfg.getOptional("rest_port", 2016)) {
-                        result ->
-                        if (result.succeeded()) {
-                            future.complete()
-                        } else {
-                            future.fail(result.cause())
-                        }
-                    }
             router.get("/login").handler { context ->
                 context.response().sendFile("login.html")
             }
@@ -149,8 +138,12 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             }
             router.get("/api/getServices").handler { context ->
                 checkAuth(context, "admin") {
+                    val result=JsonArray()
+                    servers.forEach {
+                        result.add(JsonUtil().add("name:${it.key}","address:${it.value}"))
+                    }
                     context.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
-                            .end(Json.encode(JsonArray(servers.toList())))
+                            .end(Json.encode(result))
                 }
             }
             router.get("/api/services/:service/:subcommand/:param").handler { ctx ->
@@ -170,6 +163,20 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                     }
                 }
             }
+            // calls to other resources go to the web interface
+            router.get("/*").handler(UIHandler(cfg))
+            val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
+            vertx.createHttpServer(hso)
+                    .requestHandler { request -> router.accept(request) }
+                    .listen(cfg.getOptional("rest_port", 2016)) {
+                        result ->
+                        if (result.succeeded()) {
+                            future.complete()
+                        } else {
+                            future.fail(result.cause())
+                        }
+                    }
+
 
         } catch(th: Throwable) {
             th.printStackTrace()
