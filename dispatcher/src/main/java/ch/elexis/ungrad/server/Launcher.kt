@@ -95,7 +95,6 @@ fun main(args:Array<String>){
                     log.info("Launched Restpoint")
                     ch.elexis.ungrad.server_test.start(vertx,config,::deployResult)
                     ch.rgw.lucinda.start(vertx,config,::deployResult)
-                    ch.elexis.ungrad.server.console.start(vertx,config,::deployResult)
                 }else{
                     log.error("Could not launch Verticles: ${rpResult.cause().message}")
                 }

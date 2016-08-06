@@ -125,7 +125,6 @@
     <orderEntry type="library" name="Maven: org.opengis:geoapi:3.0.0" level="project" />
     <orderEntry type="library" name="Maven: javax.measure:jsr-275:0.9.3" level="project" />
     <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.4" level="project" />
-    <orderEntry type="module" module-name="console" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jetbrains.kotlin:kotlin-test:1.0.3" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-core:3.3.0" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-common:4.1.1.Final" level="project" />

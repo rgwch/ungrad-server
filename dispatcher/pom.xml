@@ -117,11 +117,6 @@
             <artifactId>lucinda</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <groupId>ch.rgw</groupId>
-            <artifactId>ungrad-server-console</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
 
     </dependencies>
     <properties>
