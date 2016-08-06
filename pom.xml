@@ -72,6 +72,11 @@
                 <version>${vertx-version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.1.7</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -97,6 +102,10 @@
         <dependency>
             <groupId>rgwch</groupId>
             <artifactId>rgw-toolbox</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
     </dependencies>
 

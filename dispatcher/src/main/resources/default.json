@@ -1,5 +1,5 @@
 {
-    "webroot": "web", // the webroot
+    "webroot": "dispatcher/src/client/ungrad-console", // the webroot in debug mode
     "rest_port": 2016,
     "users":{
         "admin":{

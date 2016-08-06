@@ -12,10 +12,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.jar.Manifest
 
+
 /**
  * Created by gerry on 06.08.16.
  */
 class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
+
     val df = SimpleDateFormat("E, dd MM yyyy HH:mm:ss z")
     val log = LoggerFactory.getLogger("UIHandler")
 
@@ -27,7 +29,7 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
         val date = Date()
         ctx.response().putHeader("Date", df.format(Date()))
         ctx.response().putHeader("Server", "Elexis Ungrad Server")
-        val reqpath = ctx.request().path()
+        val reqpath = ctx.request().path().substring(prefix.length)
         if (reqpath == "/" || reqpath == "/index.html" || reqpath == "/index.htm") {
             val rnd = UUID.randomUUID().toString()
             var scanner: Scanner? = null
@@ -75,7 +77,7 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
     private fun anyOtherResource(req: RoutingContext) {
         try {
             var rsc: RscObject
-            val addrPath = req.request().path()
+            val addrPath = req.request().path().substring(prefix.length)
             val cOff = addrPath.indexOf("/custom/")
             if (cOff != -1) {
                 rsc = getResource(cfg.getString("customRoot", ""), addrPath.substring(cOff + 8))
@@ -167,8 +169,8 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
                 // Class not from JAR
                 val file = File(root, name)
                 log.debug(file.absolutePath)
-                val `is` = FileInputStream(file)
-                return RscObject(`is`, false, file.lastModified())
+                val fis = FileInputStream(file)
+                return RscObject(fis, false, file.lastModified())
             }
             val manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) + "/META-INF/MANIFEST.MF"
             log.debug(manifestPath)
@@ -181,9 +183,8 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
         }
 
         val dat = df.parse(timestamp)
-        log.debug(dat.toString())
         val resource = "/" + root + name
-        log.debug(resource)
+        log.debug("Resource loader: trying to load ${resource} with timestamp ${dat.toString()}")
         val rsr = javaClass.getResource(resource)
         log.debug(if (rsr == null) "resource is null" else rsr.toString())
         return RscObject(javaClass.getResourceAsStream(resource), true, dat.time)
@@ -196,5 +197,8 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
             lastModified = Date(millis)
         }
 
+    }
+    companion object{
+        val prefix="/ui"
     }
 }
