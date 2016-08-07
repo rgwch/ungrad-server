@@ -1,9 +1,11 @@
 <template>
-  <h1>${message}</h1>
-  <p>${someText()}</p>
-  <p>Ungrad Server test</p>
-  <p repeat.for="element of liste()">${element}</p>
-
-  <p repeat.for="service of services">${service}</p>
-  <button click.trigger="testme()">ok</button>
+  <h1>Elexis Ungrad</h1>
+  <div>
+    <ul>
+      <li repeat.for="service of services">
+        <a href="${service.address}">${service.name}</a>
+      </li>
+    </ul>
+    <button click.trigger="testme()">reload</button>
+  </div>
 </template>

@@ -1,36 +1,27 @@
-import {HttpClient} from 'aurelia-http-client';
+import {Http} from './http';
 
 export class App {
-  message = 'Hello World!';
-  someText=function(){
-    return 'ein Text';
+  private services: Array<Object>
+  private client: Http
+
+  constructor() {
+    this.services = []
+    this.client = new Http()
   }
 
-  liste=function(){
-    return ["eins","zwei","drei"]
-  }
+  public testme = () => {
+    debugger
+    this.services.forEach(x => console.log(x))
+    this.client.get("/api/getServices", data => {
+      if (data['responseType'] === "json") {
 
-  services = ["pi","pa","po"]
-
-  testme(){
-    let client=new HttpClient()
-      .configure(x => {
-        x.withBaseUrl(location.origin) // location.origin
-      })
-    client.get("/api/getServices").then(data => {
-      if(data['responseType']==="json") {
-        var ans = JSON.parse(data.response);
-        ans.forEach( el => {
-          this.services.push(JSON.stringify(el))
-        })
-
-      }else if(data["responseType"]==="html"){
+        this.services = JSON.parse(data['response']);
+      } else if (data["responseType"] === "html") {
         //location.href="/login"
-        client.post("dologin","username=admin&pwd=secret)").then( answer => {
-          debugger
-          console.log(answer)
-        })
-      }else {
+        //client.post("dologin","username=admin&pwd=secret)").then( answer => {
+        // console.log(answer)
+        //})
+      } else {
         console.log(data)
       }
     })
