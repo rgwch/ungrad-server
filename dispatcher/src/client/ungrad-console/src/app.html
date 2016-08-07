@@ -3,7 +3,10 @@
   <div>
     <ul>
       <li repeat.for="service of services">
-        <a href="${service.address}">${service.name}</a>
+        <span click.trigger="getDetails(service.name)">${service.name}</span>
+        <div if.bind="service.details">
+          <p>${service.details}</p>
+        </div>
       </li>
     </ul>
     <button click.trigger="testme()">reload</button>

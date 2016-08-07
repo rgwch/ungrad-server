@@ -149,17 +149,18 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             router.get("/api/services/:service/:subcommand/:param").handler { ctx ->
                 checkAuth(ctx, "admin") {
                     val param = ctx.request().getParam("param")
-                    val serverName = ctx.request().getParam("service")
-                    val service = servers.get(serverName)
+                    val serverID = ctx.request().getParam("service")
+                    val service = servers.get(serverID)
                     if (service != null) {
                         when (ctx.request().getParam("subcommand")) {
                             "startService" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:start"), ResultHandler(ctx))
                             "stopService" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:stop"), ResultHandler(ctx))
                             "getServiceName" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:getName"), ResultHandler(ctx))
                             "getParams" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:getParams"), ResultHandler(ctx))
+                            else -> ctx.response().setStatusCode(406).end("unknown subcommand")
                         }
                     } else {
-                        ctx.response().setStatusCode(404).end("${serverName} not found")
+                        ctx.response().setStatusCode(404).end("${serverID} not found")
                     }
                 }
             }
