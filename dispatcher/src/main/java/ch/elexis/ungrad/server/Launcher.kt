@@ -18,6 +18,7 @@ import ch.elexis.ungrad.server_test.SelfTest
 import ch.rgw.lucinda.Communicator
 import ch.rgw.tools.CmdLineParser
 import ch.rgw.tools.Configuration
+import ch.rgw.tools.JsonUtil
 import ch.rgw.tools.net.NetTool
 import com.hazelcast.config.Config
 import io.vertx.core.Vertx

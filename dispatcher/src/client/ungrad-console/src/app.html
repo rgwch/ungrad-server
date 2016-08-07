@@ -6,6 +6,11 @@
         <span click.trigger="getDetails(service.name)">${service.name}</span>
         <div if.bind="service.details">
           <p>${service.details}</p>
+          <ul>
+            <li repeat.for="detail of actService">
+              ${detail.name}, ${detail.caption}, ${detail.type}, ${detail.value}
+            </li>
+          </ul>
         </div>
       </li>
     </ul>

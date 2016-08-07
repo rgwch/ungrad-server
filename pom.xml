@@ -24,7 +24,7 @@
     <properties>
         <vertx-version>3.3.0</vertx-version>
         <kotlin.version>1.0.3</kotlin.version>
-        <toolbox-version>4.0.1</toolbox-version>
+        <toolbox-version>4.0.2</toolbox-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <repositories>
