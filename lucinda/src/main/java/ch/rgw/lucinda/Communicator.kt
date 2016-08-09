@@ -249,7 +249,13 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
     class RegHandler(val func: RegSpec) : AsyncResultHandler<Message<JsonObject>> {
         override fun handle(result: AsyncResult<Message<JsonObject>>) {
             if (result.failed()) {
-                log.error("could not register ${func.addr} for ${func.rest}")
+                log.error("could not register ${func.addr} for ${func.rest}: ${result.cause()}")
+            }else{
+                if("ok" == result.result().body().getString("status")){
+                    log.debug("registered ${func.addr}")
+                }else{
+                    log.error("registering of ${func.addr} failed: ${result.result().body().getString("message")}")
+                }
             }
         }
 

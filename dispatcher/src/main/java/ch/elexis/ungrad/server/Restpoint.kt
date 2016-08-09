@@ -65,9 +65,9 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             val sname = j.getString("server-id")
             val admin = j.getString("server-control")
             if (handlers.containsKey(rest)) {
-                msg.reply(JsonObject().put("status", "error").put("message", "REST address already registered"))
+                msg.reply(JsonUtil.create("status:error","message:REST address already registered"))
             } else if (handlers.containsValue(ebmsg)) {
-                msg.reply(JsonObject().put("status", "error").put("message", "EventBus address already registered"))
+                msg.reply(JsonUtil.create("status:error","message:EventBus address already registered"))
             } else {
                 handlers.put(rest, ebmsg)
                 if(sname!=null && admin !=null) {
@@ -95,6 +95,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                         }
                     }
                 }
+                msg.reply(JsonUtil.create("status:ok"))
             }
         }
         /*

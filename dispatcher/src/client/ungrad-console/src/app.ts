@@ -8,10 +8,10 @@ export class App {
   constructor() {
     this.services = []
     this.client = new Http()
-    this.testme()
+    this.getServices()
   }
 
-  public testme = function () {
+  public getServices = function () {
 
     this.client.get("/api/getServices", data => {
       if (data['responseType'] === "json") {
