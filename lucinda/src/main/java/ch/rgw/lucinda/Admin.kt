@@ -7,7 +7,8 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
 /**
- * Created by gerry on 04.08.16.
+ * This is a Singleton implementation of a Message handler, used for handling of admin messages from the Communicator
+ * verticle
  */
 object Admin : Handler<Message<JsonObject>> {
     override fun handle(message: Message<JsonObject>) {

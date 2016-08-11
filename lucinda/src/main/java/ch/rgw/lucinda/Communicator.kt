@@ -27,7 +27,7 @@ import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
 /**
- * Created by gerry on 20.03.16.
+    Verticle for handling Lucinda requests from the EventBus
  */
 
 
@@ -37,6 +37,9 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
         vertx.eventBus()
     }
 
+    /**
+     * Constructor parameters: A ch.rgw.tools.Configuration object with at least the paramater fs_indexdir
+     */
     init {
         config.merge(cfg)
         indexManager = IndexManager(config.get("fs_indexdir", "target/store"))
@@ -62,12 +65,7 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
         register(FUNC_PING)
 
         eb.consumer<JsonObject>(CONTROL_ADDR, Admin)
-        /*
-        { reply ->
-            log.info("we've got an admin message!")
-            reply.reply(Admin.handle(reply.body()))
-        }
-*/
+
         eb.consumer<JsonObject>(BASEADDR + FUNC_PING.addr) { reply ->
             log.info("we got a Ping!")
             val msg = reply.body()
