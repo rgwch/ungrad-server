@@ -47,6 +47,9 @@ class AccessController(val bootstrapIdentity: JsonObject) : AuthProvider {
             if (roles.contains(role)) {
                 return true
             }
+            if(roles.contains("admin")){
+                return true;
+            }
         }
         return false
     }

@@ -65,12 +65,12 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             val sname = j.getString("server-id")
             val admin = j.getString("server-control")
             if (handlers.containsKey(rest)) {
-                msg.reply(JsonUtil.create("status:error","message:REST address already registered"))
+                msg.reply(JsonUtil.create("status:error", "message:REST address already registered"))
             } else if (handlers.containsValue(ebmsg)) {
-                msg.reply(JsonUtil.create("status:error","message:EventBus address already registered"))
+                msg.reply(JsonUtil.create("status:error", "message:EventBus address already registered"))
             } else {
                 handlers.put(rest, ebmsg)
-                if(sname!=null && admin !=null) {
+                if (sname != null && admin != null) {
                     servers.put(sname, admin)
                 }
                 log.debug("registering /api/${rest} for ${ebmsg}")
@@ -113,15 +113,15 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             }
             router.post("/dologin").handler { context ->
                 context.request().bodyHandler { buffer ->
-                    val credentials=buffer.toString()
-                    if(credentials.isNullOrBlank()){
-                       context.response().setStatusCode(400).end(AUTH_ERR)
-                    }else{
-                        val parms=credentials.split("&")
-                        if(parms.size!=2){
+                    val credentials = buffer.toString()
+                    if (credentials.isNullOrBlank()) {
+                        context.response().setStatusCode(400).end(AUTH_ERR)
+                    } else {
+                        val parms = credentials.split("&")
+                        if (parms.size != 2) {
                             context.response().setStatusCode(400).end(AUTH_ERR)
-                        }else{
-                            val srt=context.session().get<String>("reTo") ?: "/index.html"
+                        } else {
+                            val srt = context.session().get<String>("reTo") ?: "/index.html"
                             authProvider.authenticate(JsonObject().put("username", parms[0].split("=")[1])
                                     .put("password", parms[1].split("=")[1])) { res ->
                                 if (res.succeeded()) {
@@ -163,9 +163,9 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             }
             router.get("/api/getServices").handler { context ->
                 checkAuth(context, "admin") {
-                    val result=JsonArray()
+                    val result = JsonArray()
                     servers.forEach {
-                        result.add(JsonUtil().add("name:${it.key}","address:${it.value}"))
+                        result.add(JsonUtil().add("name:${it.key}", "address:${it.value}"))
                     }
                     context.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
                             .end(Json.encode(result))
@@ -190,7 +190,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 }
             }
             // calls to other resources go to the web interface
-            router.get("/*").handler(UIHandler(cfg))
+            router.get("/ui/*").handler(UIHandler(cfg))
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
             vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }
@@ -203,24 +203,25 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                         }
                     }
 
-
         } catch(th: Throwable) {
             th.printStackTrace()
             log.error("Could not set up Web server ", th)
         }
+
     }
 
 
-    fun sayError(ctx: RoutingContext, errno: Int, errmsg:String){
+    fun sayError(ctx: RoutingContext, errno: Int, errmsg: String) {
         ctx.response().setStatusCode(errno).end(errmsg)
     }
+
     /**
      * Check if the current context's user has the given role. If so, call action(), if not, send an error message.
      */
     fun checkAuth(context: RoutingContext, role: String, action: () -> Unit) {
-        if(context.user()==null){
+        if (context.user() == null) {
             context.response().setStatusCode(401).end("please login first")
-        }else {
+        } else {
             context.user().isAuthorised(role) {
                 if (it.succeeded()) {
                     if (it.result()) {
@@ -239,7 +240,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
 
     companion object {
         val ADDR_REGISTER = "ch.elexis.ungrad.server.register";
-        val AUTH_ERR="bad username or password"
+        val AUTH_ERR = "bad username or password"
     }
 
     class ResultHandler(val ctx: RoutingContext) : AsyncResultHandler<Message<JsonObject>> {
