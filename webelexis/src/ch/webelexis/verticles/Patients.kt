@@ -2,6 +2,9 @@ package ch.webelexis.verticles
 
 import ch.rgw.tools.JsonUtil
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.AsyncResult
+import io.vertx.core.AsyncResultHandler
+import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.asyncsql.AsyncSQLClient
@@ -13,18 +16,31 @@ import java.sql.ResultSet
 /**
  * Created by gerry on 14.08.16.
  */
-class Patients(val cfg: JsonObject) : AbstractVerticle() {
+class Patients : AbstractVerticle(){
+    val API = "1.0"
 
     val database:AsyncSQLClient by lazy{
-        if(cfg.getString("type","mysql")=="mysql"){
-            MySQLClient.createShared(vertx,cfg)
+        log.debug("creating database "+config().encodePrettily())
+        if(config().getString("type","mysql")=="mysql"){
+            MySQLClient.createShared(vertx,config())
         }else{
-            PostgreSQLClient.createShared(vertx,cfg)
+            PostgreSQLClient.createShared(vertx,config())
         }
     }
     override fun start(){
+        log.info("Start")
+        fun register(func: RegSpec) {
+            vertx.eventBus().send<JsonObject>(REGISTER_ADDRESS, JsonObject()
+                    .put("ebaddress", BASE_ADDR + func.addr)
+                    .put("rest", "${API}/${func.rest}").put("method", func.method).put("role",func.role)
+                    .put("server-id","ch.rgw.lucinda").put("server-control", CONTROL_ADDR), RegHandler(func))
+        }
 
-        vertx.eventBus().consumer<JsonObject>(LIST) { msg ->
+        register(FUNC_PATLIST)
+
+        vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR,Admin)
+
+        vertx.eventBus().consumer<JsonObject>(FUNC_PATLIST.addr) { msg ->
             database.getConnection { result ->
                 if(result.succeeded()){
                     val conn=result.result()
@@ -33,7 +49,7 @@ class Patients(val cfg: JsonObject) : AbstractVerticle() {
                         if(answer.succeeded()){
                             val rs=answer.result() as ResultSet
                             val ret=JsonArray()
-                            while(rs.next() != null){
+                            while(rs.next()){
                                 val patient=Patient(rs.getString("Bezeichnung1"),rs.getString("Bezeichnung2"),rs.getString("id"))
                                 patient.put("patnr",rs.getString("patientnr"))
                                 ret.add(patient)
@@ -53,12 +69,35 @@ class Patients(val cfg: JsonObject) : AbstractVerticle() {
     }
 
     override fun stop(){
+        log.info("stop")
         database.close()
     }
     companion object{
-        val BASE_ADDR="ch.webelexis.patients."
-        val LIST= BASE_ADDR+"list"
-        val log=LoggerFactory.getLogger(javaClass)
+        const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
+        const val BASE_ADDR="ch.webelexis.patients."
+        const val CONTROL_ADDR=BASE_ADDR+".admin"
+        const val LIST= BASE_ADDR+"list"
+        val FUNC_PATLIST=RegSpec("list","patients/list","user","get")
+        val log=LoggerFactory.getLogger(Patients::class.java)
         val PATLIST="SELECT patientnr,id,Bezeichnung1,Bezeichnung2,Bezeichnung3,FROM KONTAKT WHERE Bezeichnung1 like ? OR Bezeichnung2 like ?"
     }
+
+    data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
+
+    class RegHandler(val func: RegSpec) : AsyncResultHandler<Message<JsonObject>> {
+        override fun handle(result: AsyncResult<Message<JsonObject>>) {
+            if (result.failed()) {
+                log.error("could not register ${func.addr} for ${func.rest}: ${result.cause()}")
+            }else{
+                if("ok" == result.result().body().getString("status")){
+                    log.debug("registered ${func.addr}")
+                }else{
+                    log.error("registering of ${func.addr} failed: ${result.result().body().getString("message")}")
+                }
+            }
+        }
+
+    }
+
+
 }

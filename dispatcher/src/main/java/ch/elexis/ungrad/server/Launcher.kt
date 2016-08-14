@@ -14,14 +14,11 @@
 
 package ch.elexis.ungrad.server
 
-import ch.elexis.ungrad.server_test.SelfTest
-import ch.rgw.lucinda.Communicator
 import ch.rgw.tools.CmdLineParser
-import ch.rgw.tools.Configuration
 import ch.rgw.tools.JsonUtil
 import ch.rgw.tools.net.NetTool
 import com.hazelcast.config.Config
-import io.vertx.core.AbstractVerticle
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
@@ -30,6 +27,8 @@ import io.vertx.core.json.JsonObject
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.net.URL
+import java.net.URLClassLoader
 import java.util.*
 
 
@@ -37,32 +36,31 @@ import java.util.*
  * Created by gerry on 06.07.16.
  */
 
-val config=JsonUtil.load("default.json","user.json","default.cfg","user.cfg")
-var ip:String=""
-val log=LoggerFactory.getLogger("Ungrad Launcher")
-val authProvider: AccessController by lazy{
-    val users=config.getJsonObject("users") ?: JsonObject()
+val config = JsonUtil.load("default.json", "user.json", "default.cfg", "user.cfg")
+var ip: String = ""
+val log = LoggerFactory.getLogger("Ungrad Launcher")
+val authProvider: AccessController by lazy {
+    val users = config.getJsonObject("users") ?: JsonObject()
     AccessController(users)
 }
-val verticles= HashMap<String,String>()
+val verticles = HashMap<String, String>()
 
-fun main(args:Array<String>){
-    var restpointID=""
+fun main(args: Array<String>) {
+    var restpointID = ""
     var cmdline = CmdLineParser(switches = "ip,config,daemon")
     if (!cmdline.parse(args)) {
         println(cmdline.errmsg)
         System.exit(-1)
     }
     if (cmdline.parsed.containsKey("config")) {
-        val file=File(cmdline.get("config"))
-        if(file.exists() && file.canRead()) {
+        val file = File(cmdline.get("config"))
+        if (file.exists() && file.canRead()) {
             log.info("replacing default configuration with ${file.absolutePath}")
             config.replace(JsonUtil.createFromFile(file))
-        }else{
+        } else {
             log.error("tried to replace config with ${file.absolutePath}, but could not read.")
         }
     }
-
 
 
     val net = cmdline.get("ip")
@@ -85,44 +83,48 @@ fun main(args:Array<String>){
     val mgr = HazelcastClusterManager(hazel)
 
     Vertx.clusteredVertx(vertxOptions.setClusterManager(mgr)) { result ->
-        if(result.succeeded()) {
+        if (result.succeeded()) {
             val vertx = result.result()
             vertx.deployVerticle(Restpoint(config)) { rpResult ->
                 if (rpResult.succeeded()) {
-                    fun deployResult(isOk:Boolean, message:String): Unit{
-                        if(isOk){
+                    fun deployResult(isOk: Boolean, message: String): Unit {
+                        if (isOk) {
                             log.info(message)
-                        }else{
+                        } else {
                             log.error(message)
                         }
                     }
 
-                    restpointID=rpResult.result()
+                    restpointID = rpResult.result()
                     log.info("Launched Restpoint")
-                    ch.elexis.ungrad.server_test.start(vertx,config,::deployResult)
-                    ch.rgw.lucinda.start(vertx,config,::deployResult)
+                    ch.elexis.ungrad.server_test.start(vertx, config, ::deployResult)
+                    ch.rgw.lucinda.start(vertx, config, ::deployResult)
                     config.getArray("launch", JsonArray()).forEach { launcher ->
                         try {
-                            val jo = launcher as JsonObject
-                            val cl = UngradClassLoader(jo.getString("url"))
-                            val clazz = cl.loadClass(jo.getString("verticle"))
-                            val constructor=clazz.getConstructor(JsonObject::class.java)
-                            val verticle=constructor.newInstance(jo.getJsonObject("config"))
 
-                            vertx.deployVerticle(verticle as Verticle) {handler ->
-                                if(handler.succeeded()){
-                                    verticles.put(jo.getString("name"),handler.result())
+                            val jo = launcher as JsonObject
+                            //val cl = UngradClassLoader(jo.getString("url"))
+                            //val completeURL=jo.getString("url")+"!/"+jo.getString("verticle").replace("\\.".toRegex(),"/")+".class"
+
+                            val cl = URLClassLoader(Array<URL>(1, { URL(jo.getString("url")) }))
+                            val clazz = cl.loadClass(jo.getString("verticle"))
+                            val verticle = clazz.newInstance()
+                            val options = DeploymentOptions().setConfig(jo.getJsonObject("config", JsonObject()))
+                            vertx.deployVerticle(verticle as Verticle, options) { handler ->
+                                if (handler.succeeded()) {
+                                    verticles.put(jo.getString("name"), handler.result())
                                     log.info("launched ${jo.getString("name")}")
-                                }else{
-                                    log.error("could not launch ${jo.getString("name")}",handler.cause())
+                                } else {
+                                    log.error("could not launch ${jo.getString("name")}", handler.cause())
                                 }
                             }
 
-                        }catch(ex:Exception){
+
+                        } catch(ex: Exception) {
                             log.error("could not launch ${launcher.toString()}", ex)
                         }
                     }
-                }else{
+                } else {
                     log.error("Could not launch Verticles: ${rpResult.cause().message}")
                 }
             }
@@ -135,7 +137,7 @@ fun main(args:Array<String>){
                     vertx.close()
                 }
             })
-        }else{
+        } else {
             log.error("Could not set up vertx cluster: ${result.cause().message}")
         }
 

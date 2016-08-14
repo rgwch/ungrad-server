@@ -16,8 +16,9 @@
     },
     "launch":[
         {
-            "name":"Patienten",
-            "url":"jar:file:///Users/gerry/test/webelexis.jar",
+            "name":"Patients",
+            // "url":"file:///Users/gerry/test/webelexis.jar",
+            "url":"file:///Users/gerry/git/ungrad-server/webelexis/target/classes/",
             "verticle":"ch.webelexis.verticles.Patients",
             "config":{
                 "host":"localhost",
