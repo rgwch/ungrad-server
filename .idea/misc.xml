@@ -29,6 +29,7 @@
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/lucinda/pom.xml" />
+        <option value="$PROJECT_DIR$/webelexis/pom.xml" />
       </list>
     </option>
   </component>

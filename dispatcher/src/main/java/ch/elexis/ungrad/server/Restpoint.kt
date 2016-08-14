@@ -112,6 +112,30 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 context.response().sendFile("login.html")
             }
             router.post("/dologin").handler { context ->
+                context.request().bodyHandler { buffer ->
+                    val credentials=buffer.toString()
+                    if(credentials.isNullOrBlank()){
+                       context.response().setStatusCode(400).end(AUTH_ERR)
+                    }else{
+                        val parms=credentials.split("&")
+                        if(parms.size!=2){
+                            context.response().setStatusCode(400).end(AUTH_ERR)
+                        }else{
+                            val srt=context.session().get<String>("reTo") ?: "/index.html"
+                            authProvider.authenticate(JsonObject().put("username", parms[0].split("=")[1])
+                                    .put("password", parms[1].split("=")[1])) { res ->
+                                if (res.succeeded()) {
+                                    val user = res.result()
+                                    context.setUser(user)
+                                    context.response().putHeader("Location", srt ?: "error.html").setStatusCode(302).end()
+                                } else {
+                                    context.response().setStatusCode(901).end(AUTH_ERR)
+                                }
+                            }
+                        }
+                    }
+                }
+                /*
                 context.request().setExpectMultipart(true)
                 context.request().endHandler { req ->
                     val usr = context.request().getFormAttribute("username")
@@ -128,9 +152,8 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                             context.response().end("Bad Username or password")
                         }
                     }
-
-
                 }
+                */
 
             }
             router.get("/logout").handler { context ->
@@ -188,6 +211,9 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
     }
 
 
+    fun sayError(ctx: RoutingContext, errno: Int, errmsg:String){
+        ctx.response().setStatusCode(errno).end(errmsg)
+    }
     /**
      * Check if the current context's user has the given role. If so, call action(), if not, send an error message.
      */
@@ -213,6 +239,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
 
     companion object {
         val ADDR_REGISTER = "ch.elexis.ungrad.server.register";
+        val AUTH_ERR="bad username or password"
     }
 
     class ResultHandler(val ctx: RoutingContext) : AsyncResultHandler<Message<JsonObject>> {

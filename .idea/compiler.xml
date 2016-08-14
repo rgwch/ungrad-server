@@ -52,6 +52,13 @@
         <processorPath useClasspath="true" />
         <module name="tester" />
       </profile>
+      <profile default="false" name="Annotation profile for webelexis" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="webelexis" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="console" target="1.8" />
@@ -60,6 +67,7 @@
       <module name="lucinda" target="1.8" />
       <module name="tester" target="1.8" />
       <module name="ungrad-server" target="1.8" />
+      <module name="webelexis" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

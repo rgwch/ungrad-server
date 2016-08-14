@@ -13,5 +13,21 @@
         "default":{
             "roles":["guest"]
         }
-    }
+    },
+    "launch":[
+        {
+            "name":"Patienten",
+            "url":"jar:file:///Users/gerry/test/webelexis.jar",
+            "verticle":"ch.webelexis.verticles.Patients",
+            "config":{
+                "host":"localhost",
+                "database":"elexis",
+                "charset":"utf-8",
+                "username":"elexisuser",
+                "password":"elexispwd"
+            }
+        }
+    ]
+
+
 }

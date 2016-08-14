@@ -12,6 +12,7 @@ import environment from './environment';
 export function configure(aurelia: Aurelia) {
   aurelia.use
     .standardConfiguration()
+    //.globalResources("resources.common")
     .feature('resources');
 
   if (environment.debug) {

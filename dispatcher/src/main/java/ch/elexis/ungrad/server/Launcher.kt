@@ -21,12 +21,16 @@ import ch.rgw.tools.Configuration
 import ch.rgw.tools.JsonUtil
 import ch.rgw.tools.net.NetTool
 import com.hazelcast.config.Config
+import io.vertx.core.AbstractVerticle
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.util.*
 
 
 /**
@@ -40,6 +44,7 @@ val authProvider: AccessController by lazy{
     val users=config.getJsonObject("users") ?: JsonObject()
     AccessController(users)
 }
+val verticles= HashMap<String,String>()
 
 fun main(args:Array<String>){
     var restpointID=""
@@ -96,6 +101,27 @@ fun main(args:Array<String>){
                     log.info("Launched Restpoint")
                     ch.elexis.ungrad.server_test.start(vertx,config,::deployResult)
                     ch.rgw.lucinda.start(vertx,config,::deployResult)
+                    config.getArray("launch", JsonArray()).forEach { launcher ->
+                        try {
+                            val jo = launcher as JsonObject
+                            val cl = UngradClassLoader(jo.getString("url"))
+                            val clazz = cl.loadClass(jo.getString("verticle"))
+                            val constructor=clazz.getConstructor(JsonObject::class.java)
+                            val verticle=constructor.newInstance(jo.getJsonObject("config"))
+
+                            vertx.deployVerticle(verticle as Verticle) {handler ->
+                                if(handler.succeeded()){
+                                    verticles.put(jo.getString("name"),handler.result())
+                                    log.info("launched ${jo.getString("name")}")
+                                }else{
+                                    log.error("could not launch ${jo.getString("name")}",handler.cause())
+                                }
+                            }
+
+                        }catch(ex:Exception){
+                            log.error("could not launch ${launcher.toString()}", ex)
+                        }
+                    }
                 }else{
                     log.error("Could not launch Verticles: ${rpResult.cause().message}")
                 }

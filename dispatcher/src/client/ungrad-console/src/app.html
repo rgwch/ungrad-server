@@ -1,19 +1,20 @@
 <template>
-  <h1>Elexis Ungrad</h1>
-  <div>
-    <ul>
-      <li repeat.for="service of services">
-        <span click.trigger="getDetails(service.name)">${service.name}</span>
-        <div if.bind="service.details">
-          <p>${service.details}</p>
-          <ul>
-            <li repeat.for="detail of actService">
-              ${detail.name}, ${detail.caption}, ${detail.type}, ${detail.value}
-            </li>
-          </ul>
-        </div>
-      </li>
-    </ul>
-    <button click.trigger="getServices()">reload</button>
+  <require from="bootstrap/css/bootstrap.css"></require>
+  <require from="css/styles.css"></require>
+
+  <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">
+        <i class="fa fa-user"></i>
+        <span>elexis</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4">Contact List Placeholder</div>
+      <router-view class="col-md-8"></router-view>
+    </div>
   </div>
 </template>
