@@ -27,6 +27,17 @@
                 "username":"elexisuser",
                 "password":"elexispassword"
             }
+        },{
+            "name":"Agenda",
+            "url":"file:///home/gerry/git/ungrad-server/webelexis/target/webelexis-0.0.1-SNAPSHOT.jar",
+            "verticle":"ch.webelexis.verticles.Appointments",
+            "config":{
+                "host":"localhost",
+                "database":"elexis",
+                "charset":"utf-8",
+                "username":"elexisuser",
+                "password":"elexispassword"
+            }
         }
     ]
 
