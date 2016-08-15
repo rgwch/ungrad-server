@@ -36,7 +36,9 @@ import java.util.*
  * Created by gerry on 06.07.16.
  */
 
-val config = JsonUtil.load("default.json", "user.json", "default.cfg", "user.cfg")
+val config: JsonUtil by lazy {
+    JsonUtil.load("user.json", "user.cfg", "default.json", "default.cfg")
+}
 var ip: String = ""
 val log = LoggerFactory.getLogger("Ungrad Launcher")
 val authProvider: AccessController by lazy {
@@ -105,9 +107,9 @@ fun main(args: Array<String>) {
                             val jo = launcher as JsonObject
                             //val cl = UngradClassLoader(jo.getString("url"))
                             //val completeURL=jo.getString("url")+"!/"+jo.getString("verticle").replace("\\.".toRegex(),"/")+".class"
-                            val url=URL(jo.getString("url"))
-                            val file=File(url.file)
-                            if(!file.exists() || !file.canRead()){
+                            val url = URL(jo.getString("url"))
+                            val file = File(url.file)
+                            if (!file.exists() || !file.canRead()) {
                                 log.error("can't read ${file.absolutePath}")
                             }
 

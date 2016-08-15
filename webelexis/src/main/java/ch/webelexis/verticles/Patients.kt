@@ -38,6 +38,7 @@ class Patients : AbstractVerticle() {
         }
 
         register(FUNC_PATLIST)
+        register(FUNC_PATDETAIL)
 
         vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR, Admin)
 
@@ -48,7 +49,7 @@ class Patients : AbstractVerticle() {
                     val conn = result.result()
                     val parm = msg.body().getString("pattern").replace('*','%')
                     val params=JsonArray().add(parm).add(parm)
-                    conn.queryWithParams(PATLIST, params) { answer ->
+                    conn.queryWithParams(SQL_PATLIST, params) { answer ->
                         if (answer.succeeded()) {
                             val rs = answer.result()
                             val ret = JsonArray()
@@ -58,9 +59,11 @@ class Patients : AbstractVerticle() {
                                 ret.add(patient)
                             }
                             msg.reply(JsonUtil.create("status:ok").put("result", ret))
+                            conn.close()
                         } else {
                             log.error("Error executing PATLIST with ${msg.body().encodePrettily()}", answer.cause())
                             msg.reply(JsonUtil.create("status:error", "message:${answer.cause().message}"))
+                            conn.close()
                         }
                     }
 
@@ -68,6 +71,38 @@ class Patients : AbstractVerticle() {
                     log.error("could not connect to database", result.cause())
                     msg.reply(JsonUtil.create("status:error","message:internal server error: database"))
                 }
+            }
+        }
+
+        vertx.eventBus().consumer<JsonObject>(BASE_ADDR+FUNC_PATDETAIL.addr){ msg ->
+            database.getConnection { con ->
+                if(con.succeeded()){
+                    val conn=con.result()
+                    val parm = msg.body().getString("id")
+                    val params=JsonArray().add(parm)
+                    conn.queryWithParams(SQL_PATDETAIL,params){ result ->
+                        if(result.succeeded()){
+                            val rs=result.result()
+                            if(rs.numRows!=1){
+                                msg.reply(JsonUtil.create("status:error","message:${rs.numRows} results"))
+                            }else{
+                                val pat=rs.rows[0]
+                                msg.reply(pat)
+                            }
+                            conn.close()
+                        }else{
+                            log.error("Error executing PATDETAIL with ${msg.body().encodePrettily()}", result.cause())
+                            msg.reply(JsonUtil.create("status:error","message:${result.cause().message}"))
+                            conn.close()
+                        }
+                    }
+
+
+                }else{
+                    log.error("could not connect to database", con.cause())
+                    msg.reply(JsonUtil.create("status:error","message:internal server error: database"))
+                }
+
             }
         }
     }
@@ -83,8 +118,10 @@ class Patients : AbstractVerticle() {
         const val CONTROL_ADDR = BASE_ADDR + "admin"
         const val LIST = BASE_ADDR + "list"
         val FUNC_PATLIST = RegSpec("list", "patients/list/:pattern", "user", "get")
+        val FUNC_PATDETAIL= RegSpec("detail","patients/detail/:id","user","get")
         val log = LoggerFactory.getLogger(Patients::class.java)
-        val PATLIST = "SELECT patientnr,id,Bezeichnung1,Bezeichnung2,Bezeichnung3 FROM KONTAKT WHERE Bezeichnung1 like ? or Bezeichnung2 like ?"
+        val SQL_PATLIST = "SELECT patientnr,id,Bezeichnung1,Bezeichnung2,Bezeichnung3 FROM KONTAKT WHERE (Bezeichnung1 like ? OR Bezeichnung2 like ?) AND deleted='0'"
+        val SQL_PATDETAIL= "SELECT * FROM KONTAKT WHERE id=? AND deleted='0'"
     }
 
     data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)

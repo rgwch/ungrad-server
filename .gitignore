@@ -95,3 +95,4 @@ fabric.properties
 hs_err_pid*
 
 .idea
+/dispatcher/src/main/resources/user.json
