@@ -7,6 +7,7 @@
     <groupId>ch.rgw</groupId>
     <artifactId>ungrad-server-dispatcher</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+
     <build>
         <plugins>
             <plugin>

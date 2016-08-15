@@ -105,8 +105,13 @@ fun main(args: Array<String>) {
                             val jo = launcher as JsonObject
                             //val cl = UngradClassLoader(jo.getString("url"))
                             //val completeURL=jo.getString("url")+"!/"+jo.getString("verticle").replace("\\.".toRegex(),"/")+".class"
+                            val url=URL(jo.getString("url"))
+                            val file=File(url.file)
+                            if(!file.exists() || !file.canRead()){
+                                log.error("can't read ${file.absolutePath}")
+                            }
 
-                            val cl = URLClassLoader(Array<URL>(1, { URL(jo.getString("url")) }))
+                            val cl = URLClassLoader(Array<URL>(1, { url }))
                             val clazz = cl.loadClass(jo.getString("verticle"))
                             val verticle = clazz.newInstance()
                             val options = DeploymentOptions().setConfig(jo.getJsonObject("config", JsonObject()))

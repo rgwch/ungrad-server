@@ -17,15 +17,15 @@
     "launch":[
         {
             "name":"Patients",
-            // "url":"file:///Users/gerry/test/webelexis.jar",
-            "url":"file:///Users/gerry/git/ungrad-server/webelexis/target/classes/",
+            "url":"file:///home/gerry/git/ungrad-server/webelexis/target/webelexis-0.0.1-SNAPSHOT.jar",
+            // "url":"file:///Users/gerry/git/ungrad-server/webelexis/target/classes/",
             "verticle":"ch.webelexis.verticles.Patients",
             "config":{
                 "host":"localhost",
                 "database":"elexis",
                 "charset":"utf-8",
                 "username":"elexisuser",
-                "password":"elexispwd"
+                "password":"elexispassword"
             }
         }
     ]

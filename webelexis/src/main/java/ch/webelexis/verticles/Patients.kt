@@ -46,14 +46,15 @@ class Patients : AbstractVerticle() {
             database.getConnection { result ->
                 if (result.succeeded()) {
                     val conn = result.result()
-                    val parm = msg.body().getString("pattern")
-                    conn.queryWithParams(PATLIST, JsonArray().add(parm).add(parm)) { answer ->
+                    val parm = msg.body().getString("pattern").replace('*','%')
+                    val params=JsonArray().add(parm).add(parm)
+                    conn.queryWithParams(PATLIST, params) { answer ->
                         if (answer.succeeded()) {
-                            val rs = answer.result() as ResultSet
+                            val rs = answer.result()
                             val ret = JsonArray()
-                            while (rs.next()) {
-                                val patient = Patient(rs.getString("Bezeichnung1"), rs.getString("Bezeichnung2"), rs.getString("id"))
-                                patient.put("patnr", rs.getString("patientnr"))
+                            rs.results.forEach {
+                                val patient = Patient(it.getString(2), it.getString(3), it.getString(1))
+                                patient.put("patnr", it.getString(0))
                                 ret.add(patient)
                             }
                             msg.reply(JsonUtil.create("status:ok").put("result", ret))
@@ -65,6 +66,7 @@ class Patients : AbstractVerticle() {
 
                 } else {
                     log.error("could not connect to database", result.cause())
+                    msg.reply(JsonUtil.create("status:error","message:internal server error: database"))
                 }
             }
         }
@@ -82,7 +84,7 @@ class Patients : AbstractVerticle() {
         const val LIST = BASE_ADDR + "list"
         val FUNC_PATLIST = RegSpec("list", "patients/list/:pattern", "user", "get")
         val log = LoggerFactory.getLogger(Patients::class.java)
-        val PATLIST = "SELECT patientnr,id,Bezeichnung1,Bezeichnung2,Bezeichnung3,FROM KONTAKT WHERE Bezeichnung1 like ? OR Bezeichnung2 like ?"
+        val PATLIST = "SELECT patientnr,id,Bezeichnung1,Bezeichnung2,Bezeichnung3 FROM KONTAKT WHERE Bezeichnung1 like ? or Bezeichnung2 like ?"
     }
 
     data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
