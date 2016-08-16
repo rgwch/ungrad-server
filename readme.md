@@ -43,16 +43,16 @@ Launch your favorite web browser and navigate to `http://localhost:2016/index.hm
 
 The basic units of functionality are *Verticles*. A Verticle is a independently running piece of software, invented by vert.x. It features are:
 
-* Normally single threaded, no deadlocks. Multicore- Capability is achieved by launching a verticle multiple times in parallel.
+* No concurrency issues by design, similar to NodeJS: Single threaded, no deadlocks. Multicore- Capability is achieved by launching a verticle multiple times in parallel.
 * Has a communication system to talk to other verticles, the EventBus.
-* Can be written in Java, Ruby, JavaScript, Python, Scala and others. Verticles of different languages can play peacefully together and communicate via the eventBus
+* Can be written in Java, Ruby, Groovy, JavaScript, Python, Scala and others. Verticles of different languages can play peacefully together and communicate via the eventBus
 * Interconnected Verticles can reside in the same VM, or in different VMs on the same Machine, or on different Machines within the same network.
 
 In Ungrad-Server, Verticles are added and launched in a number of ways:
 
-* Some Verticles are built-in and Launched, whenever the main program launches.
-* The Launcher (ch.elexis.ungrad.server.Launcher) checks its configuration on startup and launches external Verticles configured there.
-* A program can be launched completely independent, launch its ow verticles and connect to ungrad-server via the EventBus.
+* Some Verticles are built-in and Launched, whenever the main program launches. (e.g. dispatcher/Restpoint and lucinda/Communicator)
+* The Launcher (ch.elexis.ungrad.server.Launcher) checks its configuration on startup and launches external Verticles configured there. (See the webelexis subproject as an example)
+* A program can be launched completely independent, launch its own verticles and connect to ungrad-server via the EventBus.
 
 
 
