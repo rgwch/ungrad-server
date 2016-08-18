@@ -112,7 +112,7 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
                 rsc = getResource(cfg.getString("webroot"), addrPath)
             }
             if (rsc.stream == null) {
-                val ans = "Not found"
+                val ans = "${addrPath} not found"
                 req.response().putHeader("Content-Length", Integer.toString(ans.length))
                 req.response().write(ans)
                 req.response().statusCode = 404 // not found

@@ -112,6 +112,9 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             router.get("/login").handler { context ->
                 context.response().sendFile("login.html")
             }
+            router.get("/test").handler { ctx ->
+                ctx.response().end("OK")
+            }
             router.post("/dologin").handler { context ->
                 context.request().bodyHandler { buffer ->
                     val credentials = buffer.toString()
@@ -122,13 +125,18 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                         if (parms.size != 2) {
                             context.response().setStatusCode(400).end(AUTH_ERR)
                         } else {
-                            val srt = context.session().get<String>("reTo") ?: "/index.html"
+                            val srt = context.session().get<String>("reTo")
                             authProvider.authenticate(JsonObject().put("username", parms[0].split("=")[1])
                                     .put("password", parms[1].split("=")[1])) { res ->
                                 if (res.succeeded()) {
                                     val user = res.result()
                                     context.setUser(user)
-                                    context.response().putHeader("Location", srt ?: "error.html").setStatusCode(302).end()
+                                    if(srt!=null) {
+                                        context.response().putHeader("Location", srt).setStatusCode(302).end()
+                                    }else{
+                                        context.response().putHeader("content-type", "application/json; charset=utf-8")
+                                        .end(JsonUtil.create("status:ok").encode())
+                                    }
                                 } else {
                                     context.response().setStatusCode(901).end(AUTH_ERR)
                                 }
@@ -172,7 +180,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 }
             }
             // calls to other resources go to the web interface
-            router.route("/index.html").handler(UIHandler(cfg))
+            router.route("/*").handler(UIHandler(cfg))
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
             vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }
