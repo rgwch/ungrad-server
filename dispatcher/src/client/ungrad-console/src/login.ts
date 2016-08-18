@@ -1,14 +1,19 @@
-import {Http} from './http';
-import hans from './resources/common'
+import {inject} from 'aurelia-framework'
+import {AppState} from './appstate'
+import {HttpClient} from "aurelia-http-client";
 
+@inject(HttpClient, AppState)
 export class Login {
-  username= hans.hans
+  username= ""
   password = ""
 
-  private client:Http
+  private client
+  private state
 
-  constructor() {
-    this.client = new Http()
+  constructor(http,appstate) {
+    this.client = http
+    this.state=appstate
+    this.username=this.state.hans
   }
 
   doLogin = function () {

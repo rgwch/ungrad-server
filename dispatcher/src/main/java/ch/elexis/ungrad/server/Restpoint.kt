@@ -20,6 +20,7 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
+import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
@@ -135,25 +136,6 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                         }
                     }
                 }
-                /*
-                context.request().setExpectMultipart(true)
-                context.request().endHandler { req ->
-                    val usr = context.request().getFormAttribute("username")
-                    val pwd = context.request().getFormAttribute("pwd")
-                    val srt=context.session().get<String>("reTo") ?: "/index.html"
-                    val redir = context.request().getFormAttribute("reTo") ?: srt
-                    authProvider.authenticate(JsonObject().put("username", usr)
-                            .put("password", pwd)) { res ->
-                        if (res.succeeded()) {
-                            val user = res.result()
-                            context.setUser(user)
-                            context.response().putHeader("Location", redir ?: "error.html").setStatusCode(302).end()
-                        } else {
-                            context.response().end("Bad Username or password")
-                        }
-                    }
-                }
-                */
 
             }
             router.get("/logout").handler { context ->
@@ -190,7 +172,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 }
             }
             // calls to other resources go to the web interface
-            router.get("/ui/*").handler(UIHandler(cfg))
+            router.route("/index.html").handler(UIHandler(cfg))
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
             vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }
