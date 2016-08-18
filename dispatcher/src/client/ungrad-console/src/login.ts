@@ -18,7 +18,7 @@ export class Login {
 
   doLogin = function () {
 
-    this.client.post("dologin", `username=${this.username}&pwd=${this.password}`, response => {
+    this.client.post("/dologin", `username=${this.username}&pwd=${this.password}`, response => {
       if(response.statusCode==200){
 
       }else{

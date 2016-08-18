@@ -96,7 +96,12 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
     private fun anyOtherResource(req: RoutingContext) {
         try {
             var rsc: RscObject
-            val addrPath = req.request().path()
+            val rawPath = req.request().path()
+            val addrPath=if(rawPath.startsWith(prefix)){
+                rawPath.substring(prefix.length)
+            }else{
+                rawPath
+            }
             val cOff = addrPath.indexOf("/custom/")
             if (cOff != -1) {
                 rsc = getResource(cfg.getString("customRoot", ""), addrPath.substring(cOff + 8))
