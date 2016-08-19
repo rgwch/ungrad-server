@@ -1,20 +1,15 @@
 <template>
-  <require from="bootstrap/css/bootstrap.css"></require>
+  <!-- require from="bootstrap/css/bootstrap.css"></require -->
   <require from="css/styles.css"></require>
-
-  <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="#">
-        <i class="fa fa-user"></i>
-        <span>elexis</span>
-      </a>
-    </div>
-  </nav>
 
   <div class="container">
     <div class="row">
-      <div class="col-md-4">Contact List Placeholder</div>
-      <router-view class="col-md-8"></router-view>
+      <div class="col-md-4">
+        <router-view name="left"></router-view>
+      </div>
+      <div class="col-md-8">
+        <router-view name="main"></router-view>
+      </div>
     </div>
   </div>
 </template>
