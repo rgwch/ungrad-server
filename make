@@ -1,10 +1,17 @@
 #! /bin/sh
-cd dispatcher/src/client/ungrad-console
-rm -rf  ../../main/resources/web
-mkdir -p ../../main/resources/web/scripts
+rootdir=`pwd`
+console=${rootdir}/console
+dispatcher=${rootdir}/dispatcher
+webelexis=${rootdir}/webelexis
+
+cd ${console}
+rm -rf  ${dispatcher}/src/main/resources/web
+mkdir -p ${dispatcher}/src/main/resources/web/scripts
 au build
-cp index.html ../../main/resources/web/index.html
-cp -r scripts ../../main/resources/web
-cd ../../../../
+cp index.html ${dispatcher}/src/main/resources/web/index.html
+cp -r scripts ${dispatcher}/src/main/resources/web
+cd ${webelexis}
+mvn clean package
+cd ${rootdir}
 mvn clean package
 

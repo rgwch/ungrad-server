@@ -145,8 +145,8 @@
         </plugins>
     </build>
     <modules>
-        <module>dispatcher</module>
         <module>tester</module>
         <module>lucinda</module>
+        <module>dispatcher</module>
     </modules>
 </project>
