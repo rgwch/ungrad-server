@@ -11,6 +11,7 @@ export class ServiceList{
   constructor(http,state){
     this.link=http
     this.cfg=state
+    this.getServices()
   }
 
   public getServices=function(){

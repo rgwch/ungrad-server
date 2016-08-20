@@ -19,7 +19,7 @@ export class App {
         name: 'login'
       },
       {
-        route: '/ui/configure',
+        route: 'configure',
         viewPorts: {
           left: {
             moduleId: 'services/servicelist',

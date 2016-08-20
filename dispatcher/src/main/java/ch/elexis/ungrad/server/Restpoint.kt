@@ -20,7 +20,6 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
-import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
@@ -106,9 +105,12 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             router.route().handler(io.vertx.ext.web.handler.CookieHandler.create());
             router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
             router.route().handler(io.vertx.ext.web.handler.UserSessionHandler.create(authProvider));
-            val redirectAuthHandler = RedirectAuthHandler.create(authProvider, "/login", "reTo")
-            // pass all calls to /api/* through authentication
-            router.route("/api/*").handler(redirectAuthHandler)
+            if (config.getString("mode", "prod") != "debug") {
+                // if not in debug mode: pass all calls to /api/* through authentication and let users login first
+
+                val redirectAuthHandler = RedirectAuthHandler.create(authProvider, "/login", "reTo")
+                router.route("/api/*").handler(redirectAuthHandler)
+            }
             router.get("/login").handler { context ->
                 context.response().sendFile("login.html")
             }
@@ -131,11 +133,11 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                                 if (res.succeeded()) {
                                     val user = res.result()
                                     context.setUser(user)
-                                    if(srt!=null) {
+                                    if (srt != null) {
                                         context.response().putHeader("Location", srt).setStatusCode(302).end()
-                                    }else{
+                                    } else {
                                         context.response().putHeader("content-type", "application/json; charset=utf-8")
-                                        .end(JsonUtil.create("status:ok").encode())
+                                                .end(JsonUtil.create("status:ok").encode())
                                     }
                                 } else {
                                     context.response().setStatusCode(901).end(AUTH_ERR)
@@ -210,7 +212,11 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
      */
     fun checkAuth(context: RoutingContext, role: String, action: () -> Unit) {
         if (context.user() == null) {
-            context.response().setStatusCode(401).end("please login first")
+            if (config.getString("mode", "prod") == "debug") {
+                action()
+            } else {
+                context.response().setStatusCode(401).end("please login first")
+            }
         } else {
             context.user().isAuthorised(role) {
                 if (it.succeeded()) {

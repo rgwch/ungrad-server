@@ -14,6 +14,7 @@
 package ch.elexis.ungrad.server
 
 import io.vertx.core.AsyncResult
+import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.auth.AbstractUser
@@ -25,16 +26,20 @@ import io.vertx.ext.auth.AuthProvider
 
 class AccessController(val bootstrapIdentity: JsonObject) : AuthProvider {
     override fun authenticate(identity: JsonObject?, handler: Handler<AsyncResult<io.vertx.ext.auth.User>>?) {
-        val userid = identity?.getString("username")
-        val pwd = identity?.getString("password")
-        val entry = bootstrapIdentity.getJsonObject(userid)
-        if (entry == null) {
-            handler?.handle(AuthResult(null))
+        if (config.getString("mode", "prod") == "debug") {
+            handler?.handle(Future.succeededFuture(User("admin", this)))
         } else {
-            if (pwd.equals(entry.getString("password"))) {
-                handler?.handle(AuthResult(User(userid, this)))
-            }else{
-                handler?.handle(AuthResult(null))
+            val userid = identity?.getString("username")
+            val pwd = identity?.getString("password")
+            val entry = bootstrapIdentity.getJsonObject(userid)
+            if (entry == null) {
+                handler?.handle(Future.failedFuture("bad userid or password"))
+            } else {
+                if (pwd.equals(entry.getString("password"))) {
+                    handler?.handle(Future.succeededFuture(User(userid, this)))
+                } else {
+                    handler?.handle(Future.failedFuture("bad userid or password"))
+                }
             }
         }
     }
@@ -47,7 +52,7 @@ class AccessController(val bootstrapIdentity: JsonObject) : AuthProvider {
             if (roles.contains(role)) {
                 return true
             }
-            if(roles.contains("admin")){
+            if (roles.contains("admin")) {
                 return true;
             }
         }
@@ -56,24 +61,6 @@ class AccessController(val bootstrapIdentity: JsonObject) : AuthProvider {
 
 }
 
-class AuthResult(val user: User?) : AsyncResult<io.vertx.ext.auth.User> {
-    override fun cause(): Throwable {
-        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun failed(): Boolean {
-        return user == null
-    }
-
-    override fun result(): User? {
-        return user
-    }
-
-    override fun succeeded(): Boolean {
-        return user != null
-    }
-
-}
 
 class User(val userid: String?, ac: AccessController) : AbstractUser() {
     var lastName = ""
@@ -91,6 +78,8 @@ class User(val userid: String?, ac: AccessController) : AbstractUser() {
 
     override fun doIsPermitted(role: String?, handler: Handler<AsyncResult<Boolean>>) {
         val usr = this
+        handler.handle(Future.succeededFuture(provider.hasRole(usr, role)))
+        /*
         handler.handle(object : AsyncResult<Boolean> {
             override fun cause(): Throwable {
                 return Exception("operation not permitted")
@@ -109,6 +98,7 @@ class User(val userid: String?, ac: AccessController) : AbstractUser() {
             }
 
         })
+        */
     }
 }
 
