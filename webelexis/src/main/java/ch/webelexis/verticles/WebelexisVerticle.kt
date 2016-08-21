@@ -17,7 +17,7 @@ import org.slf4j.Logger
 /**
  * Created by gerry on 15.08.16.
  */
-open class WebelexisVerticle : AbstractVerticle(){
+abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : AbstractVerticle(){
     val API = "1.0"
     val log : Logger=org.slf4j.LoggerFactory.getLogger(WebelexisVerticle::class.java)
     val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
@@ -32,6 +32,19 @@ open class WebelexisVerticle : AbstractVerticle(){
         }
     }
 
+    override fun start(){
+        super.start()
+        vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR){msg ->
+            when(msg.body().getString("command")){
+                "getName" -> msg.reply(JsonUtil.create("status:ok","name:${getName()}"))
+                "getParams" -> msg.reply(createParams())
+            }
+        }
+
+    }
+
+    abstract fun createParams():JsonObject
+    abstract fun getName():String
 
     override fun stop() {
         Patients.log.info("stop")
@@ -52,7 +65,7 @@ open class WebelexisVerticle : AbstractVerticle(){
         vertx.eventBus().send<JsonObject>(REGISTER_ADDRESS, JsonObject()
                 .put("ebaddress", func.addr)
                 .put("rest", "${API}/${func.rest}").put("method", func.method).put("role", func.role)
-                .put("server-id", "ch.webelexis").put("server-control", Patients.CONTROL_ADDR), RegHandler(func))
+                .put("server-id", ID).put("server-control", CONTROL_ADDR), RegHandler(func))
     }
     data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
 

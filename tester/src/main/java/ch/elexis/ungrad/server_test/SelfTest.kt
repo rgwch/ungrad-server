@@ -47,7 +47,9 @@ class SelfTest: AbstractVerticle() {
          * On startup, register our EventBus address with the dispatcher and tell him, that we are
          * interested in "get" requests with the given address scheme.
          */
-        val registerMsg= JsonUtil.create("rest:1.0/ping/:plus/:minus","ebaddress:${MY_ADDRESS}","method:get");
+        val registerMsg= JsonUtil.create("ebaddress:${MY_ADDRESS}","method:get","server-id:ch.elexis.ungrad.server_test",
+                "server-control:ch.elexis.ungrad.server_test.admin")
+                .put("rest","1.0/ping/:plus/:minus");
         vertx.eventBus().send<JsonObject>(REGISTER_ADDRESS,registerMsg) { reply ->
             if(reply.succeeded()){
                 log.info("successfully registered TestVerticle")

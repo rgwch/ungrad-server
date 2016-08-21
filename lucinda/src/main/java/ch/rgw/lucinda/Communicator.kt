@@ -32,22 +32,17 @@ import org.slf4j.LoggerFactory
  */
 
 
-class Communicator(cfg: JsonObject) : AbstractVerticle() {
+class Communicator: AbstractVerticle() {
     val API = "1.0"
     val eb: EventBus by lazy {
         vertx.eventBus()
     }
 
-    /**
-     * Constructor parameters: A ch.rgw.tools.Configuration object with at least the paramater fs_indexdir
-     */
-    init {
-        config.mergeIn(cfg)
-        indexManager = IndexManager(config.getString("fs_indexdir", "target/store"),config.getString("default_language", "de"))
-    }
 
     override fun start() {
         super.start()
+        config.mergeIn(config())
+        indexManager = IndexManager(config.getString("fs_indexdir", "target/store"),config.getString("default_language", "de"))
         val dispatcher = Dispatcher(vertx,config.getString("fs_import", "target/store"))
 
         fun register(func: RegSpec) {

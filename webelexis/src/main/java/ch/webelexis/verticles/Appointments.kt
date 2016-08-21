@@ -9,9 +9,10 @@ import io.vertx.core.json.JsonObject
 /**
  * Created by gerry on 15.08.16.
  */
-class Appointments : WebelexisVerticle() {
+class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
 
     override fun start() {
+        super.start()
         register(FUNC_LIST)
 
         vertx.eventBus().consumer<JsonObject>(FUNC_LIST.addr) { msg ->
@@ -40,10 +41,18 @@ class Appointments : WebelexisVerticle() {
             }
         }
     }
+    override fun createParams():JsonObject{
+        return JsonObject()
+    }
+
+    override fun getName()="Elexis Appointments"
 
     companion object {
-        const val SQL_APPTS = "SELECT * FROM AGNTERMINE WHERE Tag>=? AND Tag<=? AND Bereich=? AND deleted='0'"
         const val BASE_ADDR = "ch.webelexis.appointments."
+        const val ID="ch.webelexis.verticles.appointments"
+        const val SQL_APPTS = "SELECT * FROM AGNTERMINE WHERE Tag>=? AND Tag<=? AND Bereich=? AND deleted='0'"
         val FUNC_LIST = RegSpec(BASE_ADDR+"list", "appnts/list/:resource/:from/:until", "user", "get")
+        const val CONTROL_ADDR= BASE_ADDR+"admin"
+
     }
 }

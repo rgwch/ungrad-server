@@ -217,7 +217,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 }
             }
             // calls to other resources go to the web interface
-            router.route("/*").handler(UIHandler(cfg))
+            router.route("/ui/*").handler(UIHandler(cfg))
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
             vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }

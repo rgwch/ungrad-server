@@ -22,8 +22,8 @@
         },
         {
             "name":"Lucinda",
-            "url": "file:./lucinda/targetlucinda-1.0.0-SNAPSHOT.jar",
-            "verticle": "ch.rgw.lucinda.Communicator"
+            "url": "file:./lucinda/target/lucinda-1.0.0-SNAPSHOT.jar",
+            "verticle": "ch.rgw.lucinda.Communicator",
             "config": {
                 "default_language":"de",
                 "msg_prefix":"ch.rgw.lucinda",

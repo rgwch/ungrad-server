@@ -16,17 +16,13 @@ import java.sql.ResultSet
 /**
  * Created by gerry on 14.08.16.
  */
-class Patients : WebelexisVerticle() {
-
+class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
 
     override fun start() {
-        log.info("Start")
-
+        super.start()
 
         register(FUNC_PATLIST)
         register(FUNC_PATDETAIL)
-
-        vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR, Admin)
 
         vertx.eventBus().consumer<JsonObject>(FUNC_PATLIST.addr) { msg ->
             getConnection(msg) { result ->
@@ -84,8 +80,14 @@ class Patients : WebelexisVerticle() {
         }
     }
 
+    override fun createParams():JsonObject{
+        return JsonObject()
+    }
+
+    override fun getName()="Elexis Patients"
 
     companion object {
+        val ID="ch.webelexis.verticles.Patients"
         const val BASE_ADDR = "ch.webelexis.patients."
         const val CONTROL_ADDR = BASE_ADDR + "admin"
         val FUNC_PATLIST = RegSpec(BASE_ADDR+"list", "patients/list/:pattern", "user", "get")
