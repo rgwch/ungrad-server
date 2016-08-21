@@ -14,20 +14,6 @@ object Admin : Handler<Message<JsonObject>> {
     override fun handle(message: Message<JsonObject>) {
         val msg = message.body()
         when (msg.getString("command")) {
-            "start" ->
-                if (communicatorID == null) {
-                    start(vertx!!, JsonObject(), { b: Boolean, s: String ->
-                        if (b) {
-                            message.reply(JsonObject().put("status", "ok"))
-                        } else {
-                            message.reply(JsonObject().put("status", "error").put("message", "launch failed"))
-                        }
-                    })
-                }
-            "stop" -> {
-                stop()
-                message.reply(JsonObject().put("status", "ok"))
-            }
             "getName" -> message.reply(JsonObject().put("name", "Lucinda").put("status", "ok"))
             "getParams" -> {
                 val params = createParams()
@@ -60,8 +46,8 @@ object Admin : Handler<Message<JsonObject>> {
         val result= JsonArray()
         val jIndex=JsonObject(indexdir)
         val jData=JsonObject(datadir)
-        jIndex.put("value", config.get("fs_indexdir", "target/store/index"))
-        jData.put("value",config.get("fs_watch","target/store"))
+        jIndex.put("value", Communicator.config.getString("fs_indexdir", "target/store/index"))
+        jData.put("value",Communicator.config.getString("fs_watch","target/store"))
         result.add(jIndex).add(jData)
         ret.put("result",result)
         return ret;

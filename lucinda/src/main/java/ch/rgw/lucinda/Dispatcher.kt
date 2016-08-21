@@ -35,16 +35,16 @@ import java.nio.file.Paths
 /**
  * Created by gerry on 22.03.16.
  */
-class Dispatcher(val vertx: Vertx) {
+class Dispatcher(val vertx: Vertx, val basedir: String) {
     val log = LoggerFactory.getLogger("lucinda")
     val fs = vertx.fileSystem()
-    val iMgr=indexManager!!
+    val iMgr=Communicator.indexManager!!
 
     fun makeDirPath(parms: JsonObject): File {
         val fname = parms.getString("filename")
         val concern = parms.getString("concern")
         val key = parms.getBinary("key")
-        val dir = config.get("fs_import", "target/store") + (if (concern != null) {
+        val dir = basedir + (if (concern != null) {
             File.separator + concern
         } else "")
         return File(dir, fname)

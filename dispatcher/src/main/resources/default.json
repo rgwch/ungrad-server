@@ -1,5 +1,5 @@
 {
-    "webroot": "dispatcher/src/client/ungrad-console", // the webroot in debug mode
+    "webroot": "console", // the webroot in debug mode
     "rest_port": 2016,
     "users":{
         "admin":{
@@ -16,8 +16,27 @@
     },
     "launch":[
         {
+            "name":"Self Test",
+            "url": "file:./tester/target/ungrad-server-tester-0.0.1-SNAPSHOT.jar",
+            "verticle": "ch.elexis.ungrad.server_test.SelfTest"
+        },
+        {
+            "name":"Lucinda",
+            "url": "file:./lucinda/targetlucinda-1.0.0-SNAPSHOT.jar",
+            "verticle": "ch.rgw.lucinda.Communicator"
+            "config": {
+                "default_language":"de",
+                "msg_prefix":"ch.rgw.lucinda",
+                "fs_basedir":"target/store",
+                "fs_indexdir":"target/store/index",
+                "fs_watch":"target/store/inbox",
+                "fs_import":"target/store/inbox",
+                "ocr":"tesseract"
+            }
+        },
+        {
             "name":"Patients",
-            "url":"file:///home/gerry/git/ungrad-server/webelexis/target/webelexis-0.0.1-SNAPSHOT.jar",
+            "url":"file:./webelexis/target/webelexis-0.0.1-SNAPSHOT.jar",
             // "url":"file:///Users/gerry/git/ungrad-server/webelexis/target/classes/",
             "verticle":"ch.webelexis.verticles.Patients",
             "config":{
@@ -29,7 +48,7 @@
             }
         },{
             "name":"Agenda",
-            "url":"file:///home/gerry/git/ungrad-server/webelexis/target/webelexis-0.0.1-SNAPSHOT.jar",
+            "url":"file:./webelexis/target/webelexis-0.0.1-SNAPSHOT.jar",
             "verticle":"ch.webelexis.verticles.Appointments",
             "config":{
                 "host":"localhost",

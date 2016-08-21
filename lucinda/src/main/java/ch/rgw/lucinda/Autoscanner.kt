@@ -47,6 +47,7 @@ class Autoscanner : AbstractVerticle() {
     var timer = 0L
     val watcher = FileSystems.getDefault().newWatchService()
     val keys = HashMap<WatchKey, Path>()
+    val BASEADDR = Communicator.BASEADDR
 
     override fun start() {
         super.start()
@@ -148,7 +149,7 @@ class Autoscanner : AbstractVerticle() {
                     override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
                         try {
                             checkFile(file)
-                        }catch(e: Exception){
+                        } catch(e: Exception) {
                             log.severe("Exception while checking ${file.toAbsolutePath()}, ${e.message}")
                         }
                         return FileVisitResult.CONTINUE
@@ -190,12 +191,12 @@ class Autoscanner : AbstractVerticle() {
      */
     fun checkFile(file: Path) {
         log.entering("Autoscanner", "checkFile")
-        if(!exclude(file)) {
+        if (!exclude(file)) {
             if (Files.isRegularFile(file) && (!Files.isHidden(file))) {
                 val absolute = file.toFile().absolutePath
                 log.info("checking ${absolute}")
                 val id = makeID(file)
-                val doc = indexManager?.getDocument(id)
+                val doc = Communicator.indexManager?.getDocument(id)
                 if (doc == null) {
                     log.fine("did not find ${file}/${id} in index. Adding")
                     addFile(file)
@@ -207,9 +208,9 @@ class Autoscanner : AbstractVerticle() {
     }
 
     private fun exclude(file: Path): Boolean {
-        if(file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file)==0L)){
+        if (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L)) {
             return true
-        }else{
+        } else {
             return false;
         }
 
@@ -219,7 +220,7 @@ class Autoscanner : AbstractVerticle() {
      * Add an Item. If it is a directory, add it to the watch list. If it is a file, add it to the index
      */
     fun addFile(file: Path) {
-        if(!exclude(file)) {
+        if (!exclude(file)) {
             val filename = file.toFile().absolutePath
             log.info("adding ${filename}")
             if (Files.isDirectory(file, NOFOLLOW_LINKS)) {
@@ -232,7 +233,7 @@ class Autoscanner : AbstractVerticle() {
                         if (result.failed()) {
                             val errmsg = "import ${file.toAbsolutePath()} failed." + result.cause().message
                             log.severe(errmsg)
-                            vertx.eventBus().publish(FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
+                            vertx.eventBus().publish(Communicator.FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
                         }
                     }
                 })
@@ -241,11 +242,11 @@ class Autoscanner : AbstractVerticle() {
     }
 
     fun removeFile(file: Path) {
-        if(!exclude(file)) {
+        if (!exclude(file)) {
             val absolute = file.toFile().absolutePath
             log.info("removing ${absolute}")
             val id = makeID(file)
-            indexManager?.removeDocument(id)
+            Communicator.indexManager?.removeDocument(id)
         }
     }
 

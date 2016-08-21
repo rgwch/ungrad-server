@@ -15,10 +15,7 @@
 package ch.elexis.ungrad.server
 
 import ch.rgw.tools.JsonUtil
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.AsyncResult
-import io.vertx.core.AsyncResultHandler
-import io.vertx.core.Future
+import io.vertx.core.*
 import io.vertx.core.eventbus.Message
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.Json
@@ -30,6 +27,9 @@ import io.vertx.ext.web.handler.RedirectAuthHandler
 import io.vertx.ext.web.handler.SessionHandler
 import io.vertx.ext.web.sstore.LocalSessionStore
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.net.URL
+import java.net.URLClassLoader
 import java.util.*
 
 /**
@@ -50,6 +50,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
     val servers = HashMap<String, String>()
     val log = LoggerFactory.getLogger(this.javaClass)
     val params = "\\/:[a-z]+".toRegex()
+    val verticles=HashMap<String,String>()
     val router: Router by lazy {
         Router.router(vertx)
     }
@@ -96,6 +97,40 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                     }
                 }
                 msg.reply(JsonUtil.create("status:ok"))
+            }
+        }
+        vertx.eventBus().consumer<JsonObject>(ADDR_LAUNCH){ msg ->
+            val jo=msg.body()
+            val verticle_name=jo.getString("name")
+            val verticle_url=jo.getString("url")
+            val verticle_config=jo.getJsonObject("config",JsonObject())
+            if(verticle_url.endsWith(".jar")){
+                try{
+                    val url=URL(verticle_url)
+                    val file = File(url.file)
+                    if (!file.exists() || !file.canRead()) {
+                        ch.elexis.ungrad.server.log.error("can't read ${file.absolutePath}")
+                    }
+
+                    val cl = URLClassLoader(Array<URL>(1, { url }))
+                    val clazz = cl.loadClass(jo.getString("verticle"))
+                    val verticle = clazz.newInstance()
+                    val options = DeploymentOptions().setConfig(verticle_config)
+                    vertx.deployVerticle(verticle as Verticle, options) { handler ->
+                        if (handler.succeeded()) {
+                            verticles.put(verticle_name, handler.result())
+                            log.info("launched ${verticle_name}")
+                            msg.reply(JsonUtil.create("status:ok"))
+                        } else {
+                            log.error(" *** could not launch ${verticle_name}", handler.cause())
+                            msg.fail(1,handler.cause().message)
+                        }
+                    }
+
+                }catch(ex:Exception){
+                    log.error(" *** Could not launch Verticle ${verticle_url}",ex)
+                    msg.fail(2,ex.message)
+                }
             }
         }
         /*
@@ -202,6 +237,11 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
 
     }
 
+    override fun stop(){
+        verticles.forEach {
+            vertx.undeploy(it.value)
+        }
+    }
 
     fun sayError(ctx: RoutingContext, errno: Int, errmsg: String) {
         ctx.response().setStatusCode(errno).end(errmsg)
@@ -236,6 +276,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
 
     companion object {
         val ADDR_REGISTER = "ch.elexis.ungrad.server.register";
+        val ADDR_LAUNCH= "ch.elexis.ungrad.server.launch"
         val AUTH_ERR = "bad username or password"
     }
 

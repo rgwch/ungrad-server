@@ -45,12 +45,12 @@ import java.util.logging.Logger
  * This class maintains the global index for the lucinda
  * Created by gerry on 20.03.16.
  */
-class IndexManager(directory: String) {
+class IndexManager(directory: String,val language:String) {
 
     //val dir: Path =
     val log = Logger.getLogger("lucinda.indexManager")
 
-    val analyzer = when (config.get("default_language", "de")) {
+    val analyzer = when (language) {
         "de" -> GermanAnalyzer()
         "fr" -> FrenchAnalyzer()
         "it" -> ItalianAnalyzer()

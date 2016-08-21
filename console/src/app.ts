@@ -1,5 +1,11 @@
+/**
+ * Copyright (c) 2016 by G. Weirich
+ */
 import {Router, RouterConfiguration} from 'aurelia-router';
 
+/**
+ * This is the entry module of the application. Create and define the router.
+ */
 export class App {
   router:Router;
 

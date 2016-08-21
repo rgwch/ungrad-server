@@ -1,5 +1,6 @@
 import ch.rgw.lucinda.Communicator;
 import ch.rgw.tools.Configuration;
+import ch.rgw.tools.JsonUtil;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -23,7 +24,7 @@ public class Test_LucindaInterface {
     @BeforeClass
     public static void createClient(TestContext ctx){
         vertx= Vertx.vertx();
-        Configuration cfg=new Configuration();
+        JsonObject cfg=new JsonObject();
         Async async=ctx.async();
         vertx.deployVerticle(new Communicator(cfg), test -> {
             Assert.assertTrue(test.succeeded());

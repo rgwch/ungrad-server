@@ -16,6 +16,7 @@ package ch.rgw.lucinda
 
 
 import ch.rgw.tools.Configuration
+import ch.rgw.tools.JsonUtil
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.AsyncResultHandler
@@ -31,7 +32,7 @@ import org.slf4j.LoggerFactory
  */
 
 
-class Communicator(cfg: Configuration) : AbstractVerticle() {
+class Communicator(cfg: JsonObject) : AbstractVerticle() {
     val API = "1.0"
     val eb: EventBus by lazy {
         vertx.eventBus()
@@ -41,13 +42,13 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
      * Constructor parameters: A ch.rgw.tools.Configuration object with at least the paramater fs_indexdir
      */
     init {
-        config.merge(cfg)
-        indexManager = IndexManager(config.get("fs_indexdir", "target/store"))
+        config.mergeIn(cfg)
+        indexManager = IndexManager(config.getString("fs_indexdir", "target/store"),config.getString("default_language", "de"))
     }
 
     override fun start() {
         super.start()
-        val dispatcher = Dispatcher(vertx)
+        val dispatcher = Dispatcher(vertx,config.getString("fs_import", "target/store"))
 
         fun register(func: RegSpec) {
             eb.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
@@ -261,5 +262,30 @@ class Communicator(cfg: Configuration) : AbstractVerticle() {
 
     data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
 
+    companion object{
+        const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
+        const val BASEADDR = "ch.rgw.lucinda"
+        const val CONTROL_ADDR=BASEADDR+".admin"
+
+        /** reply address for error messages */
+        val FUNC_ERROR = Communicator.RegSpec(".error", "lucinda/error", "user", "get")
+        /** Add a file to the storage */
+        val FUNC_IMPORT = Communicator.RegSpec(".import", "lucinda/import", "docmgr", "post")
+        /** Index a file in-place (don't add it to the storage) */
+        val FUNC_INDEX = Communicator.RegSpec(".index", "lucinda/index/:url", "docmgr", "get")
+        /** Retrieve a file by _id*/
+        val FUNC_GETFILE = Communicator.RegSpec(".get", "lucinda/get/:id", "user", "get")
+        /** Get Metadata of files matching a search query */
+        val FUNC_FINDFILES = Communicator.RegSpec(".find", "lucinda/find/:spec", "user", "get")
+        /** Update Metadata of a file by _id*/
+        val FUNC_UPDATE = Communicator.RegSpec(".update", "lucinda/update", "docmgr","post")
+        /** Connection check */
+        val FUNC_PING = Communicator.RegSpec(".ping", "lucinda/ping/:var", "guest", "get")
+        val log = LoggerFactory.getLogger("lucinda.Communicator")
+
+        var indexManager: IndexManager? = null;
+        val config= JsonUtil()
+
+    }
 }
 

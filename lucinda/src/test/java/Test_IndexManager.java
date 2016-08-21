@@ -1,6 +1,6 @@
 import ch.rgw.io.FileTool;
+import ch.rgw.lucinda.Communicator;
 import ch.rgw.lucinda.IndexManager;
-import ch.rgw.lucinda.LauncherKt;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.lucene.document.Document;
@@ -37,8 +37,8 @@ public class Test_IndexManager {
     @Before
     public void setUp(){
         FileTool.deltree("target/indexMgrTest");
-        LauncherKt.setIndexManager(new IndexManager("target/indexMgrTest"));
-        indexManager= LauncherKt.getIndexManager();
+        Communicator.Companion.setIndexManager(new IndexManager("target/indexMgrTest","de"));
+        indexManager= Communicator.Companion.getIndexManager();
     }
     @After
     public void tearDown(){
