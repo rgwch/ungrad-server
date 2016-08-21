@@ -104,32 +104,45 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
             val verticle_name=jo.getString("name")
             val verticle_url=jo.getString("url")
             val verticle_config=jo.getJsonObject("config",JsonObject())
-            if(verticle_url.endsWith(".jar")){
-                try{
-                    val url=URL(verticle_url)
-                    val file = File(url.file)
-                    if (!file.exists() || !file.canRead()) {
-                        ch.elexis.ungrad.server.log.error("can't read ${file.absolutePath}")
-                    }
+            val url=URL(verticle_url)
+            val file = File(url.file)
+            if (!file.exists() || !file.canRead()) {
+                ch.elexis.ungrad.server.log.error("can't read ${file.absolutePath}")
+            }else {
+                if (verticle_url.endsWith(".jar")) {
+                    try {
 
-                    val cl = URLClassLoader(Array<URL>(1, { url }))
-                    val clazz = cl.loadClass(jo.getString("verticle"))
-                    val verticle = clazz.newInstance()
-                    val options = DeploymentOptions().setConfig(verticle_config)
-                    vertx.deployVerticle(verticle as Verticle, options) { handler ->
-                        if (handler.succeeded()) {
-                            verticles.put(verticle_name, handler.result())
+                        val cl = URLClassLoader(Array<URL>(1, { url }))
+                        val clazz = cl.loadClass(jo.getString("verticle"))
+                        val verticle = clazz.newInstance()
+                        val options = DeploymentOptions().setConfig(verticle_config)
+                        vertx.deployVerticle(verticle as Verticle, options) { handler ->
+                            if (handler.succeeded()) {
+                                verticles.put(verticle_name, handler.result())
+                                log.info("launched ${verticle_name}")
+                                msg.reply(JsonUtil.create("status:ok"))
+                            } else {
+                                log.error(" *** could not launch ${verticle_name}", handler.cause())
+                                msg.fail(1, handler.cause().message)
+                            }
+                        }
+
+                    } catch(ex: Exception) {
+                        log.error(" *** Could not launch Verticle ${verticle_url}", ex)
+                        msg.fail(2, ex.message)
+                    }
+                } else {
+                    vertx.deployVerticle(file.absolutePath,DeploymentOptions().setConfig(verticle_config)){handler ->
+                        if(handler.succeeded()){
+                            verticles.put(verticle_name,handler.result())
                             log.info("launched ${verticle_name}")
                             msg.reply(JsonUtil.create("status:ok"))
-                        } else {
+                        }else{
                             log.error(" *** could not launch ${verticle_name}", handler.cause())
-                            msg.fail(1,handler.cause().message)
+                            msg.fail(1, handler.cause().message)
+
                         }
                     }
-
-                }catch(ex:Exception){
-                    log.error(" *** Could not launch Verticle ${verticle_url}",ex)
-                    msg.fail(2,ex.message)
                 }
             }
         }

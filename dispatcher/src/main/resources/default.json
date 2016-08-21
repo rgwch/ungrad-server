@@ -1,5 +1,10 @@
+/**
+Default configuration file for ungrad server. Please don't edit this file, but copy it tu 'user.json' instead and edit that.
+'user.json' will overlay this file i.e. any parameter found here will be overwritten, if the same parameter is in user.json.
+The format ist strict json, but comments are allowed like this here.
+*/
 {
-    "webroot": "console", // the webroot in debug mode
+    "webroot": "console", // where to serve static files from
     "rest_port": 2016,
     "users":{
         "admin":{
@@ -56,6 +61,13 @@
                 "charset":"utf-8",
                 "username":"elexisuser",
                 "password":"elexispassword"
+            }
+        },
+        {
+            "name":"Articles",
+            "url":"file:./article/src/medical_articles.js",
+            "config":{
+                "epha":"/Users/gerry/git/cli-robot"
             }
         }
     ]

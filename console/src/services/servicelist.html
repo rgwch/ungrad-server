@@ -1,8 +1,8 @@
 <template>
   <p>Liste</p>
-  <ul>
-    <li repeat.for="service of services">
-      ${service.name}
+  <ul class="list-group">
+    <li repeat.for="service of services" class="list-group-item">
+      <a route-href="servicedetail">${service.name}</a>
     </li>
   </ul>
 </template>
