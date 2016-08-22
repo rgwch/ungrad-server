@@ -48,7 +48,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
     val API = "1.0"
     val handlers = HashMap<String, String>()
     val servers = HashMap<String, String>()
-    val log = LoggerFactory.getLogger(this.javaClass)
+    val log = LoggerFactory.getLogger("Restpoint")
     val params = "\\/:[a-z]+".toRegex()
     val verticles=HashMap<String,String>()
     val router: Router by lazy {

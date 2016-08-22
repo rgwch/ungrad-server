@@ -1,20 +1,10 @@
-<!--
-Copyright (c) 2016 by G. Weirich
-
-Screen of the entry module of the application
--->
 <template>
-  <!-- require from="bootstrap/css/bootstrap.css"></require -->
   <require from="css/styles.css"></require>
-
+  <require from="./services/list"></require>
   <div class="container">
     <div class="row">
-      <div class="col-md-4">
-        <router-view name="left"></router-view>
-      </div>
-      <div class="col-md-8">
-        <router-view name="main"></router-view>
-      </div>
+      <list class="col-md-3"></list>
+      <router-view class="col-md-9"></router-view>
     </div>
   </div>
 </template>

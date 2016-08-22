@@ -12,30 +12,8 @@ export class App {
   configureRouter(config:RouterConfiguration, router:Router) {
     config.title = 'Contacts';
     config.map([
-      {
-        route: '',
-        viewPorts: {
-          left: {
-            moduleId: 'services/placeholder'
-          },
-          main: {
-            moduleId: 'login',
-          }
-        },
-        name: 'login'
-      },
-      {
-        route: 'configure',
-        viewPorts: {
-          left: {
-            moduleId: 'services/servicelist',
-          },
-          main: {
-            moduleId: 'services/servicedetail'
-          }
-        },
-        name: 'configure'
-      },
+      { route: '', moduleId: 'login', name:'login'},
+      { route: 'configure', moduleId: 'services/servicedetail', name: 'configure'},
       {route: 'test', moduleId: 'test', name: 'Test'}
     ]);
 

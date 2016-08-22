@@ -113,6 +113,10 @@
             <artifactId>vertx-lang-js</artifactId>
             <version>${vertx-version}</version>
         </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
     </dependencies>
     <properties>
         <kotlin.version>1.0.3</kotlin.version>

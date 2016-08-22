@@ -13,6 +13,7 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
 
     override fun start() {
         super.start()
+        log.info("Appointments verticle launching")
         register(FUNC_LIST)
 
         vertx.eventBus().consumer<JsonObject>(FUNC_LIST.addr) { msg ->

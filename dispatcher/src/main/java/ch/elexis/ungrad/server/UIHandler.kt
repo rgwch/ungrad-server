@@ -32,10 +32,14 @@ import java.util.jar.Manifest
 class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
 
     val df = SimpleDateFormat("E, dd MM yyyy HH:mm:ss z")
+    val dm = SimpleDateFormat("yyyyMMdd-HHmm")
     val log = LoggerFactory.getLogger("UIHandler")
 
     init {
         df.timeZone = TimeZone.getTimeZone("UTC")
+        log.info("Origin is "+File(".").absolutePath)
+        log.info("Webroot is "+File(cfg.getString("webroot",".")).absolutePath)
+        println("UIHandler launched")
     }
 
     override fun handle(ctx: RoutingContext) {
@@ -69,7 +73,8 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
                 ctx.response().putHeader("Content-Length", java.lang.Long.toString(modified.length.toLong()))
                 ctx.response().write(modified)
             } catch (e: Throwable) {
-                ctx.response().setStatusCode(500).end("internal Server error")
+                log.error("Could not return index.html",e )
+                ctx.response().setStatusCode(501).end("internal Server error")
             } finally {
                 if (scanner != null) {
                     scanner.close()
@@ -206,7 +211,7 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
             return RscObject(null, false, 0L)
         }
 
-        val dat = df.parse(timestamp)
+        val dat = dm.parse(timestamp)
         val resource = "/" + root + name
         log.debug("Resource loader: trying to load ${resource} with timestamp ${dat.toString()}")
         val rsr = javaClass.getResource(resource)

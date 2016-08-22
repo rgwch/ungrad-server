@@ -20,7 +20,7 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
 
     override fun start() {
         super.start()
-
+        log.info("Patients verticle launching")
         register(FUNC_PATLIST)
         register(FUNC_PATDETAIL)
 

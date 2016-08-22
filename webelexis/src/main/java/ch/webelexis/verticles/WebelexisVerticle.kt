@@ -19,12 +19,12 @@ import org.slf4j.Logger
  */
 abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : AbstractVerticle(){
     val API = "1.0"
-    val log : Logger=org.slf4j.LoggerFactory.getLogger(WebelexisVerticle::class.java)
+    val log : Logger=org.slf4j.LoggerFactory.getLogger("Webelexis")
     val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
 
 
     val database: AsyncSQLClient by lazy {
-        Patients.log.debug("creating database " + config().encodePrettily())
+        log.debug ("creating database " + config().encodePrettily())
         if (config().getString("type", "mysql") == "mysql") {
             MySQLClient.createShared(vertx, config())
         } else {

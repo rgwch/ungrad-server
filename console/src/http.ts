@@ -22,4 +22,12 @@ export class Http {
     })
 
   }
+
+  getServices(){
+    return new Promise(resolve => {
+      this.get("/api/getServices", function(response){
+        resolve(JSON.parse(response.response))
+      })
+    })
+  }
 }
