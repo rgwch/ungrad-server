@@ -1,6 +1,11 @@
 import {HttpClient} from 'aurelia-http-client';
 import {RequestMessage} from "aurelia-http-client/dist/aurelia-http-client";
 
+export interface IService {
+  id:String,
+  address:String
+}
+
 export class Http {
   private client:HttpClient
 
@@ -23,10 +28,19 @@ export class Http {
 
   }
 
-  getServices(){
+
+  getServices():Promise<Array<IService>> {
     return new Promise(resolve => {
-      this.get("/api/getServices", function(response){
+      this.get("/api/getServices", function (response) {
         resolve(JSON.parse(response.response))
+      })
+    })
+  }
+
+  getServiceTitle(srv:IService):Promise<String> {
+    return new Promise(resolve => {
+      this.get(`/api/services/${srv.id}/getServiceName/dummy`, function (response) {
+        resolve(JSON.parse(response.response).name)
       })
     })
   }

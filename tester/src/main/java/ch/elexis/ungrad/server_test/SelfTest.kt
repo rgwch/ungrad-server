@@ -43,6 +43,13 @@ class SelfTest: AbstractVerticle() {
             msg.reply(JsonObject().put("Answer:","Pong, ${plus}, ${minus}"))
 
         }
+        vertx.eventBus().consumer<JsonObject>("ch.elexis.ungrad.server_test.admin"){msg ->
+            if(msg.body().getString("command")=="getName"){
+                msg.reply(JsonUtil.create("status:ok","name:Server self test"))
+            }else if(msg.body().getString("command")=="getParams"){
+                msg.reply(JsonObject())
+            }
+        }
         /**
          * On startup, register our EventBus address with the dispatcher and tell him, that we are
          * interested in "get" requests with the given address scheme.

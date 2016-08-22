@@ -1,10 +1,11 @@
 import {inject} from 'aurelia-framework'
-import {Http} from '../http'
+import {Http,IService} from '../http'
 
 @inject(Http)
 export class List {
   api:Http
-  services:Array<Object>=[]
+  services:Array<IService>=[]
+  serviceNames:Array<String>=[]
 
   constructor(api){
     this.api=api
@@ -13,6 +14,9 @@ export class List {
   created(){
     this.api.getServices().then(services => {
       this.services=services
+      this.services.forEach(service => {
+        this.api.getServiceTitle(service).then(name => this.serviceNames.push(name))
+      })
     })
   }
   test="Liste-Test"

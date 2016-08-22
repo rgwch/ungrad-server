@@ -28,11 +28,11 @@ var register=function(rest,ebaddr,method,role,handler){
 
 eb.consumer("ch.elexis.ungrad.articles.admin",function(message){
   console.log(name+"got admin")
-  switch(message.body.command){
+  switch(message.body().command){
     case "getParams":
       var parm=require('./params').parm
       break;
-    case getName:
+    case "getName":
       message.reply({"status":"ok","name":"Medical Articles Switzerland"})
       break;
     default:

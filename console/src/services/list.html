@@ -1,10 +1,8 @@
 <template>
   <div class="list">
-    <h1>List</h1>
-    <p>${test}</p>
-    <ul>
-      <li repeat.for="service of services">
-        ${service.name}
+    <ul class="list-group">
+      <li repeat.for="name of serviceNames" class="list-group-item">
+        ${name}
       </li>
     </ul>
   </div>
