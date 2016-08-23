@@ -1,11 +1,8 @@
 import {HttpClient} from 'aurelia-http-client';
 import {RequestMessage} from "aurelia-http-client/dist/aurelia-http-client";
+import {IService} from './appstate'
 
-export interface IService {
-  id:String,
-  address:String,
-  name?:String
-}
+
 
 export class Http {
   private client:HttpClient

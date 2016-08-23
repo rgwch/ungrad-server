@@ -1,7 +1,7 @@
 <template>
   <div class="list">
     <ul class="list-group">
-      <li repeat.for="service of services" class="list-group-item">
+      <li repeat.for="service of services" class="list-group-item" click.trigger="doSelect(service)">
         ${service.name}
       </li>
     </ul>

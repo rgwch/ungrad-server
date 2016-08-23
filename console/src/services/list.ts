@@ -1,17 +1,15 @@
 import {inject} from 'aurelia-framework'
-import {Http,IService} from '../http'
-import {AppState} from '../appstate'
+import {Http} from '../http'
+import {AppState,IService} from '../appstate'
+import {ServiceSelected} from '../messages'
+import {EventAggregator} from 'aurelia-event-aggregator'
 
-@inject(Http,AppState)
+@inject(Http,AppState,EventAggregator)
 export class List {
-  api:Http
-  state:AppState
   services:Array<IService>=[]
   serviceNames:Array<String>=[]
 
-  constructor(api,appstate){
-    this.api=api
-    this.state=appstate
+  constructor(private api,private appstate, private ea){
   }
 
   created(){
@@ -20,8 +18,12 @@ export class List {
       this.services.forEach(service => {
         this.api.getServiceTitle(service).then(name => service['name']=name)
       })
-      this.state.selectedService=services[0]
+      this.appstate.selectedService=services[0]
+      this.ea.publish(new ServiceSelected(services[0]))
     })
   }
-  test="Liste-Test"
+
+  doSelect(service){
+    this.ea.publish(new ServiceSelected(service))
+  }
 }

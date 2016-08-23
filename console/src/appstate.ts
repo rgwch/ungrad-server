@@ -6,3 +6,9 @@ export class AppState{
   bLoggedIn:Boolean=false;
   selectedService={}
 }
+
+export interface IService {
+  id:String,
+  address:String,
+  name?:String
+}
