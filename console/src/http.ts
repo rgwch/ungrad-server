@@ -3,7 +3,8 @@ import {RequestMessage} from "aurelia-http-client/dist/aurelia-http-client";
 
 export interface IService {
   id:String,
-  address:String
+  address:String,
+  name?:String
 }
 
 export class Http {

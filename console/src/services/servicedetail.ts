@@ -1,5 +1,7 @@
+import {AppState} from '../appstate'
 export class ServiceDetail {
-
-  text:String="text"
+  serviceID:String
+  serviceCmd:String
+  serviceName:String
 
 }

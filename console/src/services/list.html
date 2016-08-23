@@ -1,8 +1,8 @@
 <template>
   <div class="list">
     <ul class="list-group">
-      <li repeat.for="name of serviceNames" class="list-group-item">
-        ${name}
+      <li repeat.for="service of services" class="list-group-item">
+        ${service.name}
       </li>
     </ul>
   </div>
