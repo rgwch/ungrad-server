@@ -23,4 +23,28 @@ export class ServiceDetail {
     })
   }
 
+  isType(typ:String, param:IServiceParameter):Boolean{
+    return(param.type.toLowerCase()==typ)
+  }
+  checkedState(param:IServiceParameter) : String{
+    if(param.value===true){
+      return "checked"
+    }else{
+      return "unchecked"
+    }
+  }
+  writeState(param:IServiceParameter){
+    if(param.writable===true){
+      return "writable"
+    }else{
+      return "readonly"
+    }
+  }
+  disabledState(param:IServiceParameter){
+    if(param.writable===true){
+      return "enabled"
+    }else{
+      return "disabled"
+    }
+  }
 }
