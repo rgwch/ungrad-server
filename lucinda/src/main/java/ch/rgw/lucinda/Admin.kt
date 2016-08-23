@@ -31,7 +31,8 @@ object Admin : Handler<Message<JsonObject>> {
                 "name":"indexdir",
                 "caption":"index directory",
                 "type": "string",
-                "value": "/some/dir"
+                "value": "/some/dir",
+                "writable":true
             }
         """
         val datadir = """
@@ -39,10 +40,11 @@ object Admin : Handler<Message<JsonObject>> {
                 "name":"datadir",
                 "caption":"import directory",
                 "type": "string",
-                "value":"/some/dir/data"
+                "value":"/some/dir/data",
+                "writable":true
             }
         """
-        val ret = JsonUtil().add("status:ok")
+        val ret = JsonUtil.create("status:ok")
         val result= JsonArray()
         val jIndex=JsonObject(indexdir)
         val jData=JsonObject(datadir)

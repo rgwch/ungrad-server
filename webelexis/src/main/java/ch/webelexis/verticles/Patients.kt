@@ -81,7 +81,7 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
     }
 
     override fun createParams():JsonObject{
-        return JsonObject()
+        return JsonUtil.create("status:ok").put("result",JsonArray())
     }
 
     override fun getName()="Elexis Patients"

@@ -16,6 +16,7 @@ package ch.elexis.ungrad.server_test
 import ch.rgw.tools.JsonUtil
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.eventbus.Message
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
@@ -47,7 +48,12 @@ class SelfTest: AbstractVerticle() {
             if(msg.body().getString("command")=="getName"){
                 msg.reply(JsonUtil.create("status:ok","name:Server self test"))
             }else if(msg.body().getString("command")=="getParams"){
-                msg.reply(JsonObject())
+                val result=JsonArray()
+                val os=System.getProperty("os.name")+" / "+System.getProperty("os.arch")+", v."+System.getProperty("os.version")
+                result.add(JsonUtil.create("name:os","caption:Operating System","type:String").put("writable",false).put("value",os))
+                val java=System.getProperty("java.version")+" / "+System.getProperty("java.vendor")
+                result.add(JsonUtil.create("name:java","caption:Java","type:String","value:${java}").put("writable",false))
+                msg.reply(JsonUtil.create("status:ok").put("result",result))
             }
         }
         /**

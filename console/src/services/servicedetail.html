@@ -3,4 +3,7 @@
   <p>id: ${serviceID}</p>
   <p>cmd: ${serviceCmd}</p>
   <p>name: ${serviceName}</p>
+  <ul repeat.for="param of parameters">
+    <li><em>${param.caption}</em>: ${param.value}</li>
+  </ul>
 </template>

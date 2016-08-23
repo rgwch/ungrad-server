@@ -12,3 +12,11 @@ export interface IService {
   address:String,
   name?:String
 }
+
+export interface IServiceParameter{
+  name:String
+  caption: String
+  type: String
+  writable: boolean
+  value:any
+}

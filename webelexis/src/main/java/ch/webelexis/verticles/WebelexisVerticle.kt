@@ -37,7 +37,10 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
         vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR){msg ->
             when(msg.body().getString("command")){
                 "getName" -> msg.reply(JsonUtil.create("status:ok","name:${getName()}"))
-                "getParams" -> msg.reply(createParams())
+                "getParams" -> {
+                    val answer=createParams()
+                    msg.reply(answer)
+                }
             }
         }
 
