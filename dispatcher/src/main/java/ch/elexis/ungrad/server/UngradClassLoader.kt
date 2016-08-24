@@ -13,19 +13,21 @@ class UngradClassLoader(val url: String) : ClassLoader() {
 
     override fun loadClass(name: String): Class<*> {
         val bytes = loadClassData(name)
-        if (bytes == null) {
-            return super.loadClass(name)
+        return if (bytes == null) {
+            super.loadClass(name)
+        }else {
+            val clazz = defineClass(name, bytes, 0, bytes.size)
+            resolveClass(clazz)
+            clazz
         }
-        val clazz=defineClass(name, bytes, 0, bytes.size)
-        resolveClass(clazz)
-        return clazz
     }
-
+/*
     fun loadClass(name: String, clazz: Class<*>) : Class<*>{
         val ret=loadClass(name)
         resolveClass(ret)
         return ret
     }
+    */
     fun loadClassData(name: String): ByteArray? {
         val completeURL=url+"!/"+name.replace("\\.".toRegex(),"/")+".class"
         val url = URL(completeURL)

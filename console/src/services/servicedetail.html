@@ -5,7 +5,7 @@
       <div class="col-md-9" if.bind="isType('string',param)">
         <input type="text" class="form-control" id.bind="param.name" value.bind="param.value" readonly.bind="writeState(param)">
       </div>
-      <div class="col-md-3" if.bind="isType('boolean',param)">
+      <div class="col-md-3 checkbox" if.bind="isType('boolean',param)">
         <input type="checkbox" class="form-control" id="${param.name}" checked.bind="checkedState(param)"  disabled="disabledState(param)">
       </div>
       <div class="col-md-3" if.bind="isType('action',param)">

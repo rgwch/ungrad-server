@@ -7,7 +7,6 @@ import {EventAggregator} from 'aurelia-event-aggregator'
 @inject(Http,AppState,EventAggregator)
 export class List {
   services:Array<IService>=[]
-  serviceNames:Array<String>=[]
 
   constructor(private api,private appstate, private ea){
   }
@@ -17,6 +16,16 @@ export class List {
       this.services=services
       this.services.forEach(service => {
         this.api.getServiceTitle(service).then(name => service['name']=name)
+        this.services.sort((a,b)=>{
+          if((typeof(a.name) == 'undefined') || (typeof(b.name)== 'undefined')){
+            return 0;
+          }
+          if(a.name.toLowerCase()< b.name.toLowerCase()) {
+            return -1
+          } else {
+            return 1
+          }
+        })
       })
       this.appstate.selectedService=services[0]
       this.ea.publish(new ServiceSelected(services[0]))
@@ -24,6 +33,8 @@ export class List {
   }
 
   doSelect(service){
+    this.appstate.selectedService=service
     this.ea.publish(new ServiceSelected(service))
   }
+
 }

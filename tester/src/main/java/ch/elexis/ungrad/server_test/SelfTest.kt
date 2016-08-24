@@ -46,13 +46,17 @@ class SelfTest: AbstractVerticle() {
         }
         vertx.eventBus().consumer<JsonObject>("ch.elexis.ungrad.server_test.admin"){msg ->
             if(msg.body().getString("command")=="getName"){
-                msg.reply(JsonUtil.create("status:ok","name:Server self test"))
+                msg.reply(JsonUtil.create("status:ok","name:Server Status"))
             }else if(msg.body().getString("command")=="getParams"){
                 val result=JsonArray()
                 val os=System.getProperty("os.name")+" / "+System.getProperty("os.arch")+", v."+System.getProperty("os.version")
                 result.add(JsonUtil.create("name:os","caption:Operating System","type:String").put("writable",false).put("value",os))
                 val java=System.getProperty("java.version")+" / "+System.getProperty("java.vendor")
-                result.add(JsonUtil.create("name:java","caption:Java","type:String","value:${java}").put("writable",false))
+                result.add(JsonUtil.create("name:java","caption:Java","type:String","value:$java").put("writable",false))
+                val res=StringBuilder()
+                res.append("processors: ").append(Runtime.getRuntime().availableProcessors())
+                .append(", memory: " ).append(Math.round(Runtime.getRuntime().freeMemory()/1024f)).append("K")
+                result.add(JsonUtil.create("name:resources","caption:Resources","type:string","value:${res.toString()}").put("writable",false))
                 msg.reply(JsonUtil.create("status:ok").put("result",result))
             }
         }

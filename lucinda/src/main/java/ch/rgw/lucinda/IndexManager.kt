@@ -255,17 +255,11 @@ class IndexManager(directory: String,val language:String) {
 
     fun removeDocument(id: String) {
         require(id.isNotBlank())
-        val doc = getDocument(id)
         val term = Term("_id", id)
         val writer = createWriter()
         writer.deleteDocuments(term)
         writer.close()
-        /*
-        writer.flush()
-        writer.commit()
 
-        searcherManager.maybeRefreshBlocking()
-        */
     }
 
 

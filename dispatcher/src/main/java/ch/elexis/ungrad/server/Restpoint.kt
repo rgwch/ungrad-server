@@ -222,7 +222,8 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                             "stopService" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:stop"), ResultHandler(ctx))
                             "getServiceName" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:getName"), ResultHandler(ctx))
                             "getParams" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:getParams"), ResultHandler(ctx))
-                            else -> ctx.response().setStatusCode(406).end("unknown subcommand")
+                            "setParam" -> vertx.eventBus().send<JsonObject>(service,JsonUtil.create("command:setParam","value:${param}"),ResultHandler(ctx))
+                            else -> ctx.response().setStatusCode(406).end("unknown sub command")
                         }
                     } else {
                         ctx.response().setStatusCode(404).end("${serverID} not found")
