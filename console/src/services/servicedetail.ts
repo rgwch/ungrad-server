@@ -26,18 +26,18 @@ export class ServiceDetail {
   isType(typ:String, param:IServiceParameter):Boolean{
     return(param.type.toLowerCase()==typ)
   }
-  checkedState(param:IServiceParameter) : String{
+  checkedState(param:IServiceParameter) : Boolean{
     if(param.value===true){
-      return "checked"
+      return true
     }else{
-      return "unchecked"
+      return false
     }
   }
-  writeState(param:IServiceParameter){
+  writeState(param:IServiceParameter):Boolean{
     if(param.writable===true){
-      return "writable"
+      return false
     }else{
-      return "readonly"
+      return true
     }
   }
   disabledState(param:IServiceParameter){

@@ -7,14 +7,14 @@ module.exports = {
         "caption":"Data source",
         "type":"String",
         "value":"/Users/gerry/cli-robot",
-        "writeable":true
+        "writeable":false
       },
       {
         "name":"has_atc",
         "caption":"ATC loaded",
         "type":"boolean",
         "value":true,
-        writable:true
+        writable:false
       },
       {
         "name":"load:atc",

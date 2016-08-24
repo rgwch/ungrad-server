@@ -6,7 +6,7 @@
         <input type="text" class="form-control" id.bind="param.name" value.bind="param.value" readonly.bind="writeState(param)">
       </div>
       <div class="col-md-3" if.bind="isType('boolean',param)">
-        <input type="checkbox" class="form-control" id="${param.name}" checked="checkedState(param)"  disabled="disabledState(param)">
+        <input type="checkbox" class="form-control" id="${param.name}" checked.bind="checkedState(param)"  disabled="disabledState(param)">
       </div>
       <div class="col-md-3" if.bind="isType('action',param)">
         <button type="push" class="btn-sm" value="klick">klack</button>
