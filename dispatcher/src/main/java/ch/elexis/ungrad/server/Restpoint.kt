@@ -250,6 +250,19 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                     }
                 }
             }
+            router.get("/api/services/:service/exec/:action").handler{ ctx ->
+                checkAuth(ctx, "admin"){
+                    val serverID = ctx.request().getParam("service")
+                    val serviceDesc = servers.get(serverID)
+                    if (serviceDesc != null) {
+                        val serviceAddr = serviceDesc.getString("address")
+                        vertx.eventBus().send<JsonObject>(serviceAddr, JsonUtil.create("command:exec", "action:${ctx.request().getParam("action")}"), ResultHandler(ctx))
+                    } else {
+                        ctx.response().setStatusCode(404).end("${serverID} not found")
+                    }
+                }
+
+            }
             // calls to other resources go to the web interface
             router.route("/ui/*").handler(UIHandler(cfg))
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)

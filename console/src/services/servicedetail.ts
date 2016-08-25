@@ -44,4 +44,10 @@ export class ServiceDetail {
       return "disabled"
     }
   }
+
+  run(name){
+    this.api.get(`/api/services/${this.serviceID}/exec/${name}`, result =>{
+      this.ea.publish(new ServiceSelected(JSON.parse(result.response).answer))
+    })
+  }
 }

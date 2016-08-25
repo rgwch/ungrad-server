@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory
 class SelfTest: AbstractVerticle() {
     val REGISTER_ADDRESS="ch.elexis.ungrad.server.register"
     val MY_ADDRESS="ch.elexis.ungrad.server-test"
-    val SERVER_CONTROL = "ch.elexis.ungrad.servAer_test.admin"
+    val SERVER_CONTROL = "ch.elexis.ungrad.server_test.admin"
 
 
     val log=LoggerFactory.getLogger(this.javaClass)
@@ -68,6 +68,8 @@ class SelfTest: AbstractVerticle() {
             }else if(msg.body().getString("command")=="setParam"){
                 msg.reply(JsonUtil.create("status:error","message:all parameters are read only"))
 
+            }else if(msg.body().getString("command")=="exec"){
+                msg.reply(JsonUtil.create("status:ok").put("answer",make_overview()))
             }
         }
         /**
@@ -90,7 +92,7 @@ class SelfTest: AbstractVerticle() {
     }
     fun make_overview(): JsonObject{
         return JsonUtil.create("id:ch.elexis.ungrad.server_info","name:Server info","address:$SERVER_CONTROL")
-                .put("params",JsonArray(PARAMS))
+                .put("params",JsonArray(params()))
     }
 
     companion object{
@@ -104,7 +106,8 @@ class SelfTest: AbstractVerticle() {
         fun max_memory()=Runtime.getRuntime().maxMemory()
         fun avail_memory()=Runtime.getRuntime().freeMemory()
         fun system_time()=TimeTool().toString(TimeTool.DATETIME_XML)
-        val PARAMS="""
+        fun roundKB(b:Long)=Math.round(b.toDouble()/(1024*1024))
+        fun params()="""
         [
             {
                 "name":"os_desc","caption":"OS","type":"string","value":"$os_name $os_version / $os_arch","writable":false
@@ -114,11 +117,14 @@ class SelfTest: AbstractVerticle() {
             },
             {
                 "name":"system","caption":"System","type":"string",
-                "value":"${processors()} Processors, Memory total ${max_memory()} / free ${avail_memory()} / max usable ${max_memory()}",
+                "value":"${processors()} Processors, Memory total ${roundKB(max_memory())}M / free ${roundKB(avail_memory())}M / max usable ${roundKB(max_memory())}M",
                 "writable": false
             },
             {
                 "name":"systime","caption":"System time","type":"string","value":"${system_time()}","writable":false
+            },
+            {
+                "name":"reload","caption":"Refresh","type":"action","value":"refresh","writable":true
             }
         ]
         """
