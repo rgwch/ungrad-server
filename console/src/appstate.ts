@@ -7,10 +7,12 @@ export class AppState{
   selectedService={}
 }
 
+
 export interface IService {
   id:String,
   address:String,
-  name?:String
+  name:String,
+  params?:Array<IServiceParameter>
 }
 
 export interface IServiceParameter{

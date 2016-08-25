@@ -13,10 +13,7 @@ export class ServiceDetail {
 
   constructor(private ea, private api){
     ea.subscribe(ServiceSelected, msg =>{
-      this.parameters=[]
-      api.getServiceParams(msg.service).then(result =>{
-        this.parameters=result.result
-      })
+      this.parameters=msg.service.params
       this.serviceID=msg.service.id
       this.serviceCmd=msg.service.address
       this.serviceName=msg.service.name

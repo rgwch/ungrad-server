@@ -36,7 +36,7 @@ eb.consumer("ch.elexis.ungrad.articles.admin",function(message){
         message.reply({"status":"ok","result":"0"})
       break;
     case "setParam":
-        message.reply({"status:ok"})
+        message.reply({"status":"ok"})
       break;
     default:
       message.reply({"status":"error","message":"unknown command "+message.body.command})

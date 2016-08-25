@@ -13,19 +13,16 @@ export class List {
 
   created(){
     this.api.getServices().then(services => {
-      this.services=services
-      this.services.forEach(service => {
-        this.api.getServiceTitle(service).then(name => service['name']=name)
-        this.services.sort((a,b)=>{
-          if((typeof(a.name) == 'undefined') || (typeof(b.name)== 'undefined')){
-            return 0;
-          }
-          if(a.name.toLowerCase()< b.name.toLowerCase()) {
-            return -1
-          } else {
-            return 1
-          }
-        })
+      this.services=services.sort((a,b) =>{
+        if((typeof(a.name) == 'undefined') || (typeof(b.name)== 'undefined')){
+          return 0;
+        }
+        if(a.name.toLowerCase()< b.name.toLowerCase()) {
+          return -1
+        } else {
+          return 1
+        }
+
       })
       this.appstate.selectedService=services[0]
       this.ea.publish(new ServiceSelected(services[0]))

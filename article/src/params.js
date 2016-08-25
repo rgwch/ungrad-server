@@ -9,7 +9,7 @@ module.exports = {
         "caption":"Data source",
         "type":"String",
         "value":"/Users/gerry/cli-robot",
-        "writeable":false
+        "writable":false
       },
       {
         "name":"has_atc",

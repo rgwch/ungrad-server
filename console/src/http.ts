@@ -35,23 +35,4 @@ export class Http {
     })
   }
 
-  getServiceTitle(srv:IService):Promise<String> {
-    return new Promise(resolve => {
-      this.get(`/api/services/${srv.id}/getServiceName/dummy`, function (response) {
-        resolve(JSON.parse(response.response).name)
-      })
-    })
-  }
-
-  getServiceParams(srv:IService):Promise<Object>{
-    return new Promise(resolve => {
-      this.get(`api/services/${srv.id}/getParams/dummy`,function(response){
-        if(response.responseType== 'json') {
-          resolve(JSON.parse(response.response))
-        }else{
-          console.log(response)
-        }
-      })
-    })
-  }
 }

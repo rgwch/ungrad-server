@@ -14,11 +14,13 @@
 package ch.elexis.ungrad.server_test
 
 import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.TimeTool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
+
 
 /**
  * This module tests the basic functionality of the Dispatcher. It is launched automatically and always.
@@ -27,6 +29,8 @@ import org.slf4j.LoggerFactory
 class SelfTest: AbstractVerticle() {
     val REGISTER_ADDRESS="ch.elexis.ungrad.server.register"
     val MY_ADDRESS="ch.elexis.ungrad.server-test"
+    val SERVER_CONTROL = "ch.elexis.ungrad.servAer_test.admin"
+
 
     val log=LoggerFactory.getLogger(this.javaClass)
 
@@ -44,42 +48,80 @@ class SelfTest: AbstractVerticle() {
             msg.reply(JsonObject().put("Answer:","Pong, ${plus}, ${minus}"))
 
         }
-        vertx.eventBus().consumer<JsonObject>("ch.elexis.ungrad.server_test.admin"){msg ->
-            if(msg.body().getString("command")=="getName"){
-                msg.reply(JsonUtil.create("status:ok","name:Server Status"))
-            }else if(msg.body().getString("command")=="getParams"){
-                val result=JsonArray()
-                val os=System.getProperty("os.name")+" / "+System.getProperty("os.arch")+", v."+System.getProperty("os.version")
-                result.add(JsonUtil.create("name:os","caption:Operating System","type:String").put("writable",false).put("value",os))
-                val java=System.getProperty("java.version")+" / "+System.getProperty("java.vendor")
-                result.add(JsonUtil.create("name:java","caption:Java","type:String","value:$java").put("writable",false))
-                val res=StringBuilder()
-                res.append("processors: ").append(Runtime.getRuntime().availableProcessors())
-                .append(", memory: " ).append(Math.round(Runtime.getRuntime().freeMemory()/1024f)).append("K")
-                result.add(JsonUtil.create("name:resources","caption:Resources","type:string","value:${res.toString()}").put("writable",false))
-                msg.reply(JsonUtil.create("status:ok").put("result",result))
+
+        vertx.eventBus().consumer<JsonObject>(SERVER_CONTROL){msg ->
+            if(msg.body().getString("command")=="getParam"){
+                val answer=when(msg.body().getString("param")){
+                    "os_name" -> os_name
+                    "os_arch" -> os_arch
+                    "os_version" -> os_version
+                    "java_version" -> java_version
+                    "java_vendor" -> java_vendor
+                    "processors" -> processors()
+                    "total_memory" -> total_memory()
+                    "max_memory" -> max_memory()
+                    "avail_memory" -> avail_memory()
+                    "system_time" -> system_time()
+                    else -> "unknown parameter"
+                }
+                msg.reply(JsonUtil.create("status:ok","result:$answer"))
+            }else if(msg.body().getString("command")=="setParam"){
+                msg.reply(JsonUtil.create("status:error","message:all parameters are read only"))
+
             }
         }
         /**
          * On startup, register our EventBus address with the dispatcher and tell him, that we are
          * interested in "get" requests with the given address scheme.
          */
-        val registerMsg= JsonUtil.create("ebaddress:${MY_ADDRESS}","method:get","server-id:ch.elexis.ungrad.server_test",
-                "server-control:ch.elexis.ungrad.server_test.admin")
-                .put("rest","1.0/ping/:plus/:minus");
-        vertx.eventBus().send<JsonObject>(REGISTER_ADDRESS,registerMsg) { reply ->
+        fun registerMsg()= JsonUtil.create("ebaddress:${MY_ADDRESS}","method:get")
+                .put("rest","1.0/ping/:plus/:minus")
+                .put("server",make_overview())
+
+        vertx.eventBus().send<JsonObject>(REGISTER_ADDRESS,registerMsg()) { reply ->
             if(reply.succeeded()){
                 log.info("successfully registered TestVerticle")
             }else{
                 log.error("Could not register TestVerticle")
             }
+
         }
 
     }
+    fun make_overview(): JsonObject{
+        return JsonUtil.create("id:ch.elexis.ungrad.server_info","name:Server info","address:$SERVER_CONTROL")
+                .put("params",JsonArray(PARAMS))
+    }
+
     companion object{
         val os_name=System.getProperty("os.name")
         val os_arch=System.getProperty("os.arch")
         val os_version=System.getProperty("os.version")
-        val java=System.getProperty("java.version")
+        val java_version=System.getProperty("java.version")
+        val java_vendor=System.getProperty("java.vendor")
+        fun processors()=Runtime.getRuntime().availableProcessors()
+        fun total_memory()=Runtime.getRuntime().totalMemory()
+        fun max_memory()=Runtime.getRuntime().maxMemory()
+        fun avail_memory()=Runtime.getRuntime().freeMemory()
+        fun system_time()=TimeTool().toString(TimeTool.DATETIME_XML)
+        val PARAMS="""
+        [
+            {
+                "name":"os_desc","caption":"OS","type":"string","value":"$os_name $os_version / $os_arch","writable":false
+            },
+            {
+                "name":"java_desc","caption":"Java","type":"string","value":"$java_version / $java_vendor", "writable":false
+            },
+            {
+                "name":"system","caption":"System","type":"string",
+                "value":"${processors()} Processors, Memory total ${max_memory()} / free ${avail_memory()} / max usable ${max_memory()}",
+                "writable": false
+            },
+            {
+                "name":"systime","caption":"System time","type":"string","value":"${system_time()}","writable":false
+            }
+        ]
+        """
+
     }
 }

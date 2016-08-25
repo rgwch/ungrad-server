@@ -215,7 +215,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 checkAuth(context, "admin") {
                     val result = JsonArray()
                     servers.forEach {
-                        result.add(JsonObject().put(it.key, it.value))
+                        result.add(it.value)
                     }
                     context.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
                             .end(Json.encode(result))
