@@ -74,5 +74,12 @@ class SelfTest: AbstractVerticle() {
                 log.error("Could not register TestVerticle")
             }
         }
+
+    }
+    companion object{
+        val os_name=System.getProperty("os.name")
+        val os_arch=System.getProperty("os.arch")
+        val os_version=System.getProperty("os.version")
+        val java=System.getProperty("java.version")
     }
 }
