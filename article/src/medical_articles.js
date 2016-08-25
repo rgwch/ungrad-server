@@ -1,3 +1,4 @@
+//noinspection UnterminatedStatementJS,UnterminatedStatementJS,UnterminatedStatementJS
 /**
  *  Copyright (c) 2016 by G. Weirich
  */
@@ -6,16 +7,17 @@
 var name="medical_articles.js "
 
 var eb=vertx.eventBus()
+var server=require('./params.js')
 
 var register=function(rest,ebaddr,method,role,handler){
-  eb.send("ch.elexis.ungrad.server.register",{
-    "rest":"1.0/articles/"+rest,
-    "ebaddress":"ch.elexis.ungrad.articles."+ebaddr,
-    "method":method,
-    "role":role,
-    "server-id":"ch.elexis.ungrad.articles",
-    "server-control":"ch.elexis.ungrad.articles.admin"
-  },function(ar,ar_err){
+  var msg={}
+  msg['rest']="1.0/articles/"+rest
+  msg['ebaddress']="ch.elexis.ungrad.articles."+ebaddr
+  msg['method']=method
+  msg['role']=role
+  msg['server']=server.desc
+  eb.send("ch.elexis.ungrad.server.register",msg
+  ,function(ar,ar_err){
     if(ar_err==null){
       console.log(name+"received "+JSON.stringify(ar.body()))
       handler(ar.body())
@@ -29,32 +31,18 @@ var register=function(rest,ebaddr,method,role,handler){
 eb.consumer("ch.elexis.ungrad.articles.admin",function(message){
   console.log(name+"got admin")
   switch(message.body().command){
-    case "getParams":
-      var parm=require('./params').params
-        message.reply(parm)
+    case "getParam":
+
+        message.reply({"status":"ok","result":"0"})
       break;
-    case "getName":
-      message.reply({"status":"ok","name":"Medical Articles Switzerland"})
+    case "setParam":
+        message.reply({"status:ok"})
       break;
     default:
       message.reply({"status":"error","message":"unknown command "+message.body.command})
   }
 })
 
-eb.send("ch.elexis.ungrad.server.register",{
-  "rest":"1.0/articles/update",
-  "ebaddress":"ch.elexis.ungrad.articles.update",
-  "method":"get",
-  "role":"admin",
-  "server-id":"ch.elexis.ungrad.articles",
-  "server-control":"ch.elexis.ungrad.articles.admin"
-},function(ar,ar_err){
-    if(ar_err==null){
-      console.log(name+"received "+JSON.stringify(ar.body()))
-    }else{
-      console.log(name+ar_err)
-    }
-})
 
 register("find/:pattern","find","get","user",function(result){
   if(result.status==="ok"){

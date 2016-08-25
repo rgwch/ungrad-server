@@ -24,6 +24,7 @@ import io.vertx.core.Handler
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.Json
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 
@@ -49,7 +50,7 @@ class Communicator: AbstractVerticle() {
             eb.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
                     .put("ebaddress", BASEADDR + func.addr)
                     .put("rest", "${API}/${func.rest}").put("method", func.method).put("role",func.role)
-                    .put("server-id","ch.rgw.lucinda").put("server-control", CONTROL_ADDR), RegHandler(func))
+                    .put("server", serverDesc), RegHandler(func))
         }
 
 
@@ -280,6 +281,26 @@ class Communicator: AbstractVerticle() {
 
         var indexManager: IndexManager? = null;
         val config= JsonUtil()
+        val params= """
+        [
+           {
+                "name":"indexdir",
+                "caption":"index directory",
+                "type": "string",
+                "value": "/some/dir",
+                "writable":true
+            },
+            {
+                "name":"datadir",
+                "caption":"import directory",
+                "type": "string",
+                "value":"/some/dir/data",
+                "writable":true
+            }
+        ]
+        """
+        val serverDesc=JsonUtil.create("id:ch.rgw.lucinda","name:Lucinda","address:${CONTROL_ADDR}")
+        .put("params", JsonArray(params))
 
     }
 }

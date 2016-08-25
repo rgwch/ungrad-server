@@ -7,6 +7,7 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.Message
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.asyncsql.AsyncSQLClient
 import io.vertx.ext.asyncsql.MySQLClient
@@ -46,7 +47,7 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
 
     }
 
-    abstract fun createParams():JsonObject
+    abstract fun createParams(): JsonArray
     abstract fun getName():String
 
     override fun stop() {
@@ -65,10 +66,11 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
         }
     }
     fun register(func: RegSpec) {
-        vertx.eventBus().send<JsonObject>(REGISTER_ADDRESS, JsonObject()
+        vertx.eventBus().send(REGISTER_ADDRESS, JsonObject()
                 .put("ebaddress", func.addr)
                 .put("rest", "${API}/${func.rest}").put("method", func.method).put("role", func.role)
-                .put("server-id", ID).put("server-control", CONTROL_ADDR), RegHandler(func))
+                .put("server",JsonUtil.create("id:$ID","name:${getName()}","address:$CONTROL_ADDR").put("params",createParams())))
+
     }
     data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
 
@@ -86,4 +88,5 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
         }
 
     }
+
 }

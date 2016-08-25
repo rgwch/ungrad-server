@@ -1,7 +1,9 @@
 module.exports = {
-  params:{
-    status:"ok",
-    result:[
+  desc:{
+    "id":"ch.elexis.ungrad,articles",
+    "name":"Medical Articles Switzerland",
+    "address":"ch.elexis.ungrad.articles.admin",
+    "params": [
       {
         "name":"source",
         "caption":"Data source",

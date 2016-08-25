@@ -42,8 +42,8 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
             }
         }
     }
-    override fun createParams():JsonObject{
-        return JsonUtil.create("status:ok").put("result",JsonArray())
+    override fun createParams():JsonArray{
+        return JsonArray()
     }
 
     override fun getName()="Elexis Appointments"

@@ -47,68 +47,78 @@ import java.util.*
 class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
     val API = "1.0"
     val handlers = HashMap<String, String>()
-    val servers = HashMap<String, String>()
+    val servers = HashMap<String, JsonObject>()
     val log = LoggerFactory.getLogger("Restpoint")
     val params = "\\/:[a-z]+".toRegex()
-    val verticles=HashMap<String,String>()
+    val verticles = HashMap<String, String>()
     val router: Router by lazy {
         Router.router(vertx)
     }
 
     override fun start(future: Future<Void>) {
         super.start()
-        vertx.eventBus().consumer<Message<JsonObject>>(ADDR_REGISTER) { msg ->
-            val j = msg.body() as JsonObject
-            val rest = j.getString("rest")
-            val ebmsg = j.getString("ebaddress")
-            val method = j.getString("method")
-            val role = j.getString("role") ?: "guest"
-            val sname = j.getString("server-id")
-            val admin = j.getString("server-control")
-            if (handlers.containsKey(rest)) {
-                msg.reply(JsonUtil.create("status:error", "message:REST address already registered"))
-            } else if (handlers.containsValue(ebmsg)) {
-                msg.reply(JsonUtil.create("status:error", "message:EventBus address already registered"))
+        vertx.eventBus().consumer<JsonObject>(ADDR_REGISTER) { msg ->
+            val j = JsonUtil(msg.body())
+            if (!j.validate("rest:string", "method:string", "ebaddress:string")) {
+                msg.reply(JsonUtil.create("status:error", "message:format error of register message " + j.encodePrettily()))
             } else {
-                handlers.put(rest, ebmsg)
-                if (sname != null && admin != null) {
-                    servers.put(sname, admin)
-                }
-                log.debug("registering /api/${rest} for ${ebmsg}")
-                when (method) {
-                    "get" -> router.get("/api/${rest}").handler { context ->
-                        checkAuth(context, role) {
-                            val cmd = JsonObject()
-                            params.findAll(rest).forEach { match ->
-                                val parm = match.value.substring(2)
-                                cmd.put(parm, context.request().getParam(parm))
-                            }
-                            vertx.eventBus().send<JsonObject>(ebmsg, cmd, ResultHandler(context))
-                        }
+                val rest = j.getString("rest")
+                val ebmsg = j.getString("ebaddress")
+                val method = j.getString("method")
+                val role = j.getString("role") ?: "guest"
+                val server = j.getJsonObject("server")
+                if (server != null) {
+                    if (JsonUtil(server).validate("id:string", "name:string", "address:string")) {
+                        servers.put(server.getString("id"), server)
+                    } else {
+                        msg.reply(JsonUtil.create("status:error", "message:format error of server definition " + j.encodePrettily()))
+                        log.error("message:format error of server definition " + j.encode())
 
                     }
-                    "post" -> router.post("/api/${rest}").handler { context ->
-                        context.request().bodyHandler { buffer ->
+                }
+
+                if (handlers.containsKey(rest)) {
+                    msg.reply(JsonUtil.create("status:error", "message:REST address already registered"))
+                } else if (handlers.containsValue(ebmsg)) {
+                    msg.reply(JsonUtil.create("status:error", "message:EventBus address already registered"))
+                } else {
+                    handlers.put(rest, ebmsg)
+                    log.debug("registering /api/${rest} for ${ebmsg}")
+                    when (method) {
+                        "get" -> router.get("/api/${rest}").handler { context ->
                             checkAuth(context, role) {
-                                val cmd = buffer.toJsonObject()
+                                val cmd = JsonObject()
+                                params.findAll(rest).forEach { match ->
+                                    val parm = match.value.substring(2)
+                                    cmd.put(parm, context.request().getParam(parm))
+                                }
                                 vertx.eventBus().send<JsonObject>(ebmsg, cmd, ResultHandler(context))
+                            }
+
+                        }
+                        "post" -> router.post("/api/${rest}").handler { context ->
+                            context.request().bodyHandler { buffer ->
+                                checkAuth(context, role) {
+                                    val cmd = buffer.toJsonObject()
+                                    vertx.eventBus().send<JsonObject>(ebmsg, cmd, ResultHandler(context))
+                                }
                             }
                         }
                     }
+                    msg.reply(JsonUtil.create("status:ok"))
                 }
-                msg.reply(JsonUtil.create("status:ok"))
             }
         }
-        vertx.eventBus().consumer<JsonObject>(ADDR_LAUNCH){ msg ->
-            val jo=msg.body()
-            val verticle_name=jo.getString("name")
-            val verticle_url=jo.getString("url")
-            val verticle_config=jo.getJsonObject("config",JsonObject())
-            val url=URL(verticle_url)
+        vertx.eventBus().consumer<JsonObject>(ADDR_LAUNCH) { msg ->
+            val jo = msg.body()
+            val verticle_name = jo.getString("name")
+            val verticle_url = jo.getString("url")
+            val verticle_config = jo.getJsonObject("config", JsonObject())
+            val url = URL(verticle_url)
             val file = File(url.file)
             if (!file.exists() || !file.canRead()) {
                 ch.elexis.ungrad.server.log.error("can't read ${file.absolutePath}")
-            }else {
+            } else {
                 if (verticle_url.endsWith(".jar")) {
                     try {
 
@@ -132,12 +142,12 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                         msg.fail(2, ex.message)
                     }
                 } else {
-                    vertx.deployVerticle(file.absolutePath,DeploymentOptions().setConfig(verticle_config)){handler ->
-                        if(handler.succeeded()){
-                            verticles.put(verticle_name,handler.result())
+                    vertx.deployVerticle(file.absolutePath, DeploymentOptions().setConfig(verticle_config)) { handler ->
+                        if (handler.succeeded()) {
+                            verticles.put(verticle_name, handler.result())
                             log.info("launched ${verticle_name}")
                             msg.reply(JsonUtil.create("status:ok"))
-                        }else{
+                        } else {
                             log.error(" *** could not launch ${verticle_name}", handler.cause())
                             msg.fail(1, handler.cause().message)
 
@@ -205,28 +215,38 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 checkAuth(context, "admin") {
                     val result = JsonArray()
                     servers.forEach {
-                        result.add(JsonUtil().add("id:${it.key}", "address:${it.value}"))
+                        result.add(JsonObject().put(it.key, it.value))
                     }
                     context.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
                             .end(Json.encode(result))
                 }
             }
-            router.get("/api/services/:service/:subcommand/:param").handler { ctx ->
+            router.get("/api/services/:service/getParam/:name").handler { ctx ->
                 checkAuth(ctx, "admin") {
-                    val param = ctx.request().getParam("param")
                     val serverID = ctx.request().getParam("service")
-                    val service = servers.get(serverID)
-                    if (service != null) {
-                        when (ctx.request().getParam("subcommand")) {
-                            "startService" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:start"), ResultHandler(ctx))
-                            "stopService" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:stop"), ResultHandler(ctx))
-                            "getServiceName" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:getName"), ResultHandler(ctx))
-                            "getParams" -> vertx.eventBus().send<JsonObject>(service, JsonUtil.create("command:getParams"), ResultHandler(ctx))
-                            "setParam" -> vertx.eventBus().send<JsonObject>(service,JsonUtil.create("command:setParam","value:${param}"),ResultHandler(ctx))
-                            else -> ctx.response().setStatusCode(406).end("unknown sub command")
-                        }
+                    val serviceDesc = servers.get(serverID)
+                    if (serviceDesc != null) {
+                        val serviceAddr = serviceDesc.getString("address")
+                        vertx.eventBus().send<JsonObject>(serviceAddr, JsonUtil.create("command:getParam", "param:${ctx.request().getParam("name")}"), ResultHandler(ctx))
                     } else {
                         ctx.response().setStatusCode(404).end("${serverID} not found")
+                    }
+
+                }
+            }
+            router.post("/api/services/setParam").handler { ctx ->
+                checkAuth(ctx, "admin") {
+                    ctx.request().bodyHandler { buffer ->
+                        val cmd = buffer.toJsonObject()
+                        val serverID = cmd.getString("service")
+                        val serviceDesc = servers.get(serverID)
+                        if (serviceDesc != null) {
+                            val serviceAddr = serviceDesc.getString("address")
+                            cmd.put("command","setParam")
+                            vertx.eventBus().send<JsonObject>(serviceAddr, cmd, ResultHandler(ctx))
+                        } else {
+                            ctx.response().setStatusCode(404).end("${serverID} not found")
+                        }
                     }
                 }
             }
@@ -251,7 +271,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
 
     }
 
-    override fun stop(){
+    override fun stop() {
         verticles.forEach {
             vertx.undeploy(it.value)
         }
@@ -290,7 +310,7 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
 
     companion object {
         val ADDR_REGISTER = "ch.elexis.ungrad.server.register";
-        val ADDR_LAUNCH= "ch.elexis.ungrad.server.launch"
+        val ADDR_LAUNCH = "ch.elexis.ungrad.server.launch"
         val AUTH_ERR = "bad username or password"
     }
 
