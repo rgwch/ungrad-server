@@ -8,19 +8,21 @@ is built upon the [Vert.x](http://vertx.io) ecosystem and uses its EventBus and 
 Ungrad Server is a collection of Verticles. A Verticle is a module of functionality, very similar to a plugin.
 
 On Startup, the Dispatcher runs configured verticles. Additional verticles (or modules) can be launched independently
-and connect with the dispatcher.
+and connect with the dispatcher. A Verticle usually exposes a REST Address for its work, and an EventBus Address for administrative
+access.
 
 To register, a verticle must:
 
- - Send a register message to "ch.elexis.ungrad.server.register" on the EventBus. The message content is a JsonObject
+ - Send a one or more register messages to "ch.elexis.ungrad.server.register" on the EventBus. The message content is a JsonObject
  with the following fields:
     - "rest" -> the rest address. For example: "1.0/someFunc", to register for calls to "https://myhost/api/1.0/someFunc".
      The address can contain variables, as in "1.0/someFunc/:foo/:bar"
     - "method" -> the request method to listen for (get or post)
     - "ebaddress" -> the event bus address this module will listen.
+    - "server" -> A JsonObject describing the Service and its administrative interface.
     
  - Listen to the EventBus-address provided when registering ("ebaddress"). The Dispatcher will catch requests to the registered
- address and convert them to EventBus messages, which then are dispatched to the client. The EventBus message content will
+ REST address and convert them to EventBus messages, which then are dispatched to the client. The EventBus message content will
  be a JsonObject with the following fields:
         
     - In case of "get" requests: The variables supplied in the request address. Example: If `1.1/someFunc/:foo/:bar` was 
@@ -35,7 +37,7 @@ To register, a verticle must:
     - In case of "post" requests: The request body as a JsonObject.
     
   
-(You might want to check the submodule "tester", `ch.elexis.ungrad.server_test.SelfTest`for an example how to do this)
+(You might want to check the submodule "Server Info", `ch.elexis.ungrad.server_test.SelfTest`for an example how to do this)
   
 ### Access permissions
 
@@ -44,30 +46,17 @@ proceeding. If not, it will redirect to a login page.
 
 ### Administrative interface
   
-If the register message contains entries for "server id" and "server control", the framework will provide an administrative
-  user interface for that Verticle. "server id" should be a unique identifier and "server control" should be an EventBus address
-  the Verticle listens to.
+If the register message contains an entry "server" the framework will provide an administrative
+  user interface for that Verticle. Server is a JsonObject with the following fields:
   
-  Eventually, the framework will send one of the following messages to that address:
+  * id - a unique ID for the server
+  * name - a descriptive name
+  * address - The EventBus Address of the administrative access.
+  * params - A JsonArray with all Parameters that can be queried, set or executed via the administrative interface. Each parameter entry is
+  a JsonObject with the following fields:
+    * name - a unique name for the parameter (unique within this service)
+    * caption - a caption for the web interface
+    * type - one of 'string', 'boolean', 'number', or 'object'
+    * value - value for the parameter
   
-* getName -> the answer should be a human readable name for this Plugin
-* getParams -> the answer contains the parameters for the user interface to 
-present for modifying and should be a JsonObject with a content similar to the following:
-  
-        {
-            name: {  
-                caption: some human readable label
-                type: <one of: boolean, string, number>
-                default: <defaultvalue>
-                range: <allowed range. For String parameters: regexp>
-            },
-            otherName{
-            }
-            ...
-        }
-       
-* setParam({name: caption, value: newVal})
-* start
-* stop
-
-It is the responsibility of the Verticle to perform Actions for each call. 
+ 
