@@ -1,7 +1,0 @@
-<template>
-    <md-collection>
-      <md-collection-item repeat.for="service of services" class="accent-text ${service.id==$parent.appstate.selectedService.id ? 'active' : ''}" click.trigger="doSelect(service)">
-        ${service.name}
-      </md-collection-item>
-  </md-collection>
-</template>
