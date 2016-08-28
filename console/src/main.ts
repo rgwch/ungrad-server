@@ -13,7 +13,8 @@ export function configure(aurelia: Aurelia) {
   aurelia.use
     .standardConfiguration()
     //.globalResources("resources.common")
-    .feature('resources');
+    //.feature('resources');
+    .plugin('aurelia-materialize-bridge', bridge => bridge.useAll())
 
   if (environment.debug) {
     aurelia.use.developmentLogging();

@@ -135,14 +135,9 @@
           },
           "jquery",
           {
-            "name": "bootstrap",
-            "path": "../node_modules/bootstrap/dist",
-            "main": "js/bootstrap.min",
-            "deps": ["jquery"],
-            "exports": "$",
-            "resources": [
-              "css/bootstrap.css"
-            ]
+           "name": "aurelia-materialize-bridge",
+            "path":"../node_modules/aurelia-materialize-bridge/dist/amd",
+            "main":"index"
           }
         ]
       }
