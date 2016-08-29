@@ -1,24 +1,22 @@
 {
-  "name": "aurelia-skeleton-navigation-typescript",
+  "name": "Ungrad server admin",
   "version": "1.0.0",
-  "description": "A starter kit for building a standard navigation-style app with Aurelia and TypeScript.",
+  "description": "An administrative UI for the Elexis ungrad server",
   "keywords": [
-    "aurelia",
-    "navigation",
-    "skeleton",
-    "typescript",
-    "vscode"
+    "elexis",
+    "physician",
+    "EMR"
   ],
-  "homepage": "http://aurelia.io",
+  "homepage": "http://www.elexis.ch/ungrad",
   "bugs": {
-    "url": "https://github.com/aurelia/skeleton-navigation-typescript/issues"
+    "url": "https://github.com/rgwch/ungrad-server/issues"
   },
-  "license": "CC0-1.0",
-  "author": "Mike Graham <mgraham@technicalmedia.com> (http://cmichaelgraham.io/)",
+  "license": "EPL-1.0",
+  "author": "Gwrry Weirich <weirich@elexis.ch>",
   "main": "dist/main.js",
   "repository": {
     "type": "git",
-    "url": "http://github.com/aurelia/skeleton-navigation-typescript"
+    "url": "http://github.com/rgwch/ungrad-server"
   },
   "scripts": {
     "prepublish": "./node_modules/.bin/typings install",
@@ -39,6 +37,7 @@
     "gulp-notify": "^2.2.0",
     "gulp-plumber": "^1.1.0",
     "gulp-protractor": "3.0.0",
+    "gulp-pug": "^3.0.4",
     "gulp-sass": "^2.3.2",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-tslint": "^6.0.2",

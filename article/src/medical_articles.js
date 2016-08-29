@@ -47,8 +47,14 @@ eb.consumer(base_addr+"admin",function(message){
         message.reply({"status":"ok"})
       break;
     case "exec":
-          val atfile=require('/home/gerry/git/cli-robot/data7release/atc.json')
-          message.reply({"status":"ok","executed":message.body().action})
+          var fs=vertx.fileSystem()
+          fs.readFile('/Users/gerry/git/cli-robot/data/release/atc/atc.json',function(result,err){
+              if(err==null){
+                var all_codes=JSON.parse(result)
+                atc_list=all_codes
+              }
+          })
+          message.reply({"status":"ok","executed":message.body().action,"message":"task is running"})
     default:
       message.reply({"status":"error","message":"unknown command "+message.body.command})
   }
@@ -63,9 +69,7 @@ register("getATC/:code","getATC","get","user",function(result){
     eb.consumer(base_addr+"getATC",function(message){
       var body=message.body()
       var code=body['code']
-      var result=atc_list.filter(function(item){
-        return (item['name']===code)
-      })
+      var result=atc_list[code]
        message.reply({"status":"ok","result":result})
     })
   }

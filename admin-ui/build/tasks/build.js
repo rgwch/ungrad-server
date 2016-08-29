@@ -9,6 +9,7 @@ var notify = require('gulp-notify');
 var browserSync = require('browser-sync');
 var typescript = require('gulp-typescript');
 var htmlmin = require('gulp-htmlmin');
+var jade=require('gulp-jade');
 
 // transpiles changed es6 files to SystemJS format
 // the plumber() call prevents 'pipe breaking' caused
