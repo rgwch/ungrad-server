@@ -2,13 +2,13 @@
 
 ### Core concept 
 
-This is the central class of the Ungrad Server. It manages modules and dispatches REST calls accordingly. The system
+This is the main module of the Ungrad Server. It manages other modules and dispatches REST calls accordingly. The system
 is built upon the [Vert.x](http://vertx.io) ecosystem and uses its EventBus and Verticle concept.
 
-Ungrad Server is a collection of Verticles. A Verticle is a module of functionality, very similar to a plugin.
+Ungrad Server is ultimately a collection of independently running Verticles. A Verticle is a module of functionality, very similar to a plugin.
 
-On Startup, the Dispatcher runs configured verticles. Additional verticles (or modules) can be launched independently
-and connect with the dispatcher. A Verticle usually exposes a REST Address for its work, and an EventBus Address for administrative
+On Startup, the Dispatcher runs configured verticles. Additional verticles (or modules) can be launched individually
+and connect with the dispatcher. A Verticle usually exposes a REST API for its work, and an EventBus Address for administrative
 access.
 
 To register, a verticle must:
@@ -26,7 +26,7 @@ To register, a verticle must:
  be a JsonObject with the following fields:
         
     - In case of "get" requests: The variables supplied in the request address. Example: If `1.1/someFunc/:foo/:bar` was 
-        registered, the a call to `https://myhost/api/1.1/someFunc/hula/hoop` will send a message to the registered adress
+        registered, the a call to `https://myhost/api/1.1/someFunc/hula/hoop` will send a message to the registered address
         with the following message body:
         
             {
@@ -46,7 +46,7 @@ proceeding. If not, it will redirect to a login page.
 
 ### Administrative interface
   
-If the register message contains an entry "server" the framework will provide an administrative
+If the register message contains an entry "server", the framework will provide an administrative
   user interface for that Verticle. Server is a JsonObject with the following fields:
   
   * id - a unique ID for the server

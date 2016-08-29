@@ -8,23 +8,12 @@
         <md-checkbox md-checked.bind="checkedState(param)">${param.caption}</md-checkbox>
       </div>
       <div if.bind="isType('action',param)">
-        <button md-button="flat: true" md-waves waves-red class="accent-text" click.delegate="run(param['name'])">
+        <button md-button="flat: true" md-waves="color:red;" class="accent-text" click.delegate="run(param['name'])">
           ${param['caption']}
         </button>
       </div>
 
     </div>
-    <!-- div class="form-group" repeat.for="param of parameters">
-      <label for="${param.name}" class="col-md-3 control-label">${param.caption}</label>
-      <div class="col-md-9" if.bind="isType('string',param)">
-        <input type="text" class="form-control" id.bind="param.name" value.bind="param.value" readonly.bind="writeState(param)">
-      </div>
-      <div class="col-md-3 checkbox" if.bind="isType('boolean',param)">
-        <input type="checkbox" class="form-control" id="${param.name}" checked.bind="checkedState(param)"  disabled="disabledState(param)">
-      </div>
-      <div class="col-md-3" if.bind="isType('action',param)">
-        <button type="push" class="btn-sm" value="klick" click.trigger="run(param['name'])">${param['caption']}</button>
-      </div>
-    </div -->
+
   </form>
 </template>

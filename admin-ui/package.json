@@ -39,6 +39,7 @@
     "gulp-notify": "^2.2.0",
     "gulp-plumber": "^1.1.0",
     "gulp-protractor": "3.0.0",
+    "gulp-sass": "^2.3.2",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-tslint": "^6.0.2",
     "gulp-typescript": "^2.13.6",
