@@ -3,15 +3,16 @@ import {AppState,IService,IServiceParameter} from '../appstate'
 import {EventAggregator} from 'aurelia-event-aggregator'
 import {ServiceSelected} from '../messages'
 import {Http} from '../http'
+import {MdToastService} from 'aurelia-materialize-bridge';
 
-@inject(EventAggregator,Http)
+@inject(EventAggregator,Http,MdToastService)
 export class ServiceDetail {
   serviceID:String
   serviceCmd:String
   serviceName:String
   parameters:IServiceParameter[]
 
-  constructor(private ea, private api){
+  constructor(private ea, private api,private toast){
     ea.subscribe(ServiceSelected, msg =>{
       this.parameters=msg.service.params
       this.serviceID=msg.service.id
@@ -47,7 +48,17 @@ export class ServiceDetail {
 
   run(name){
     this.api.get(`/api/services/${this.serviceID}/exec/${name}`, result =>{
-      this.ea.publish(new ServiceSelected(JSON.parse(result.response).answer))
+      var ans=JSON.parse(result.response)
+      if(ans.status === "ok"){
+        this.showSuccessToast("atc update")
+      }else{
+
+      }
+      //this.ea.publish(new ServiceSelected(JSON.parse(result.response).answer))
     })
   }
+  showSuccessToast(msg) {
+    this.toast.show('Success:'+msg, 4000, 'rounded red');
+  }
+
 }

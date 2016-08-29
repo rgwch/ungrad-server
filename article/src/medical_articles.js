@@ -4,59 +4,63 @@
  */
 
 'use strict'
-var name="medical_articles.js "
+var name = "medical_articles.js "
 
-var eb=vertx.eventBus()
-var server=require('./params.js')
-var base_addr="ch.elexis.ungrad.articles."
-var atc_list=[]
+var eb = vertx.eventBus()
+var server = require('./params.js')
+var base_addr = "ch.elexis.ungrad.articles."
+var atc_list = []
 
-var register=function(rest,ebaddr,method,role,handler){
-  var msg={
-    "rest":"1.0/articles/"+rest,
-    "ebaddress":base_addr+ebaddr,
-    "method":method
+var register = function (rest, ebaddr, method, role, handler) {
+  var msg = {
+    "rest": "1.0/articles/" + rest,
+    "ebaddress": base_addr + ebaddr,
+    "method": method
   }
-  if(typeof role ==='string') {
+  if (typeof role === 'string') {
     msg['role'] = role
   }
-  if(typeof server === 'object') {
+  if (typeof server === 'object') {
     msg['server'] = server.desc
   }
 
-  eb.send("ch.elexis.ungrad.server.register",msg
-  ,function(ar,ar_err){
-    if(ar_err==null){
-      console.log(name+"received "+JSON.stringify(ar.body()))
-      handler(ar.body())
-    }else{
-      console.log(name+ar_err)
-      handler({})
-    }
-  })
+  eb.send("ch.elexis.ungrad.server.register", msg
+    , function (ar, ar_err) {
+      if (ar_err == null) {
+        console.log(name + "received " + JSON.stringify(ar.body()))
+        handler(ar.body())
+      } else {
+        console.log(name + ar_err)
+        handler({})
+      }
+    })
 }
 
-eb.consumer(base_addr+"admin",function(message){
-  console.log(name+"got admin "+message.body().command)
-  switch(message.body().command){
+eb.consumer(base_addr + "admin", function (message) {
+  console.log(name + "got admin " + message.body().command)
+  switch (message.body().command) {
     case "getParam":
 
-        message.reply({"status":"ok","result":"0"})
+      message.reply({"status": "ok", "result": "0"})
       break;
     case "setParam":
-        message.reply({"status":"ok"})
+      message.reply({"status": "ok"})
       break;
     case "exec":
-          var fs=vertx.fileSystem()
-          fs.readFile('/Users/gerry/git/cli-robot/data/release/atc/atc.json',function(result,err){
-              if(err==null){
-                var all_codes=JSON.parse(result)
-                atc_list=all_codes
-              }
-          })
-          message.reply({"status":"ok","executed":message.body().action,"message":"task is running"})
+      var fs = vertx.fileSystem()
+      fs.readFile('/Users/gerry/git/cli-robot/data/release/atc/atc.json', function (result, err) {
+        if (err == null) {
+          var all_codes = JSON.parse(result)
+          atc_list = all_codes
+          message.reply({"status": "ok", "executed": message.body().action, "message": "task completed"})
+
+        } else {
+          message.reply({"status": "error", "message": err})
+        }
+      })
+      break;
     default:
-      message.reply({"status":"error","message":"unknown command "+message.body.command})
+      message.reply({"status": "error", "message": "unknown command " + message.body.command})
   }
 })
 
@@ -64,20 +68,20 @@ eb.consumer(base_addr+"admin",function(message){
 /**
  * get the entry for an ATC code
  */
-register("getATC/:code","getATC","get","user",function(result){
-  if(result.status==='ok'){
-    eb.consumer(base_addr+"getATC",function(message){
-      var body=message.body()
-      var code=body['code']
-      var result=atc_list[code]
-       message.reply({"status":"ok","result":result})
+register("getATC/:code", "getATC", "get", "user", function (result) {
+  if (result.status === 'ok') {
+    eb.consumer(base_addr + "getATC", function (message) {
+      var body = message.body()
+      var code = body['code']
+      var result = atc_list[code]
+      message.reply({"status": "ok", "result": result})
     })
   }
 })
-register("find/:pattern","find","get","user",function(result){
-  if(result.status==="ok"){
-    eb.consumer("ch.elexis.ungrad.articles.find",function(message){
-      var body=message.body()
+register("find/:pattern", "find", "get", "user", function (result) {
+  if (result.status === "ok") {
+    eb.consumer("ch.elexis.ungrad.articles.find", function (message) {
+      var body = message.body()
 
     })
   }

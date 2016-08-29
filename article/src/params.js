@@ -19,7 +19,7 @@ module.exports = {
         writable:false
       },
       {
-        "name":"load:atc",
+        "name":"load_atc",
         "caption":"reload ATC",
         "type":"action",
         "value":"off",
