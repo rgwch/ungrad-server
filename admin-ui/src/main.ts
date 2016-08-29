@@ -1,4 +1,3 @@
-import 'bootstrap';
 import {Aurelia} from 'aurelia-framework';
 import 'materialize-css'
 
