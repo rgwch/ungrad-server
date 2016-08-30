@@ -4,12 +4,12 @@
  */
 
 'use strict'
-var name = "medical_articles.js "
+var name = "medical_articles.js"
 
 var eb = vertx.eventBus()
 var server = require('./params.js')
 var base_addr = "ch.elexis.ungrad.articles."
-var atc_list = []
+//var model=require('./model')
 
 var register = function (rest, ebaddr, method, role, handler) {
   var msg = {
@@ -47,17 +47,6 @@ eb.consumer(base_addr + "admin", function (message) {
       message.reply({"status": "ok"})
       break;
     case "exec":
-      var fs = vertx.fileSystem()
-      fs.readFile('/Users/gerry/git/cli-robot/data/release/atc/atc.json', function (result, err) {
-        if (err == null) {
-          var all_codes = JSON.parse(result)
-          atc_list = all_codes
-          message.reply({"status": "ok", "executed": message.body().action, "message": "task completed"})
-
-        } else {
-          message.reply({"status": "error", "message": err})
-        }
-      })
       break;
     default:
       message.reply({"status": "error", "message": "unknown command " + message.body.command})
@@ -73,8 +62,10 @@ register("getATC/:code", "getATC", "get", "user", function (result) {
     eb.consumer(base_addr + "getATC", function (message) {
       var body = message.body()
       var code = body['code']
-      var result = atc_list[code]
-      message.reply({"status": "ok", "result": result})
+      var model=require('./model')
+      model.getATC(code,function(result){
+        message.reply({"status": "ok", "result": result})
+      })
     })
   }
 })
