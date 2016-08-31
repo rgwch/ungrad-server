@@ -1,6 +1,6 @@
-## Article manager
+# Article manager
 
-### Summary
+## Summary
 
 This is an example of an ungrad server module written in JavaScript. It maintaints a repository of swiss medical articla data:
 
@@ -11,7 +11,7 @@ This is an example of an ungrad server module written in JavaScript. It maintain
 
 The source of the data are public available sites, but the retrieval and processing engine (cli-robot) was created by [epha](https://www.epha.ch/#/view=intro/state=default/)
 
-### Preparation
+## Preparation
 
 This Verticle needs cli-robot, original copyright by epha. So first
 
@@ -38,7 +38,7 @@ to the ungrad launcher config, as in:
                 }
             ]
 
-### Usage
+## Usage
 
 This module is called via `/api/1.0/articles/xxx`
 
