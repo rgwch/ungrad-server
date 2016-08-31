@@ -12,6 +12,9 @@
           ${param['caption']}
         </button>
       </div>
+      <div if.bind="isType('number',param)">
+        <md-input md-label="${param.caption}" md-value.bind="param.value"></md-input>
+      </div>
 
     </div>
 

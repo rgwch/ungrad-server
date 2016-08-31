@@ -2,10 +2,7 @@ package ch.webelexis.verticles
 
 import ch.rgw.tools.JsonUtil
 import com.hazelcast.logging.LoggerFactory
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.AsyncResult
-import io.vertx.core.AsyncResultHandler
-import io.vertx.core.Handler
+import io.vertx.core.*
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -37,10 +34,22 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
         super.start()
         vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR){msg ->
             when(msg.body().getString("command")){
-                "getName" -> msg.reply(JsonUtil.create("status:ok","name:${getName()}"))
-                "getParams" -> {
-                    val answer=createParams()
-                    msg.reply(answer)
+                "getParam" -> {
+                    val result=getParam(msg)
+                    result.setHandler{ async ->
+                        if(async.succeeded()){
+                            msg.reply(JsonUtil.create("status:ok").put("result",async.result()))
+                        }else{
+                            msg.reply(JsonUtil.create("status:error","message:${async.cause().message}"))
+                        }
+
+                    }
+                }
+                "setParam" -> {
+
+                }
+                "exec" ->{
+
                 }
             }
         }
@@ -49,10 +58,25 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
 
     abstract fun createParams(): JsonArray
     abstract fun getName():String
+    abstract fun getParam(msg: Message<JsonObject>): Future<JsonObject>
+    
 
     override fun stop() {
         Patients.log.info("stop")
         database.close()
+    }
+    fun sendQuery(query:String, handler:((AsyncResult<List<JsonArray>>) -> Unit)){
+        database.getConnection { con ->
+            if(con.succeeded()){
+                val conn=con.result()
+                conn.query(query){ result ->
+                    if(result.succeeded()){
+                        val rs=result.result()
+                        handler(Future.succeededFuture<List<JsonArray>>(rs.results))
+                    }
+                }
+            }
+        }
     }
 
     fun getConnection(msg: Message<JsonObject>,handler: ((AsyncResult<SQLConnection>) -> Unit)){

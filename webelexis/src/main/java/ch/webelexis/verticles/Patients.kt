@@ -4,6 +4,7 @@ import ch.rgw.tools.JsonUtil
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.AsyncResultHandler
+import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -17,6 +18,8 @@ import java.sql.ResultSet
  * Created by gerry on 14.08.16.
  */
 class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
+
+
 
     override fun start() {
         super.start()
@@ -79,9 +82,53 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
             }
         }
     }
+    override fun getParam(msg:Message<JsonObject>): Future<JsonObject> {
+        val ret=Future.future<JsonObject>()
+        val param=msg.body().getString("param")
+        when(param) {
+            "totalEntries" -> {
+                // sendQuery("SELECT count(*) ")
+                /*
+                getConnection(msg){con ->
+                    if(con.succeeded()){
+                        val conn=con.result()
+                        conn.query("SELECT count(*) from KONTAKTE"){result ->
+                            if(result.succeeded()){
+                                val rs=result.result()
+                                val num=rs.rows[0]
+                                ret.complete(num)
+                            }else{
+                                ret.fail(result.cause())
+                            }
+                        }
+                        conn.close()
+                    }else{
+                        ret.fail(con.cause())
+                    }
+                }
+                */
+            }
+            "deletedEntries" ->{
+
+            }
+        }
+        return ret
+    }
 
     override fun createParams():JsonArray {
-        return JsonArray()
+        val ret=JsonArray()
+        .add(JsonUtil.create("name:totalEntries",
+                "caption:Number of patient entries",
+                "type:number",
+                "value:${0}",
+                "writable:false"
+        ))
+        .add(JsonUtil.create("name:deletedEntries",
+                "caption:Number of deleted entries",
+                "type:number",
+                "value:${0}",
+                "writable:false"))
+        return ret
     }
 
     override fun getName()="Elexis Patients"

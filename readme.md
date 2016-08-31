@@ -55,6 +55,8 @@ Its features are:
 * Can be written in Java, Kotlin, Ruby, Groovy, JavaScript, Python, Scala and others. Verticles of different languages can play peacefully together and communicate via the eventBus.
 * Interconnected Verticles can reside in the same VM, or in different VMs on the same Machine, or on different Machines within the same network.
 
+if you like fancy buzzwords, you might call such verticles ['microservices'](http://martinfowler.com/articles/microservices.html) - Vert.x promoted microservises before it was cool ;)
+
 In Ungrad-Server, Verticles are added and launched in a number of ways:
 
 * Some Verticles are built-in and launched whenever the main program launches. (e.g. dispatcher/Restpoint)
@@ -66,6 +68,16 @@ In Ungrad-Server, Verticles are added and launched in a number of ways:
 If a --config parameter was given at launch, the launcher uses this file as configuration. If no --config was given, the launcher searches the classpath 
 for a file named "default.json" and then for a file called "user.json". If both exist, user.json will overlay default.json.
     
+## Further reading
+    
+You might like to have a look at some of the included subprojects as examples:
+
+* article - a verticle implemented in JavaScript, presenting epha's cli-robot data as REST services
+* lucinda - a document indexing and retrieving Verticle
+* tester - a simple SelfTest and system information Verticle
+* webelexis - some Verticles to access Elexis data
+
+* admin-ui - Web UI for admin purposes.
 
 ## Technologies
 
