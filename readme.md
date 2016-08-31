@@ -43,7 +43,7 @@ Then create a configuration file (use `dispatcher/src/main/resources/default.jso
     java -jar dispatcher/target/ungrad-server-dispatcher-x.y.z-SNAPSHOT.jar --config=<your-configuration.json>
 
 (Please note that relative paths in the configuration file are relative to the current directory when launching).
-Launch your favorite web browser and navigate to `http://localhost:2016/ui/index.hml`. You'll (hopefully) see a login screen. Enter uisername and password as defined in `user.json`, and there you are.
+Launch your favorite web browser and navigate to `http://localhost:2016/ui/index.hml`. You'll (hopefully) see a login screen. Enter username and password as defined in `user.json`, and there you are.
 
 ## Extending functionality
 
@@ -52,13 +52,13 @@ Its features are:
 
 * No concurrency issues by design, similar to NodeJS: Single threaded, no deadlocks. Multicore capability is achieved by launching a verticle multiple times in parallel.
 * Has a communication system to talk to other verticles, the EventBus.
-* Can be written in Java, Ruby, Groovy, JavaScript, Python, Scala and others. Verticles of different languages can play peacefully together and communicate via the eventBus
+* Can be written in Java, Kotlin, Ruby, Groovy, JavaScript, Python, Scala and others. Verticles of different languages can play peacefully together and communicate via the eventBus.
 * Interconnected Verticles can reside in the same VM, or in different VMs on the same Machine, or on different Machines within the same network.
 
 In Ungrad-Server, Verticles are added and launched in a number of ways:
 
 * Some Verticles are built-in and launched whenever the main program launches. (e.g. dispatcher/Restpoint)
-* The Launcher (ch.elexis.ungrad.server.Launcher) checks its configuration on startup and launches external Verticles configured there. 
+* The Launcher (dispatcher->ch.elexis.ungrad.server.Launcher) checks its configuration on startup and launches external Verticles configured there. 
 * A program can be launched completely independent, launch its own verticles and connect to ungrad-server via the EventBus.
 
 ## Configuration

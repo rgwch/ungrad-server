@@ -1,7 +1,9 @@
 //noinspection UnterminatedStatementJS,UnterminatedStatementJS,UnterminatedStatementJS
 /**
+ * A verticle to handle requests for medical articles.
  *  Copyright (c) 2016 by G. Weirich
  */
+
 
 'use strict'
 var name = "medical_articles.js"
@@ -11,6 +13,14 @@ var server = require('./params.js')
 var base_addr = "ch.elexis.ungrad.articles."
 var model = require('./model')
 
+/*
+ * Internal method: Register a REST endpoint for an eventBus address.
+ * @param rest REST endpoint to use (will always be preixed with "1.0/articles/"
+ * @param ebaddr EventBus Address to register for that REST
+ * @param method get or post
+ * @param role role needed to access this service
+ * @param handler handler for the service
+ */
 var register = function (rest, ebaddr, method, role, handler) {
   var msg = {
     "rest": "1.0/articles/" + rest,
@@ -36,6 +46,9 @@ var register = function (rest, ebaddr, method, role, handler) {
     })
 }
 
+/**
+ * Landing point for the admin API
+ */
 eb.consumer(base_addr + "admin", function (message) {
   console.log(name + "got admin " + message.body().command)
   switch (message.body().command) {
@@ -55,7 +68,8 @@ eb.consumer(base_addr + "admin", function (message) {
 
 
 /**
- * get the entry for an ATC code
+ * Get the entry for an ATC code.
+ * Example: http://localhost:2016/api/1.0/articles/getATC/N02CC04
  */
 register("getATC/:code", "getATC", "get", "user", function (result) {
   if (result.status === 'ok') {
@@ -69,6 +83,10 @@ register("getATC/:code", "getATC", "get", "user", function (result) {
   }
 })
 
+/**
+ * get all BAG Entries for an ATC code.
+ * Example: http://localhost:2016/api/1.0/articles/getBAG/N02CC04
+ */
 register("getBAG/:code", "getBAG", "get", "user", function (result) {
   if (result.status === "ok") {
     eb.consumer(base_addr + "getBAG", function (message) {
@@ -81,6 +99,10 @@ register("getBAG/:code", "getBAG", "get", "user", function (result) {
   }
 })
 
+/**
+ * Get all Swissmedic entries where the name or the substances match a given pattern
+ * Example: http://localhost:2016/api/1.0/articles/getSwissmedic/diclofenac
+ */
 register("getSwissmedic/:pattern", "getSM", "get", "user", function (result) {
   if (result.status == "ok") {
     eb.consumer(base_addr+"getSM",function(message) {
@@ -93,12 +115,4 @@ register("getSwissmedic/:pattern", "getSM", "get", "user", function (result) {
   }
 })
 
-register("find/:pattern", "find", "get", "user", function (result) {
-  if (result.status === "ok") {
-    eb.consumer("ch.elexis.ungrad.articles.find", function (message) {
-      var body = message.body()
-
-    })
-  }
-})
 
