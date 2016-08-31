@@ -46,6 +46,12 @@ export class ServiceDetail {
     }
   }
 
+  getValue(param){
+    this.api.getParameterValue(this.serviceID,param).then(result => {
+      debugger
+      return result.result
+    })
+  }
   run(name){
     this.api.get(`/api/services/${this.serviceID}/exec/${name}`, result =>{
       var ans=JSON.parse(result.response)
@@ -58,7 +64,7 @@ export class ServiceDetail {
     })
   }
   showSuccessToast(msg) {
-    this.toast.show('Success:'+msg, 4000, 'rounded red');
+    this.toast.show('Success:'+msg, 4000, 'rounded blue');
   }
 
 }

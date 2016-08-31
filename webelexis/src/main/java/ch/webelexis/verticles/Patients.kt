@@ -87,7 +87,19 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
         val param=msg.body().getString("param")
         when(param) {
             "totalEntries" -> {
-                // sendQuery("SELECT count(*) ")
+                sendQuery("SELECT count(*) from KONTAKTE"){ result ->
+                    if(result.succeeded()){
+                        val rs=result.result()
+                        if(rs.size>0){
+                            val r=rs.get(0)
+                            ret.complete(r.getJsonObject(0))
+                        }else{
+                            ret.complete(JsonUtil.create("count:${0}"))
+                        }
+                    }else{
+                        ret.fail(result.cause())
+                    }
+                }
                 /*
                 getConnection(msg){con ->
                     if(con.succeeded()){
@@ -109,7 +121,7 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
                 */
             }
             "deletedEntries" ->{
-
+                ret.complete(JsonUtil.create("count:${0}"))
             }
         }
         return ret
