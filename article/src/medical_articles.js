@@ -9,7 +9,7 @@ var name = "medical_articles.js"
 var eb = vertx.eventBus()
 var server = require('./params.js')
 var base_addr = "ch.elexis.ungrad.articles."
-//var model=require('./model')
+var model = require('./model')
 
 var register = function (rest, ebaddr, method, role, handler) {
   var msg = {
@@ -62,13 +62,37 @@ register("getATC/:code", "getATC", "get", "user", function (result) {
     eb.consumer(base_addr + "getATC", function (message) {
       var body = message.body()
       var code = body['code']
-      var model=require('./model')
-      model.getATC(code,function(result){
+      model.getATC(code, function (result) {
         message.reply({"status": "ok", "result": result})
       })
     })
   }
 })
+
+register("getBAG/:code", "getBAG", "get", "user", function (result) {
+  if (result.status === "ok") {
+    eb.consumer(base_addr + "getBAG", function (message) {
+      var body = message.body()
+      var code = body['code']
+      model.getBAG_from_atc(code, function (result) {
+        message.reply({"status": "ok", "result": result})
+      })
+    })
+  }
+})
+
+register("getSwissmedic/:pattern", "getSM", "get", "user", function (result) {
+  if (result.status == "ok") {
+    eb.consumer(base_addr+"getSM",function(message) {
+      var body = message.body()
+      var pattern = body.pattern
+      model.getSwissmedic(pattern, function (result) {
+        message.reply({"status": "ok", "result": result})
+      })
+    })
+  }
+})
+
 register("find/:pattern", "find", "get", "user", function (result) {
   if (result.status === "ok") {
     eb.consumer("ch.elexis.ungrad.articles.find", function (message) {
