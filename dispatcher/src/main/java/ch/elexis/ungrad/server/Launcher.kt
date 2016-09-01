@@ -40,6 +40,9 @@ val authProvider: AccessController by lazy {
     val users = config.getJsonObject("users") ?: JsonObject()
     AccessController(users)
 }
+val executionMode: String by lazy{
+    config.getString("mode","release")
+}
 
 fun main(args: Array<String>) {
     var restpointID = ""
@@ -68,7 +71,7 @@ fun main(args: Array<String>) {
     val hazel = Config()
     val vertxOptions = VertxOptions().setClustered(true)
             .setMaxEventLoopExecuteTime(5000000000L)
-            .setBlockedThreadCheckInterval(2000L)
+            .setBlockedThreadCheckInterval(if(executionMode == "debug")300000L else 3000L)
 
     if (ip.isNotEmpty()) {
         val network = hazel.networkConfig

@@ -25,7 +25,7 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
         super.start()
         log.info("Patients verticle launching")
         register(FUNC_PATLIST)
-        register(FUNC_PATDETAIL)
+        // register(FUNC_PATDETAIL)
 
         vertx.eventBus().consumer<JsonObject>(FUNC_PATLIST.addr) { msg ->
             getConnection(msg) { result ->
@@ -87,42 +87,38 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
         val param=msg.body().getString("param")
         when(param) {
             "totalEntries" -> {
-                sendQuery("SELECT count(*) from KONTAKTE"){ result ->
+                sendQuery("SELECT count(*) from KONTAKT"){ result ->
                     if(result.succeeded()){
                         val rs=result.result()
                         if(rs.size>0){
-                            val r=rs.get(0)
-                            ret.complete(r.getJsonObject(0))
+                            val r=rs.get(0).getJsonObject(0)
+                            r.put("value",r.getLong("count"))
+                            ret.complete(r)
                         }else{
-                            ret.complete(JsonUtil.create("count:${0}"))
+                            ret.complete(JsonUtil.create("value:${0}"))
                         }
                     }else{
                         ret.fail(result.cause())
                     }
                 }
-                /*
-                getConnection(msg){con ->
-                    if(con.succeeded()){
-                        val conn=con.result()
-                        conn.query("SELECT count(*) from KONTAKTE"){result ->
-                            if(result.succeeded()){
-                                val rs=result.result()
-                                val num=rs.rows[0]
-                                ret.complete(num)
-                            }else{
-                                ret.fail(result.cause())
-                            }
-                        }
-                        conn.close()
-                    }else{
-                        ret.fail(con.cause())
-                    }
-                }
-                */
             }
             "deletedEntries" ->{
-                ret.complete(JsonUtil.create("count:${0}"))
+                sendQuery("SELECT count(*) from KONTAKT where deleted='1'"){result ->
+                    if(result.succeeded()){
+                        val rs=result.result()
+                        if(rs.size>0){
+                            val r=rs.get(0).getJsonObject(0)
+                            r.put("value",r.getLong("count"))
+                            ret.complete(r)
+                        }else{
+                            ret.complete(JsonUtil.create("value:${0}"))
+                        }
+                    }else{
+                        ret.fail(result.cause())
+                    }
+                }
             }
+            else -> ret.fail("parameter ${param} unknown")
         }
         return ret
     }

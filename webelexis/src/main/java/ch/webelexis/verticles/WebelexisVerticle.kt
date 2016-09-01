@@ -32,6 +32,7 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
 
     override fun start(){
         super.start()
+        val eb=vertx.eventBus()
         vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR){msg ->
             when(msg.body().getString("command")){
                 "getParam" -> {
@@ -73,8 +74,14 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
                     if(result.succeeded()){
                         val rs=result.result()
                         handler(Future.succeededFuture<List<JsonArray>>(rs.results))
+                    }else{
+                        log.error("query error ",result.cause())
+                        handler(Future.failedFuture(result.cause()))
                     }
                 }
+            }else{
+                log.error("connection error ",con.cause())
+                handler(Future.failedFuture(con.cause()))
             }
         }
     }

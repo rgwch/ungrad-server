@@ -48,8 +48,7 @@ export class ServiceDetail {
 
   getValue(param){
     this.api.getParameterValue(this.serviceID,param).then(result => {
-      debugger
-      return result.result
+      return result.result['value']
     })
   }
   run(name){

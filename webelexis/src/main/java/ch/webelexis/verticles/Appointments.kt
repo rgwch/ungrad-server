@@ -3,6 +3,8 @@ package ch.webelexis.verticles
 import ch.rgw.tools.JsonUtil
 import ch.rgw.tools.TimeTool
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
+import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 
@@ -10,11 +12,14 @@ import io.vertx.core.json.JsonObject
  * Created by gerry on 15.08.16.
  */
 class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
+    override fun getParam(msg: Message<JsonObject>): Future<JsonObject> {
+        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     override fun start() {
         super.start()
         log.info("Appointments verticle launching")
-        register(FUNC_LIST)
+        // register(FUNC_LIST)
 
         vertx.eventBus().consumer<JsonObject>(FUNC_LIST.addr) { msg ->
             getConnection(msg) {
