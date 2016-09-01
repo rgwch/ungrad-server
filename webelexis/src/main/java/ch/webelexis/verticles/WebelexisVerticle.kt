@@ -39,11 +39,10 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
                     val result=getParam(msg)
                     result.setHandler{ async ->
                         if(async.succeeded()){
-                            msg.reply(JsonUtil.create("status:ok").put("result",async.result()))
+                            msg.reply(async.result())
                         }else{
                             msg.reply(JsonUtil.create("status:error","message:${async.cause().message}"))
                         }
-
                     }
                 }
                 "setParam" -> {
@@ -67,6 +66,7 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
         database.close()
     }
     fun sendQuery(query:String, handler:((AsyncResult<List<JsonArray>>) -> Unit)){
+        log.debug("got query: "+query)
         database.getConnection { con ->
             if(con.succeeded()){
                 val conn=con.result()

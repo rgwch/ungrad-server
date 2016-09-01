@@ -11,6 +11,7 @@
     <logger name="UIHandler" level="info"/>
     <logger name="Restpoint" level="info"/>
     <logger name="Webelexis" level="info"/>
+    <logger name="io.vertx.ext.web.handler.impl.SessionHandlerImpl" level="error"/>
     <root level="error">
         <appender-ref ref="STDOUT" />
     </root>

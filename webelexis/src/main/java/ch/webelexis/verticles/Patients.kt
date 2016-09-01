@@ -91,11 +91,10 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
                     if(result.succeeded()){
                         val rs=result.result()
                         if(rs.size>0){
-                            val r=rs.get(0).getJsonObject(0)
-                            r.put("value",r.getLong("count"))
-                            ret.complete(r)
+                            val r=rs.get(0)
+                            ret.complete(JsonUtil.create("status:ok").put("value",r.getLong(0)))
                         }else{
-                            ret.complete(JsonUtil.create("value:${0}"))
+                            ret.complete(JsonUtil.create("status:ok","value:${0}"))
                         }
                     }else{
                         ret.fail(result.cause())
@@ -107,11 +106,11 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
                     if(result.succeeded()){
                         val rs=result.result()
                         if(rs.size>0){
-                            val r=rs.get(0).getJsonObject(0)
-                            r.put("value",r.getLong("count"))
-                            ret.complete(r)
+                            val r=rs.get(0)
+                            ret.complete(JsonUtil.create("status:ok").put("value",r.getLong(0)))
+
                         }else{
-                            ret.complete(JsonUtil.create("value:${0}"))
+                            ret.complete(JsonUtil.create("status:ok","value:${0}"))
                         }
                     }else{
                         ret.fail(result.cause())
@@ -136,6 +135,7 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
                 "type:number",
                 "value:${0}",
                 "writable:false"))
+
         return ret
     }
 

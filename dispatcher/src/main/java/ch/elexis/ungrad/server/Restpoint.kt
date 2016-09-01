@@ -327,18 +327,28 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
         val AUTH_ERR = "bad username or password"
     }
 
+    /**
+     * This is the result from the service via EventBus: Tha last checkpoint for results before sending to the
+     * REST client.
+     */
     class ResultHandler(val ctx: RoutingContext) : AsyncResultHandler<Message<JsonObject>> {
         override fun handle(result: AsyncResult<Message<JsonObject>>) {
             if (result.succeeded()) {
+                // message returned technically correct but might still indicate an error condition
                 val msg = result.result().body()
                 if ("ok" == msg.getString("status")) {
+                    // request completed successfully - send answer to the client.
                     ctx.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
                             .end(result.result().body().encode())
                 } else {
+                    // some error while processing the request. The service hopefully provided a meaningful error message
+                    log.error(result.result().body().encodePrettily(), result.cause())
                     ctx.response().setStatusCode(400).putHeader("content-type", "text/plain; charset=utf-8")
                             .end(result.result().body().encodePrettily())
                 }
             } else {
+                // message was not handled or returned correctly -> internal server error
+                log.error(result?.result()?.body()?.encodePrettily() ?: "error", result?.cause())
                 ctx.response().setStatusCode(500).end(result.cause().message)
             }
         }

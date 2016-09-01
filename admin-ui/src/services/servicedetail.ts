@@ -47,9 +47,12 @@ export class ServiceDetail {
   }
 
   getValue(param){
+    param.value="..loading.."
     this.api.getParameterValue(this.serviceID,param).then(result => {
-      return result.result['value']
+      console.log("result:"+JSON.stringify(result))
+      param.value=result['value']
     })
+    return ""
   }
   run(name){
     this.api.get(`/api/services/${this.serviceID}/exec/${name}`, result =>{

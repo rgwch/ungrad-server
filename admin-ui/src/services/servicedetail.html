@@ -1,8 +1,9 @@
 <template>
   <form>
     <div repeat.for="param of parameters">
+      ${getValue(param)}
       <div if.bind="isType('string',param)">
-        <md-input md-label="${param.caption}" md-value.bind="getValue(param)"></md-input>
+        <md-input md-label="${param.caption}" md-value.bind="param.value"></md-input>
       </div>
       <div if.bind="isType('boolean',param)">
         <md-checkbox md-checked.bind="checkedState(param)">${param.caption}</md-checkbox>
@@ -13,7 +14,7 @@
         </button>
       </div>
       <div if.bind="isType('number',param)">
-        <md-input md-label="${param.caption}" md-value.bind="getValue(param)"></md-input>
+        <md-input md-label="${param.caption}" md-value.bind="param.value"></md-input>
       </div>
 
     </div>

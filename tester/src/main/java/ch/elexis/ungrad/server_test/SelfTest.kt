@@ -52,6 +52,10 @@ class SelfTest: AbstractVerticle() {
         vertx.eventBus().consumer<JsonObject>(SERVER_CONTROL){msg ->
             if(msg.body().getString("command")=="getParam"){
                 val answer=when(msg.body().getString("param")){
+                    "os_desc" -> os_desc
+                    "java_desc" -> java_desc
+                    "system"->system()
+                    "systime"-> systime()
                     "os_name" -> os_name
                     "os_arch" -> os_arch
                     "os_version" -> os_version
@@ -64,7 +68,7 @@ class SelfTest: AbstractVerticle() {
                     "system_time" -> system_time()
                     else -> "unknown parameter"
                 }
-                msg.reply(JsonUtil.create("status:ok","result:$answer"))
+                msg.reply(JsonUtil.create("status:ok","value:$answer"))
             }else if(msg.body().getString("command")=="setParam"){
                 msg.reply(JsonUtil.create("status:error","message:all parameters are read only"))
 
@@ -107,17 +111,21 @@ class SelfTest: AbstractVerticle() {
         fun avail_memory()=Runtime.getRuntime().freeMemory()
         fun system_time()=TimeTool().toString(TimeTool.DATETIME_XML)
         fun roundKB(b:Long)=Math.round(b.toDouble()/(1024*1024))
+        val os_desc="$os_name $os_version / $os_arch"
+        val java_desc="$java_version / $java_vendor"
+        fun system()="${processors()} Processors, Memory total ${roundKB(max_memory())}M / free ${roundKB(avail_memory())}M / max usable ${roundKB(max_memory())}M"
+        fun systime()=system_time()
         fun params()="""
         [
             {
-                "name":"os_desc","caption":"OS","type":"string","value":"$os_name $os_version / $os_arch","writable":false
+                "name":"os_desc","caption":"OS","type":"string","value":"$os_desc","writable":false
             },
             {
-                "name":"java_desc","caption":"Java","type":"string","value":"$java_version / $java_vendor", "writable":false
+                "name":"java_desc","caption":"Java","type":"string","value":"$java_desc", "writable":false
             },
             {
                 "name":"system","caption":"System","type":"string",
-                "value":"${processors()} Processors, Memory total ${roundKB(max_memory())}M / free ${roundKB(avail_memory())}M / max usable ${roundKB(max_memory())}M",
+                "value":"${system()}",
                 "writable": false
             },
             {
