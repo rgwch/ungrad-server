@@ -68,5 +68,7 @@ export class ServiceDetail {
   showSuccessToast(msg) {
     this.toast.show('Success:'+msg, 4000, 'rounded blue');
   }
-
+  hello(){
+    alert("hello")
+  }
 }

@@ -78,6 +78,7 @@ abstract class WebelexisVerticle(val ID:String, val CONTROL_ADDR:String) : Abstr
                         log.error("query error ",result.cause())
                         handler(Future.failedFuture(result.cause()))
                     }
+                    conn.close()
                 }
             }else{
                 log.error("connection error ",con.cause())
