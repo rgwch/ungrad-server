@@ -1,18 +1,11 @@
 package ch.webelexis.verticles
 
 import ch.rgw.tools.JsonUtil
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.AsyncResult
-import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import io.vertx.ext.asyncsql.AsyncSQLClient
-import io.vertx.ext.asyncsql.MySQLClient
-import io.vertx.ext.asyncsql.PostgreSQLClient
 import org.slf4j.LoggerFactory
-import java.sql.ResultSet
 
 /**
  * Created by gerry on 14.08.16.
@@ -20,12 +13,11 @@ import java.sql.ResultSet
 class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
 
 
-
     override fun start() {
         super.start()
         log.info("Patients verticle launching")
         register(FUNC_PATLIST)
-        // register(FUNC_PATDETAIL)
+        register(FUNC_PATDETAIL)
 
         vertx.eventBus().consumer<JsonObject>(FUNC_PATLIST.addr) { msg ->
             getConnection(msg) { result ->
@@ -82,37 +74,38 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
             }
         }
     }
-    override fun getParam(msg:Message<JsonObject>): Future<JsonObject> {
-        val ret=Future.future<JsonObject>()
-        val param=msg.body().getString("param")
-        when(param) {
+
+    override fun getParam(msg: Message<JsonObject>): Future<JsonObject> {
+        val ret = Future.future<JsonObject>()
+        val param = msg.body().getString("param")
+        when (param) {
             "totalEntries" -> {
-                sendQuery("SELECT count(*) from KONTAKT"){ result ->
-                    if(result.succeeded()){
-                        val rs=result.result()
-                        if(rs.size>0){
-                            val r=rs.get(0)
-                            ret.complete(JsonUtil.create("status:ok").put("value",r.getLong(0)))
-                        }else{
-                            ret.complete(JsonUtil.create("status:ok","value:${0}"))
+                sendQuery("SELECT count(*) from KONTAKT") { result ->
+                    if (result.succeeded()) {
+                        val rs = result.result()
+                        if (rs.size > 0) {
+                            val r = rs.get(0)
+                            ret.complete(JsonUtil.create("status:ok").put("value", r.getLong(0)))
+                        } else {
+                            ret.complete(JsonUtil.create("status:ok", "value:${0}"))
                         }
-                    }else{
+                    } else {
                         ret.fail(result.cause())
                     }
                 }
             }
-            "deletedEntries" ->{
-                sendQuery("SELECT count(*) from KONTAKT where deleted='1'"){result ->
-                    if(result.succeeded()){
-                        val rs=result.result()
-                        if(rs.size>0){
-                            val r=rs.get(0)
-                            ret.complete(JsonUtil.create("status:ok").put("value",r.getLong(0)))
+            "deletedEntries" -> {
+                sendQuery("SELECT count(*) from KONTAKT where deleted='1'") { result ->
+                    if (result.succeeded()) {
+                        val rs = result.result()
+                        if (rs.size > 0) {
+                            val r = rs.get(0)
+                            ret.complete(JsonUtil.create("status:ok").put("value", r.getLong(0)))
 
-                        }else{
-                            ret.complete(JsonUtil.create("status:ok","value:${0}"))
+                        } else {
+                            ret.complete(JsonUtil.create("status:ok", "value:${0}"))
                         }
-                    }else{
+                    } else {
                         ret.fail(result.cause())
                     }
                 }
@@ -122,31 +115,31 @@ class Patients : WebelexisVerticle(ID, CONTROL_ADDR) {
         return ret
     }
 
-    override fun createParams():JsonArray {
-        val ret=JsonArray()
-        .add(JsonUtil.create("name:totalEntries",
-                "caption:Number of patient entries",
-                "type:number",
-                "value:${0}",
-                "writable:false"
-        ))
-        .add(JsonUtil.create("name:deletedEntries",
-                "caption:Number of deleted entries",
-                "type:number",
-                "value:${0}",
-                "writable:false"))
+    override fun createParams(): JsonArray {
+        val ret = JsonArray()
+                .add(JsonUtil.create("name:totalEntries",
+                        "caption:Number of patient entries",
+                        "type:number",
+                        "value:${0}",
+                        "writable:false"
+                ))
+                .add(JsonUtil.create("name:deletedEntries",
+                        "caption:Number of deleted entries",
+                        "type:number",
+                        "value:${0}",
+                        "writable:false"))
 
         return ret
     }
 
-    override fun getName()="Elexis Patients"
+    override fun getName() = "Elexis Patients"
 
     companion object {
-        val ID="ch.webelexis.verticles.Patients"
+        val ID = "ch.webelexis.verticles.Patients"
         const val BASE_ADDR = "ch.webelexis.patients."
         const val CONTROL_ADDR = BASE_ADDR + "admin"
-        val FUNC_PATLIST = RegSpec(BASE_ADDR+"list", "patients/list/:pattern", "user", "get")
-        val FUNC_PATDETAIL = RegSpec(BASE_ADDR+"detail", "patients/detail/:id", "user", "get")
+        val FUNC_PATLIST = RegSpec(BASE_ADDR + "list", "patients/list/:pattern", "user", "get")
+        val FUNC_PATDETAIL = RegSpec(BASE_ADDR + "detail", "patients/detail/:id", "user", "get")
         val log = LoggerFactory.getLogger(Patients::class.java)
         val SQL_PATLIST = "SELECT patientnr,id,Bezeichnung1,Bezeichnung2,Bezeichnung3 FROM KONTAKT WHERE (Bezeichnung1 like ? OR Bezeichnung2 like ?) AND deleted='0'"
         val SQL_PATDETAIL = "SELECT * FROM KONTAKT WHERE id=? AND deleted='0'"
