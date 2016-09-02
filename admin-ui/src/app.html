@@ -1,8 +1,9 @@
 <template>
   <require from="./services/list"></require>
-  <md-colors md-primary-color="blue" md-accent-color="red"></md-colors>
+  <!-- set primare color to blue lighten-2 and accent color to blue-accent-3 -->
+  <md-colors md-primary-color="#64b5f6" md-accent-color="#2979ff"></md-colors>
   <div class="container">
-    <h1>Elexis Ungrad</h1>
+    <h3 class="primary-text">Elexis Ungrad Server Control</h3>
     <div class="row">
       <list class="col s3"></list>
       <router-view class="col s9"></router-view>

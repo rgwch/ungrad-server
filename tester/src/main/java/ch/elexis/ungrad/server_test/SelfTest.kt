@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 
 
 /**
- * This module tests the basic functionality of the Dispatcher. It is launched automatically and always.
+ * This module tests and demonstrates the basic functionality of the Dispatcher. It is launched automatically and always.
  * Created by gerry on 07.07.16.
  */
 class SelfTest: AbstractVerticle() {
@@ -37,7 +37,7 @@ class SelfTest: AbstractVerticle() {
     override fun start() {
         super.start()
         /**
-         * we'll listen to MY_ADDRESS. The Dispatcher will convert REST calls to "1.0/ping/:plus/:minus" to
+         * we'll listen to MY_ADDRESS. The Dispatcher will convert REST calls to "/api/1.0/ping/:plus/:minus" to
          * EventBus messages with the parameters "plus" and "minus". We reply with "pong" and echo the
          * parameters.
          */
@@ -49,6 +49,10 @@ class SelfTest: AbstractVerticle() {
 
         }
 
+        /**
+         * We also listen to the SERVER_CONTROL address for the adninistrative interface. To demonstrate this, we
+         * just show some server parameters.
+         */
         vertx.eventBus().consumer<JsonObject>(SERVER_CONTROL){msg ->
             if(msg.body().getString("command")=="getParam"){
                 val answer=when(msg.body().getString("param")){
@@ -99,6 +103,9 @@ class SelfTest: AbstractVerticle() {
                 .put("params",JsonArray(params()))
     }
 
+    /*
+     * static properties and methods.
+     */
     companion object{
         val os_name=System.getProperty("os.name")
         val os_arch=System.getProperty("os.arch")
@@ -113,7 +120,7 @@ class SelfTest: AbstractVerticle() {
         fun roundKB(b:Long)=Math.round(b.toDouble()/(1024*1024))
         val os_desc="$os_name $os_version / $os_arch"
         val java_desc="$java_version / $java_vendor"
-        fun system()="${processors()} Processors, Memory total ${roundKB(max_memory())}M / free ${roundKB(avail_memory())}M / max usable ${roundKB(max_memory())}M"
+        fun system()="${processors()} Processors, JVM-Memory total ${roundKB(max_memory())}M / free ${roundKB(avail_memory())}M / max usable ${roundKB(max_memory())}M"
         fun systime()=system_time()
         fun params()="""
         [
