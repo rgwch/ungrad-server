@@ -56,7 +56,7 @@ export class ServiceDetail {
   }
   run(name){
     this.api.get(`/api/services/${this.serviceID}/exec/${name}`, result =>{
-      var ans=JSON.parse(result.response)
+      var ans=JSON.parse(result['response'])
       if(ans.status === "ok"){
         this.showSuccessToast("atc update")
       }else{
