@@ -137,9 +137,6 @@ class SelfTest: AbstractVerticle() {
             },
             {
                 "name":"systime","caption":"System time","type":"string","value":"${system_time()}","writable":false
-            },
-            {
-                "name":"reload","caption":"Refresh","type":"action","value":"refresh","writable":true
             }
         ]
         """

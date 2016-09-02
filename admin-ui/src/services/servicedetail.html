@@ -5,7 +5,12 @@
       <div if.bind="isType('string',param)">
         <md-input md-label="${param.caption}" md-value.bind="param.value"></md-input>
       </div>
-
+      <div if.bind="isType('directory',param)">
+        <md-file md-caption="directory" view-model-ref="param.value" md-label-value.bind="labelValue"></md-file>
+        <div if-bind="param.value">
+          ${param.value}
+        </div>
+      </div>
       <div if.bind="isType('boolean',param)">
         <md-checkbox md-checked.bind="checkedState(param)">${param.caption}</md-checkbox>
       </div>
@@ -19,5 +24,17 @@
         <md-input md-label="${param.caption}" md-value.bind="param.value"></md-input>
       </div>
     </div>
+    <md-card md-horizontal="true">
+      <button md-button style="margin-right:10px" click.trigger="reload()">Refresh</button>
+      <button md-button click.trigger="send()" disabled.bind="!canWrite" show.bind="hasWritableProperties">Send</button>
+    </md-card>
+    <!-- div class="row">
+      <div class="col s6">
+        <button md-button click.trigger="reload()">Refresh</button>
+      </div>
+      <div class="col s6">
+        <button md-button click.trigger="send()">Send</button>
+      </div>
+    </div -->
   </form>
 </template>

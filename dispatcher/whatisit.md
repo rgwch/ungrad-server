@@ -56,7 +56,7 @@ If the register message contains an entry "server", the framework will provide a
   a JsonObject with the following fields:
     * name - a unique name for the parameter (unique within this service)
     * caption - a caption for the web interface
-    * type - one of 'string', 'boolean', 'number', or 'object'
+    * type - one of 'string', 'boolean', 'number', 'directory', 'file' or 'object'
     * value - value for the parameter
   
  
