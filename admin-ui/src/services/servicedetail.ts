@@ -25,11 +25,17 @@ export class ServiceDetail {
       for(var i=0;i<this.parameters.length;i++){
         this.originalParameters[i]=this.clone(this.parameters[i])
       }
+      /** observing arrays doesn't seem to work at this time. So we have to poll instead */
       //let subscription=this.binding.collectionObserver(this.parameters).subscribe(splices => console.log(splices))
     })
 
   }
 
+  /**
+   * Test if a property can be written to the server (used to enable/disable the "send" button)
+   * @returns {boolean} true, if the property has the "writable" attribute set to true, and is different from its
+   * original value.
+   */
   //@computedFrom('parameters')
   get canWrite() {
     for (var i = 0; i < this.parameters.length; i++) {
@@ -41,6 +47,10 @@ export class ServiceDetail {
     return false
   }
 
+  /**
+   * Test if the currently displayed service has any writable properties (used to show/hide the "send" button)
+   * @returns {boolean} true if at least one of the displayed properties is writable
+     */
   get hasWritableProperties(){
     if(this.parameters.find(parm =>{
       return parm.writable
@@ -51,7 +61,12 @@ export class ServiceDetail {
     }
   }
 
-
+  /**
+   * Check if a parameter is of the given type
+   * @param typ type to check (all lowercase)
+   * @param param the parameter in question
+   * @returns {boolean} true if types match
+     */
   isType(typ:String, param:IServiceParameter):Boolean {
     return (param.type.toLowerCase() == typ)
   }
@@ -85,14 +100,14 @@ export class ServiceDetail {
    * @param param name of the parameter
    * @returns {string} the value
    */
-  getValue(param) {
+  getValue(param: IServiceParameter) {
     param.value = "..loading.."
     this.api.getParameterValue(this.serviceID, param).then(result => {
       console.log("result:" + JSON.stringify(result))
       param.value = result['value']
       this.originalParameters.forEach(parameter => {
         if(parameter.name==param.name){
-          parameter.value=param.value
+          parameter['value']=param.value
           return
         }
       })
@@ -116,6 +131,9 @@ export class ServiceDetail {
     })
   }
 
+  /**
+   * Reload all parameters of the current service
+   */
   reload() {
     this.parameters.forEach(param => {
       this.getValue(param)

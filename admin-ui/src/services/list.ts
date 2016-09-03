@@ -11,6 +11,9 @@ export class List {
   constructor(private api,private appstate, private ea){
   }
 
+  /**
+   * Fetch a service list from the server and sort it alphabetically
+   */
   created(){
     this.api.getServices().then(services => {
       this.services=services.sort((a,b) =>{
@@ -24,8 +27,6 @@ export class List {
         }
 
       })
-      this.appstate.selectedService=services[0]
-      this.ea.publish(new ServiceSelected(services[0]))
     })
   }
 
