@@ -10,7 +10,7 @@
     </parent>
     <groupId>ch.rgw</groupId>
     <artifactId>webelexis</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <build>
         <plugins>
@@ -129,11 +129,7 @@
         </dependency>
     </dependencies>
     <properties>
-        <vertx-version>3.3.0</vertx-version>
-        <kotlin.version>1.0.3</kotlin.version>
-        <toolbox-version>4.0.3</toolbox-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
     </properties>
 
 </project>
