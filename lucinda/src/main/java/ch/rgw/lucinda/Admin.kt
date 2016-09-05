@@ -16,18 +16,10 @@ object Admin : Handler<Message<JsonObject>> {
     override fun handle(message: Message<JsonObject>) {
         val msg = message.body()
         val result:Future<Any> = when(msg.getString("command")) {
-            "getParam" -> {
-                getParam(msg)
-
-            }
-            "setParam" -> {
-                setParam(msg)
-            }
-            "exec" -> {
-                Future.failedFuture("Not implemented")
-            }
-
-            else -> Future.failedFuture("Not implemented")
+            "getParam" -> getParam(msg)
+            "setParam" -> setParam(msg)
+            "exec" -> Future.failedFuture("Not implemented")
+            else -> Future.failedFuture("Not implemented ${msg.getString("command")}")
         }
         if(result.failed()){
             message.reply(JsonObject().put("status", "error").put("message", "illegal function call"))
@@ -66,9 +58,5 @@ object Admin : Handler<Message<JsonObject>> {
         Communicator.saveConfig()
         ret.complete(true)
         return ret
-    }
-
-    fun fetchParam(id:String,fallback:String){
-
     }
 }
