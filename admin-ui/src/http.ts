@@ -16,7 +16,9 @@ export class Http {
   }
 
   get(url:string, callback) {
-    this.client.get(url).then(result => callback(result))
+    this.client.get(url).then(result => callback(result)).catch(error => {
+      callback(error)
+    })
   }
 
   post(url:string, params:string, callback) {
@@ -49,6 +51,8 @@ export class Http {
       param['service']=serviceID
       this.client.post("/api/services/setParam",param).then(response =>{
         resolve(JSON.parse(response.response))
+      }).catch(error => {
+        alert(error.response)
       })
     })
   }

@@ -104,14 +104,17 @@ export class ServiceDetail {
   getValue(param: IServiceParameter) {
     param.value = "..loading.."
     this.api.getParameterValue(this.serviceID, param).then(result => {
-     // console.log("result:" + JSON.stringify(result))
-      param.value = result['value']
-      this.originalParameters.forEach(parameter => {
-        if(parameter.name==param.name){
-          parameter['value']=param.value
-          return
-        }
-      })
+      if(result['status']=="ok") {
+        param.value = result['value']
+        this.originalParameters.forEach(parameter => {
+          if (parameter.name == param.name) {
+            parameter['value'] = param.value
+            return
+          }
+        })
+      }else{
+        this.showFailToast(result.message)
+      }
     })
   }
 
@@ -126,7 +129,7 @@ export class ServiceDetail {
       if (ans.status === "ok") {
         this.showSuccessToast("atc update")
       } else {
-
+        this.showFailToast("test")
       }
       //this.ea.publish(new ServiceSelected(JSON.parse(result.response).answer))
     })
@@ -155,6 +158,10 @@ export class ServiceDetail {
 
   showSuccessToast(msg) {
     this.toast.show('Success:' + msg, 4000, 'rounded blue');
+  }
+
+  showFailToast(msg){
+    this.toast.show('Failed: '+ msg,4000, 'red');
   }
 
   hello() {
