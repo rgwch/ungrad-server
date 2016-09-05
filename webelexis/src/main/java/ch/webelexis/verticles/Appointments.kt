@@ -90,15 +90,15 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
                 .add(JsonUtil.create("name:totalEntries",
                         "caption:Number of appointments",
                         "type:number",
-                        "value:${0}",
-                        "writable:false"
-                ))
+                        "value:${0}")
+                        .put("writable",false)
+                )
                 .add(JsonUtil.create("name:deletedEntries",
                         "caption:Number of deleted entries",
                         "type:number",
-                        "value:${0}",
-                        "writable:false"))
-
+                        "value:${0}")
+                        .put("writable",false)
+                )
         return ret
 
     }

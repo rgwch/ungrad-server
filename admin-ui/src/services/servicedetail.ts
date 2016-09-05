@@ -39,7 +39,7 @@ export class ServiceDetail {
   //@computedFrom('parameters')
   get canWrite() {
     for (var i = 0; i < this.parameters.length; i++) {
-      console.log(this.parameters[i].value + " - " + this.originalParameters[i].value)
+      // console.log(this.parameters[i].value + " - " + this.originalParameters[i].value)
       if ((this.parameters[i].writable==true) && this.parameters[i].value != this.originalParameters[i].value) {
         return true
       }
@@ -52,9 +52,10 @@ export class ServiceDetail {
    * @returns {boolean} true if at least one of the displayed properties is writable
      */
   get hasWritableProperties(){
-    if(this.parameters.find(parm =>{
+    var found=(this.parameters.find(parm =>{
       return parm.writable
-    }) == undefined) {
+    }))
+    if(found == undefined) {
       return false
     }else{
       return true
@@ -103,7 +104,7 @@ export class ServiceDetail {
   getValue(param: IServiceParameter) {
     param.value = "..loading.."
     this.api.getParameterValue(this.serviceID, param).then(result => {
-      console.log("result:" + JSON.stringify(result))
+     // console.log("result:" + JSON.stringify(result))
       param.value = result['value']
       this.originalParameters.forEach(parameter => {
         if(parameter.name==param.name){
@@ -129,6 +130,17 @@ export class ServiceDetail {
       }
       //this.ea.publish(new ServiceSelected(JSON.parse(result.response).answer))
     })
+  }
+  send(){
+    for(var i=0;i<this.parameters.length;i++){
+      if(this.parameters[i].value!=this.originalParameters[i].value){
+        this.api.setParameterValue(this.serviceID,this.parameters[i]).then(result =>{
+          if(result.status=="ok"){
+            this.showSuccessToast(this.parameters[i].name)
+          }
+        })
+      }
+    }
   }
 
   /**

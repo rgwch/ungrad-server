@@ -42,7 +42,15 @@ export class Http {
         resolve(JSON.parse(response.response))
       })
     })
+  }
 
+  setParameterValue(serviceID:String,param:IServiceParameter){
+    return new Promise(resolve =>{
+      param['service']=serviceID
+      this.client.post("/api/services/setParam",param).then(response =>{
+        resolve(JSON.parse(response.response))
+      })
+    })
   }
 
 }

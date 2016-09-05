@@ -55,7 +55,14 @@ object Admin : Handler<Message<JsonObject>> {
 
     fun setParam(msg: JsonObject): Future<Any> {
         val ret=Future.future<Any>()
-        ret.fail("not implemented")
+        val param=msg.getString("name")
+        val value=msg.getValue("value")
+        Communicator.config.put(param,value)
+        if(Communicator.config.flush()) {
+            ret.complete(true)
+        }else{
+            ret.fail("could not write config")
+        }
         return ret
     }
 
