@@ -57,13 +57,18 @@ object Admin : Handler<Message<JsonObject>> {
         val ret=Future.future<Any>()
         val param=msg.getString("name")
         val value=msg.getValue("value")
-        Communicator.config.put(param,value)
-        if(Communicator.config.flush()) {
-            ret.complete(true)
-        }else{
-            ret.fail("could not write config")
-        }
+
+        Communicator.config.put(when(param){
+            "indexdir" -> "fs_indexdir"
+            "datadir" -> "fs_basedir"
+            else -> "error"
+        },value)
+        Communicator.saveConfig()
+        ret.complete()
         return ret
     }
 
+    fun fetchParam(id:String,fallback:String){
+
+    }
 }

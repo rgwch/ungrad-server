@@ -17,10 +17,7 @@ package ch.rgw.lucinda
 
 import ch.rgw.tools.Configuration
 import ch.rgw.tools.JsonUtil
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.AsyncResult
-import io.vertx.core.AsyncResultHandler
-import io.vertx.core.Handler
+import io.vertx.core.*
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.Json
@@ -35,13 +32,15 @@ import org.slf4j.LoggerFactory
 
 class Communicator: AbstractVerticle() {
     val API = "1.0"
-    val eb: EventBus by lazy {
-        vertx.eventBus()
+
+    override fun stop(stopResult:Future<Void>){
+        indexManager?.shutDown()
+        stopResult.complete()
     }
 
-
-    override fun start() {
+    override fun start(startResult:Future<Void>) {
         super.start()
+        eb=vertx.eventBus()
         config.mergeIn(config())
         indexManager = IndexManager(config.getString("fs_indexdir", "target/store"),config.getString("default_language", "de"))
         val dispatcher = Dispatcher(vertx,config.getString("fs_import", "target/store"))
@@ -54,6 +53,13 @@ class Communicator: AbstractVerticle() {
         }
 
 
+        eb.send<JsonObject>("ch.elexis.ungrad.server.getconfig",JsonUtil.create("id:ch.rgw.lucinda.config")){ reply ->
+            if(reply.succeeded()) {
+                config.mergeIn(reply.result().body())
+            }else{
+                log.error("could not retrieve configuration")
+            }
+        }
         register(FUNC_IMPORT)
         register(FUNC_FINDFILES)
         register(FUNC_GETFILE)
@@ -203,7 +209,7 @@ class Communicator: AbstractVerticle() {
 
             }
         }
-
+        startResult.complete()
 
     }
 
@@ -279,7 +285,8 @@ class Communicator: AbstractVerticle() {
         val FUNC_PING = Communicator.RegSpec(".ping", "lucinda/ping/:var", "guest", "get")
         val log = LoggerFactory.getLogger("lucinda.Communicator")
 
-        var indexManager: IndexManager? = null;
+        lateinit var indexManager: IndexManager;
+        lateinit var eb:EventBus
         val config= JsonUtil()
         val params= """
         [
@@ -301,7 +308,9 @@ class Communicator: AbstractVerticle() {
         """
         val serverDesc=JsonUtil.create("id:ch.rgw.lucinda","name:Lucinda","address:${CONTROL_ADDR}")
         .put("params", JsonArray(params))
-
+        fun saveConfig(){
+            eb.send("ch.elexis.ungrad.server.setconfig",JsonObject().put("id","ch.rgw.lucinda.config").put("value",config))
+        }
     }
 }
 

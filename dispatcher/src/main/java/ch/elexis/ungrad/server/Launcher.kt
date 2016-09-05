@@ -18,6 +18,7 @@ import ch.rgw.tools.CmdLineParser
 import ch.rgw.tools.JsonUtil
 import ch.rgw.tools.net.NetTool
 import com.hazelcast.config.Config
+import io.vertx.core.DeploymentOptions
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import io.vertx.core.json.JsonArray
@@ -39,6 +40,7 @@ val log = LoggerFactory.getLogger("Ungrad Launcher")
 val executionMode: String by lazy{
     config.getString("mode","release")
 }
+val persistor=JsonFilePersistor()
 
 fun main(args: Array<String>) {
     var restpointID = ""
@@ -80,7 +82,7 @@ fun main(args: Array<String>) {
     Vertx.clusteredVertx(vertxOptions.setClusterManager(mgr)) { result ->
         if (result.succeeded()) {
             val vertx = result.result()
-            vertx.deployVerticle(Restpoint(config)) { rpResult ->
+            vertx.deployVerticle(Restpoint(persistor), DeploymentOptions().setConfig(config)) { rpResult ->
                 if (rpResult.succeeded()) {
                     restpointID = rpResult.result()
                     log.info("Launched Restpoint")

@@ -37,8 +37,9 @@ public class Test_IndexManager {
     @Before
     public void setUp(){
         FileTool.deltree("target/indexMgrTest");
-        Communicator.Companion.setIndexManager(new IndexManager("target/indexMgrTest","de"));
-        indexManager= Communicator.Companion.getIndexManager();
+
+        Communicator.indexManager=new IndexManager("target/indexMgrTest","de");
+        indexManager= Communicator.indexManager;
     }
     @After
     public void tearDown(){

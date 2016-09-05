@@ -44,162 +44,34 @@ import java.util.*
  * Created by gerry on 06.07.16.
  */
 
-class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
+class Restpoint(val persist:IPersistor) : AbstractVerticle() {
     val API = "1.0"
-    val handlers = HashMap<String, String>()
-    val servers = HashMap<String, JsonObject>()
     val log = LoggerFactory.getLogger("Restpoint")
-    val params = "\\/:[a-z]+".toRegex()
     val verticles = HashMap<String, String>()
     val router: Router by lazy {
         Router.router(vertx)
     }
+    val registrar=Registrar(this)
+    val launchManager=LaunchManager(this)
 
     override fun start(future: Future<Void>) {
         super.start()
-        vertx.eventBus().consumer<JsonObject>(ADDR_REGISTER) { msg ->
-            val j = JsonUtil(msg.body())
-            if (!j.validate("rest:string", "method:string", "ebaddress:string")) {
-                msg.reply(JsonUtil.create("status:error", "message:format error of register message " + j.encodePrettily()))
-            } else {
-                val rest = j.getString("rest")
-                val ebmsg = j.getString("ebaddress")
-                val method = j.getString("method")
-                val role = j.getString("role") ?: "guest"
-                val server = j.getJsonObject("server")
-                if (server != null) {
-                    if (JsonUtil(server).validate("id:string", "name:string", "address:string")) {
-                        servers.put(server.getString("id"), server)
-                    } else {
-                        msg.reply(JsonUtil.create("status:error", "message:format error of server definition " + j.encodePrettily()))
-                        log.error("message:format error of server definition " + j.encode())
-
-                    }
-                }
-
-                if (handlers.containsKey(rest)) {
-                    msg.reply(JsonUtil.create("status:error", "message:REST address already registered"))
-                } else if (handlers.containsValue(ebmsg)) {
-                    msg.reply(JsonUtil.create("status:error", "message:EventBus address already registered"))
-                } else {
-                    handlers.put(rest, ebmsg)
-                    log.debug("registering /api/${rest} for ${ebmsg}")
-                    when (method) {
-                        "get" -> router.get("/api/${rest}").handler { context ->
-                            checkAuth(context, role) {
-                                val cmd = JsonObject()
-                                params.findAll(rest).forEach { match ->
-                                    val parm = match.value.substring(2)
-                                    cmd.put(parm, context.request().getParam(parm))
-                                }
-                                vertx.eventBus().send<JsonObject>(ebmsg, cmd, ResultHandler(context))
-                            }
-
-                        }
-                        "post" -> router.post("/api/${rest}").handler { context ->
-                            context.request().bodyHandler { buffer ->
-                                checkAuth(context, role) {
-                                    val cmd = buffer.toJsonObject()
-                                    vertx.eventBus().send<JsonObject>(ebmsg, cmd, ResultHandler(context))
-                                }
-                            }
-                        }
-                    }
-                    msg.reply(JsonUtil.create("status:ok"))
-                }
+        vertx.eventBus().consumer<JsonObject>(ADDR_REGISTER, registrar)
+        vertx.eventBus().consumer<JsonObject>(ADDR_LAUNCH, launchManager)
+        vertx.eventBus().consumer<JsonObject>(ADDR_LOG){msg->
+            when(msg.body().getString("level")){
+                "debug" -> log.debug(msg.body().getString("message"))
+                "info" ->log.info(msg.body().getString("message"))
+                "warn" ->log.warn(msg.body().getString("message"))
+                "error"->log.error(msg.body().getString("message"))
+                else -> log.error("bad option for logging ")
             }
         }
-        vertx.eventBus().consumer<JsonObject>(ADDR_LAUNCH) { msg ->
-            val jo = msg.body()
-            val verticle_name = jo.getString("name")
-            val verticle_url = jo.getString("url")
-            val verticle_config = jo.getJsonObject("config", JsonObject())
-            val verticle_class:String?=jo.getString("verticle")
-            val url = URL(verticle_url)
-            val file = File(url.file)
-            if (!file.exists() || !file.canRead()) {
-                ch.elexis.ungrad.server.log.error("can't read ${file.absolutePath}")
-            } else {
-                try {
-                    val options = DeploymentOptions().setConfig(verticle_config)
-                    if(verticle_class==null){
-                        vertx.deployVerticle(file.absolutePath,options){ handler ->
-                            if(handler.succeeded()){
-                                verticles.put(verticle_name,handler.result())
-                                log.info("launched uncompiled Verticle ${verticle_name}")
-                                msg.reply(JsonUtil.ok())
-                            }else{
-                                log.error(" *** could not launch ${verticle_name}", handler.cause())
-                                msg.fail(1, handler.cause().message)
-                            }
-                        }
-                    }else {
-                        val cl = URLClassLoader(Array<URL>(1, { url }))
-                        val clazz = cl.loadClass(verticle_class)
-                        val verticle = clazz.newInstance()
-                        vertx.deployVerticle(verticle as Verticle, options) { handler ->
-                            if (handler.succeeded()) {
-                                verticles.put(verticle_name, handler.result())
-                                log.info("launched ${verticle_name}")
-                                msg.reply(JsonUtil.ok())
-                            } else {
-                                log.error(" *** could not launch ${verticle_name}", handler.cause())
-                                msg.fail(1, handler.cause().message)
-                            }
-                        }
-                    }
-
-                } catch(ex: Exception) {
-                    log.error(" *** Could not launch Verticle ${verticle_url}", ex)
-                    msg.fail(2, ex.message)
-                }
-                /*
-                if (verticle_url.endsWith(".jar")) {
-                    try {
-                        val cl = URLClassLoader(Array<URL>(1, { url }))
-                        val clazz = cl.loadClass(jo.getString("verticle"))
-                        val verticle = clazz.newInstance()
-                        val options = DeploymentOptions().setConfig(verticle_config)
-                        vertx.deployVerticle(verticle as Verticle, options) { handler ->
-                            if (handler.succeeded()) {
-                                verticles.put(verticle_name, handler.result())
-                                log.info("launched ${verticle_name}")
-                                msg.reply(JsonUtil.create("status:ok"))
-                            } else {
-                                log.error(" *** could not launch ${verticle_name}", handler.cause())
-                                msg.fail(1, handler.cause().message)
-                            }
-                        }
-
-                    } catch(ex: Exception) {
-                        log.error(" *** Could not launch Verticle ${verticle_url}", ex)
-                        msg.fail(2, ex.message)
-                    }
-                } else {
-                    try {
-                        val cl=URLClassLoader(Array<URL>(1,{url}))
-                        val clazz=cl.loadClass(jo.getString("verticle"))
-                        val verticle=clazz.newInstance()
-                        val options=DeploymentOptions().setConfig(verticle_config)
-                        vertx.deployVerticle(verticle as Verticle, options) { handler ->
-                            if (handler.succeeded()) {
-                                verticles.put(verticle_name, handler.result())
-                                log.info("launched ${verticle_name}")
-                                msg.reply(JsonUtil.create("status:ok"))
-                            } else {
-                                log.error(" *** could not launch ${verticle_name}", handler.cause())
-                                msg.fail(1, handler.cause().message)
-
-                            }
-                        }
-                    }catch(ex:Exception){
-                        log.error(" *** Could not launch Verticle ${verticle_url}", ex)
-                        msg.fail(2, ex.message)
-
-                    }
-                }
-                */
-            }
+        vertx.eventBus().consumer<JsonObject>(ADDR_CONFIG_GET){msg ->
+            msg.reply(persist.read(msg.body().getString("id")))
+        }
+        vertx.eventBus().consumer<JsonObject>(ADDR_CONFIG_SET){
+            persist.write(it.body().getString("id"),JsonUtil(it.body().getJsonObject("value")))
         }
         /*
          * Create the Router and HTTP Server and add some handlers for session management and authentication/authorizastion
@@ -257,9 +129,9 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 context.response().end("You are logged out")
             }
             router.get("/api/getServices").handler { context ->
-                checkAuth(context, "admin") {
+                registrar.checkAuth(context, "admin") {
                     val result = JsonArray()
-                    servers.forEach {
+                    registrar.servers.forEach {
                         result.add(it.value)
                     }
                     context.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
@@ -267,9 +139,9 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 }
             }
             router.get("/api/services/:service/getParam/:name").handler { ctx ->
-                checkAuth(ctx, "admin") {
+                registrar.checkAuth(ctx, "admin") {
                     val serverID = ctx.request().getParam("service")
-                    val serviceDesc = servers.get(serverID)
+                    val serviceDesc = registrar.servers.get(serverID)
                     if (serviceDesc != null) {
                         val serviceAddr = serviceDesc.getString("address")
                         vertx.eventBus().send<JsonObject>(serviceAddr, JsonUtil.create("command:getParam", "param:${ctx.request().getParam("name")}"), ResultHandler(ctx))
@@ -280,11 +152,11 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 }
             }
             router.post("/api/services/setParam").handler { ctx ->
-                checkAuth(ctx, "admin") {
+                registrar.checkAuth(ctx, "admin") {
                     ctx.request().bodyHandler { buffer ->
                         val cmd = buffer.toJsonObject()
                         val serverID = cmd.getString("service")
-                        val serviceDesc = servers.get(serverID)
+                        val serviceDesc = registrar.servers.get(serverID)
                         if (serviceDesc != null) {
                             val serviceAddr = serviceDesc.getString("address")
                             cmd.put("command","setParam")
@@ -296,9 +168,9 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
                 }
             }
             router.get("/api/services/:service/exec/:action").handler{ ctx ->
-                checkAuth(ctx, "admin"){
+                registrar.checkAuth(ctx, "admin"){
                     val serverID = ctx.request().getParam("service")
-                    val serviceDesc = servers.get(serverID)
+                    val serviceDesc = registrar.servers.get(serverID)
                     if (serviceDesc != null) {
                         val serviceAddr = serviceDesc.getString("address")
                         vertx.eventBus().send<JsonObject>(serviceAddr, JsonUtil.create("command:exec", "action:${ctx.request().getParam("action")}"), ResultHandler(ctx))
@@ -309,11 +181,11 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
 
             }
             // calls to other resources go to the web interface
-            router.route("/ui/*").handler(UIHandler(cfg))
+            router.route("/ui/*").handler(UIHandler(config()))
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
             vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }
-                    .listen(cfg.getOptional("rest_port", 2016)) {
+                    .listen(JsonUtil(config()).getOptional("rest_port", 2016)) {
                         result ->
                         if (result.succeeded()) {
                             future.complete()
@@ -329,9 +201,22 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
 
     }
 
-    override fun stop() {
+    /**
+     * Stop all Verticles previously launched by this RestPoint.
+     */
+    override fun stop(stopResult:Future<Void>) {
+        val futures=ArrayList<Future<Any>>()
         verticles.forEach {
-            vertx.undeploy(it.value)
+            val undeployResult= Future.future<Void>()
+            vertx.undeploy(it.value,undeployResult.completer())
+            futures.add(undeployResult as Future<Any>)
+        }
+        CompositeFuture.all(futures).setHandler { result ->
+            if(result.succeeded()){
+                stopResult.complete()
+            }else{
+                stopResult.fail(result.cause())
+            }
         }
     }
 
@@ -339,42 +224,19 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
         ctx.response().setStatusCode(errno).end(errmsg)
     }
 
-    /**
-     * Check if the current context's user has the given role. If so, call action(), if not, send an error message.
-     */
-    fun checkAuth(context: RoutingContext, role: String, action: () -> Unit) {
-        if (context.user() == null) {
-            if (config.getString("mode", "prod") == "debug") {
-                action()
-            } else {
-                context.response().setStatusCode(401).end("please login first")
-            }
-        } else {
-            context.user().isAuthorised(role) {
-                if (it.succeeded()) {
-                    if (it.result()) {
-                        action()
-                    } else {
-                        // not authorized
-                        context.response().setStatusCode(403).end("Not authorized for ${role}.")
-                    }
-                } else {
-                    //internal server error
-                    context.response().setStatusCode(500).end(it.result().toString())
-                }
-            }
-        }
-    }
+
 
     companion object {
         val ADDR_REGISTER = "ch.elexis.ungrad.server.register";
         val ADDR_LAUNCH = "ch.elexis.ungrad.server.launch"
+        val ADDR_CONFIG_GET="ch.elexis.ungrad.server.getconfig"
+        val ADDR_CONFIG_SET="ch.elexis.ungrad.server.setconfig"
+        val ADDR_LOG="ch.elexis.ungrad.server.log"
         val AUTH_ERR = "bad username or password"
         val authProvider: AccessController by lazy {
             val users = config.getJsonObject("users") ?: JsonObject()
             AccessController(users)
         }
-
     }
 
     /**
