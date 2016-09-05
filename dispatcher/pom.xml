@@ -6,7 +6,7 @@
 
     <groupId>ch.rgw</groupId>
     <artifactId>ungrad-server-dispatcher</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -112,6 +112,10 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-lang-js</artifactId>
             <version>${vertx-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-unit</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

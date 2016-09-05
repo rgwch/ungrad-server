@@ -53,7 +53,6 @@ eb.consumer(base_addr + "admin", function (message) {
   console.log(name + "got admin " + message.body().command)
   switch (message.body().command) {
     case "getParam":
-
       message.reply({"status": "ok", "result": "0"})
       break;
     case "setParam":

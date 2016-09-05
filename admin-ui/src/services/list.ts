@@ -7,6 +7,7 @@ import {EventAggregator} from 'aurelia-event-aggregator'
 @inject(Http,AppState,EventAggregator)
 export class List {
   services:Array<IService>=[]
+  running:Boolean=true
 
   constructor(private api,private appstate, private ea){
   }
@@ -34,5 +35,6 @@ export class List {
     this.appstate.selectedService=service
     this.ea.publish(new ServiceSelected(service))
   }
+
 
 }

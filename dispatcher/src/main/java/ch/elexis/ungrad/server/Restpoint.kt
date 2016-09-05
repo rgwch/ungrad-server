@@ -370,6 +370,11 @@ class Restpoint(val cfg: JsonUtil) : AbstractVerticle() {
         val ADDR_REGISTER = "ch.elexis.ungrad.server.register";
         val ADDR_LAUNCH = "ch.elexis.ungrad.server.launch"
         val AUTH_ERR = "bad username or password"
+        val authProvider: AccessController by lazy {
+            val users = config.getJsonObject("users") ?: JsonObject()
+            AccessController(users)
+        }
+
     }
 
     /**

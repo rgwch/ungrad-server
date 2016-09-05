@@ -1,5 +1,9 @@
 <template>
   <form>
+    <div>
+    Verticle state: <md-switch md-checked.bind="running" md-label-on="running" md-label-off="atopped"></md-switch>
+      <hr/>
+    </div>
     <div repeat.for="param of parameters">
       ${getValue(param)}
       <div if.bind="isType('string',param)">

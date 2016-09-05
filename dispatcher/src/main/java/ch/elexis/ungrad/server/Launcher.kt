@@ -36,10 +36,6 @@ val config: JsonUtil by lazy {
 }
 var ip: String = ""
 val log = LoggerFactory.getLogger("Ungrad Launcher")
-val authProvider: AccessController by lazy {
-    val users = config.getJsonObject("users") ?: JsonObject()
-    AccessController(users)
-}
 val executionMode: String by lazy{
     config.getString("mode","release")
 }
