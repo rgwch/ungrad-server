@@ -58,6 +58,20 @@
         <processorPath useClasspath="true" />
         <module name="webelexis" />
       </profile>
+      <profile default="false" name="Annotation profile for ungrad-server-dispatcher" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="ungrad-server-dispatcher" />
+      </profile>
+      <profile default="false" name="Annotation profile for ungrad-server-tester" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="ungrad-server-tester" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="console" target="1.8" />
@@ -66,6 +80,8 @@
       <module name="lucinda" target="1.8" />
       <module name="tester" target="1.8" />
       <module name="ungrad-server" target="1.8" />
+      <module name="ungrad-server-dispatcher" target="1.8" />
+      <module name="ungrad-server-tester" target="1.8" />
       <module name="webelexis" target="1.8" />
     </bytecodeTargetLevel>
   </component>
