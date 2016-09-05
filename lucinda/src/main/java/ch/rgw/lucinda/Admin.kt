@@ -64,7 +64,7 @@ object Admin : Handler<Message<JsonObject>> {
             else -> "error"
         },value)
         Communicator.saveConfig()
-        ret.complete()
+        ret.complete(true)
         return ret
     }
 

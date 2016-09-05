@@ -132,11 +132,12 @@ export class ServiceDetail {
     })
   }
   send(){
-    for(var i=0;i<this.parameters.length;i++){
+    let self=this
+    for(let i=0;i<this.parameters.length;i++){
       if(this.parameters[i].value!=this.originalParameters[i].value){
         this.api.setParameterValue(this.serviceID,this.parameters[i]).then(result =>{
           if(result.status=="ok"){
-            this.showSuccessToast(this.parameters[i].name)
+            self.showSuccessToast(self.parameters[i].name)
           }
         })
       }
