@@ -5,7 +5,8 @@
 This is the main module of the Ungrad Server. It manages other modules and dispatches REST calls accordingly. The system
 is built upon the [Vert.x](http://vertx.io) ecosystem and uses its EventBus and Verticle concept.
 
-Ungrad Server is ultimately a collection of independently running Verticles. A Verticle is a module of functionality, very similar to a plugin.
+Ungrad Server is ultimately a collection of independently running Verticles. A Verticle is a module of functionality, similar
+ to a plugin, but with less dependencies.
 
 On Startup, the Dispatcher runs configured verticles. Additional verticles (or modules) can be launched individually
 and connect with the dispatcher. A Verticle usually exposes a REST API for its work, and an EventBus Address for administrative

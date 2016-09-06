@@ -72,6 +72,7 @@ for a file named "default.json" and then for a file called "user.json". If both 
     
 You might like to have a look at some of the included subprojects as examples:
 
+* dispatcher - the main entry model; more explanation on the interaction modell provided in its "readme.md".
 * article - a verticle implemented in JavaScript, presenting epha's cli-robot data as REST services
 * lucinda - a document indexing and retrieving Verticle
 * tester - a simple SelfTest and system information Verticle
