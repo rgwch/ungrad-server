@@ -8,15 +8,9 @@ export class Login {
   username= ""
   password = ""
 
-  private client
-  private state
-  private router
 
-  constructor(http,appstate,router) {
-    this.client = http
-    this.state=appstate
+  constructor(private client,private state,private router) {
     this.username=this.state.hans
-    this.router=router
   }
 
   doLogin = function () {

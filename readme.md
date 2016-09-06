@@ -91,16 +91,20 @@ Copyright (c) 2016 by G. Weirich, Licensed under the [Eclipse public License V1.
 
 ## tl;dr
 
-The following works in a freshly installed Ubuntu 16.04.1:
+The following creates the ungrad-server from scratch in a freshly installed Ubuntu 16.04.1:
 
     sudo apt-get install npm nodejs-legacy openjdk-8-jdk maven git
+    sudo npm install -g gulp-cli jspm
     git clone https://github.com/rgwch/ungrad-server.git
     cd ungrad-server/admin-ui
-    sudo npm install -g gulp-cli jspm
     npm install
     jspm install
     cd ..
     ./make
+    java -jar dispatcher/target/ungrad-server-dispatcher-0.1.0-SNAPSHOT.jar
     
 (It will take some time and there will be some warnings which you can ignore for now)
     
+Then, launch your favourite browser and navigate to `http://localhost:2016/ui/index.html`. login as user `admin` with
+    the password `secret`. After playing around, create a `user.json`, based on `dispatcher/src/main/respurces/default.json` and
+    set correct data for your own system.
