@@ -6,12 +6,17 @@ module.exports = {
         "**/*.html!text",
         "**/*.css!text",
         "materialize",
-        "materialize-css"
+        "materialize-css",
+        "text",
+        "aurelia-materialize-bridge",
+        "aurelia-materialize-bridge/**/*.js",
+        "aurelia-materialize-bridge/**/*.html!text",
+        "aurelia-materialize-bridge/**/*.css!text"
       ],
       "options": {
         "inject": true,
-        "minify": true,
-        "depCache": true,
+        "minify": false,
+        "depCache": false,
         "rev": false
       }
     },/*
@@ -40,7 +45,8 @@ module.exports = {
         "aurelia-loader-default",
         "aurelia-history-browser",
         "aurelia-logging-console",
-        "aurelia-materialize-bridge",
+        "aurelia-http-client",
+        "aurelia-event-aggregator",
         "fetch",
         "jquery"
       ],

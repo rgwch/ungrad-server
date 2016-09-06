@@ -31,8 +31,7 @@ module.exports = {
       ]
     ],[
       'materialize-css',[
-        '/css/ghpages-materialize.css',
-        '/fonts/**/*'
+        '/dist/**/*'
       ]
     ]
   ]
