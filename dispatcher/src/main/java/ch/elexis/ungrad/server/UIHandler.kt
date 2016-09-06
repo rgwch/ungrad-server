@@ -32,7 +32,7 @@ import java.util.jar.Manifest
 class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
 
     val df = SimpleDateFormat("E, dd MM yyyy HH:mm:ss z")
-    val dm = SimpleDateFormat("yyyyMMdd-HHmm")
+    val dm = SimpleDateFormat("yyyy-MM-dd HH:mm")
     val log = LoggerFactory.getLogger("UIHandler")
 
     init {

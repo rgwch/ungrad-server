@@ -22,8 +22,7 @@ Ungrad server has two API's: (1) a REST-Api for programmatic access, found in `<
     git clone https://github.com/rgwch/ungrad-server
     cd ungrad-server/admin-ui
 
-    sudo npm install -g gulp
-    sudo npm install -g jspm
+    sudo npm install -g gulp-cli jspm
     npm install
     jspm install -y
     cd ..
@@ -84,9 +83,24 @@ You might like to have a look at some of the included subprojects as examples:
 
 * Server-side APIs, Verticle technology and communication: [Vert.x](http://vertx.io).
 * Client UI: [Aurelia](http://aurelia.io), [Materialize css](http://materializecss.com/) and [aurelia-materialize-bridge](http://aurelia-ui-toolkits.github.io/demo-materialize/).
-* Built with: [Idea Ultimate 2015](https://www.jetbrains.com/idea/), [Oracle JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html), [npm](https://www.npmjs.com/), 
-[jspm](http://jspm.io/), and [gulp](http://gulpjs.com/). 
+* Built with: [Idea Ultimate 2015](https://www.jetbrains.com/idea/), [Oracle JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html), [npm](https://www.npmjs.com/), [jspm](http://jspm.io/), and [gulp](http://gulpjs.com/). 
 
 ## License
 
 Copyright (c) 2016 by G. Weirich, Licensed under the [Eclipse public License V1.0](https://www.eclipse.org/legal/epl-v10.html)
+
+## tl;dr
+
+The following works in a freshly installed Ubuntu 16.04.1:
+
+    sudo apt-get install npm nodejs-legacy openjdk-8-jdk maven git
+    git clone https://github.com/rgwch/ungrad-server.git
+    cd ungrad-server/admin-ui
+    sudo npm install -g gulp-cli jspm
+    npm install
+    jspm install
+    cd ..
+    ./make
+    
+(It will take some time and there will be some warnings which you can ignore for now)
+    
