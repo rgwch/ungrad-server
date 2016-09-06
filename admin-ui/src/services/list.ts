@@ -36,5 +36,7 @@ export class List {
     this.ea.publish(new ServiceSelected(service))
   }
 
-
+  attached(){
+   this.doSelect(this.services[0])
+  }
 }

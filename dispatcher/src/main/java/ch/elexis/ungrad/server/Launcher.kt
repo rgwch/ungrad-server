@@ -105,7 +105,14 @@ fun main(args: Array<String>) {
                         if(stopresult.failed()){
                             log.error("graceful shutdown failed. "+stopresult.cause())
                         }
-                        vertx.close()
+                        log.warn("Ungrad server is shut down")
+                        vertx.close(){msg ->
+                            if(msg.succeeded()){
+                                log.info("vertx closed")
+                            }else{
+                                log.error("vertx not closed cleanly")
+                            }
+                        }
                     }
                  }
             })
