@@ -20,6 +20,7 @@ import io.vertx.ext.web.RoutingContext
 import org.slf4j.LoggerFactory
 import java.io.*
 import java.net.URL
+import java.net.URLClassLoader
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -212,11 +213,22 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
         }
 
         val dat = dm.parse(timestamp)
-        val resource = "/" + root + name
+        val jarfile=classPath.substring(4, classPath.lastIndexOf("!"))
+        // log.debug("Jarfile is $jarfile")
+        val jarURL=URL(jarfile)
+        // log.debug("URL of jar file is: ${jarURL.path}")
+        val urlcs=URLClassLoader(Array<URL>(1,{jarURL}))
+        val rsr=urlcs.findResource(root+name)
+        log.debug("Resource loader: trying to load (${root+name}) from $classPath with timestamp ${dat.toString()}")
+        return RscObject(rsr.openStream(),true,dat.time)
+        /*
+        val resource = classPath.substring(0, classPath.lastIndexOf("!") + 1)+"/" + root + name
         log.debug("Resource loader: trying to load ${resource} with timestamp ${dat.toString()}")
-        val rsr = javaClass.getResource(resource)
+        val rsr = ClassLoader.getSystemClassLoader().getResource(resource)
         log.debug(if (rsr == null) "resource is null" else rsr.toString())
         return RscObject(javaClass.getResourceAsStream(resource), true, dat.time)
+        */
+
     }
 
     class RscObject(val stream: InputStream?, val inJar: Boolean, millis: Long) {

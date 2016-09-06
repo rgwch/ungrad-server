@@ -208,6 +208,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
         val futures=ArrayList<Future<Any>>()
         verticles.forEach {
             val undeployResult= Future.future<Void>()
+            log.info("stopping ${it.key} - ${it.value}")
             vertx.undeploy(it.value,undeployResult.completer())
             futures.add(undeployResult as Future<Any>)
         }

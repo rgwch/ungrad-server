@@ -4,7 +4,7 @@ Default configuration file for ungrad server. Please don't edit this file, but c
 The format is strict json, but comments are allowed like this one here.
 */
 {
-    "webroot": "admin-ui", // where to serve static files from - IDE mode. Try "web" for .jar mode.
+    "webroot": "web", // where to serve static files from - .jar mode. Try "admin-ui" for IDE mode.
     "rest_port": 2016,
     "users":{
         "admin":{

@@ -66,7 +66,7 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
 
 
     override fun stop() {
-        Patients.log.info("stop")
+        log.info(getName()+" stopped.")
         database!!.close()
     }
 

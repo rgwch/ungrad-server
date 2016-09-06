@@ -29,6 +29,11 @@ module.exports = {
       'bluebird', [
         '/js/browser/bluebird.min.js'
       ]
+    ],[
+      'materialize-css',[
+        '/css/ghpages-materialize.css',
+        '/fonts/**/*'
+      ]
     ]
   ]
 };

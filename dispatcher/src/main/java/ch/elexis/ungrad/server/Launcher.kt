@@ -103,7 +103,7 @@ fun main(args: Array<String>) {
                     println("Shutdown signal received")
                     vertx.undeploy(restpointID){stopresult ->
                         if(stopresult.failed()){
-                            log.error("graceful shutdown failed")
+                            log.error("graceful shutdown failed. "+stopresult.cause())
                         }
                         vertx.close()
                     }

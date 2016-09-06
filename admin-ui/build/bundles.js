@@ -4,7 +4,9 @@ module.exports = {
       "includes": [
         "[**/*.js]",
         "**/*.html!text",
-        "**/*.css!text"
+        "**/*.css!text",
+        "materialize",
+        "materialize-css"
       ],
       "options": {
         "inject": true,
@@ -12,7 +14,18 @@ module.exports = {
         "depCache": true,
         "rev": false
       }
-    },
+    },/*
+    "dist/materialize":{
+      "includes":[
+        "aurelia-materialize-bridge",
+        "materialize-css",
+        "materialize"
+      ],
+      "options":{
+        "inject":true,
+        "minify":true
+      }
+    },*/
     "dist/aurelia": {
       "includes": [
         "aurelia-framework",
@@ -27,6 +40,7 @@ module.exports = {
         "aurelia-loader-default",
         "aurelia-history-browser",
         "aurelia-logging-console",
+        "aurelia-materialize-bridge",
         "fetch",
         "jquery"
       ],
