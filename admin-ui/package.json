@@ -90,6 +90,7 @@
   },
   "dependencies": {
     "aurelia-event-aggregator": "^1.0.0",
-    "aurelia-http-client": "^1.0.0"
+    "aurelia-http-client": "^1.0.0",
+    "aurelia-materialize-bridge":"^0.14.0"
   }
 }

@@ -105,6 +105,6 @@ The following creates the ungrad-server from scratch in a freshly installed Ubun
     
 (It will take some time and there will be some warnings which you can ignore for now)
     
-Then, launch your favourite browser and navigate to `http://localhost:2016/ui/index.html`. login as user `admin` with
+Then, launch your favourite browser and navigate to `http://localhost:2016/ui/index.html`. Login as user `admin` with
     the password `secret`. After playing around, create a `user.json`, based on `dispatcher/src/main/respurces/default.json` and
     set correct data for your own system.
