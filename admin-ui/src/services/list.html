@@ -1,8 +1,12 @@
 <template>
-   <md-collection>
-      <md-collection-item repeat.for="service of services" class="${service.id==$parent.appstate.selectedService.id ? 'active' : ''}" click.trigger="doSelect(service)">
+  <div if.bind="appstate.loggedIn">
+    <md-collection>
+      <md-collection-item repeat.for="service of services"
+                          class="${service.id==$parent.appstate.selectedService.id ? 'active' : ''}"
+                          click.trigger="doSelect(service)">
         ${service.name}
         <!-- md-switch md-checked.bind="isRunning(service)"></md-switch -->
       </md-collection-item>
-  </md-collection>
+    </md-collection>
+  </div>
 </template>

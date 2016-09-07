@@ -20,6 +20,7 @@ export class Login {
         this.state.bLoggedIn=true
         this.state.username=this.username
         this.state.password=this.password
+        this.state.loggedIn=true
         this.router.navigateToRoute("configure")
       }else{
         if(typeof response === 'string'){
