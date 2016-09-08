@@ -1,0 +1,36 @@
+<template>
+  <form>
+    <div>
+    Verticle state: <md-switch md-checked.bind="running" md-label-on="running" md-label-off="atopped"></md-switch>
+      <hr/>
+    </div>
+    <div repeat.for="param of parameters">
+      ${getValue(param)}
+      <div if.bind="isType('string',param)">
+        <md-input md-label="${param.caption}" md-value.bind="param.value"></md-input>
+      </div>
+      <div if.bind="isType('directory',param)">
+        <md-file md-caption="directory" view-model-ref="param.value" md-label-value.bind="labelValue"></md-file>
+        <div if-bind="param.value">
+          ${param.value}
+        </div>
+      </div>
+      <div if.bind="isType('boolean',param)">
+        <md-checkbox md-checked.bind="checkedState(param)">${param.caption}</md-checkbox>
+      </div>
+      <div if.bind="isType('action',param)">
+        <button md-button="flat: true" md-waves="color:red;" class="accent-text"
+                click.delegate="run(param['name'])">
+          ${param['caption']}
+        </button>
+      </div>
+      <div if.bind="isType('number',param)">
+        <md-input md-label="${param.caption}" md-value.bind="param.value"></md-input>
+      </div>
+    </div>
+    <md-card md-horizontal="true">
+      <button md-button style="margin-right:10px" click.trigger="reload()">Refresh</button>
+      <button md-button click.trigger="send()" disabled.bind="!canWrite" show.bind="hasWritableProperties">Send</button>
+    </md-card>
+  </form>
+</template>
