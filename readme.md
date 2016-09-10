@@ -106,5 +106,20 @@ The following creates the ungrad-server from scratch in a freshly installed Ubun
 (It will take some time and there will be some warnings which you can ignore for now)
     
 Then, launch your favourite browser and navigate to `http://localhost:2016/ui/index.html`. Login as user `admin` with
-    the password `secret`. After playing around, create a `user.json`, based on `dispatcher/src/main/respurces/default.json` and
+    the password `secret`. If it doesn't work at first start, stop the application with CTRL-C and relaunch the .jar. 
+    After playing around, create a `user.json`, based on `dispatcher/src/main/resources/default.json` and
     set correct data for your own system.
+    
+    
+Arch linux:
+
+    sudo pacman -S nodejs npm jdk8-openjdk maven git
+    
+    
+NOTE: At the time of this writing (9. sept. 2016), NPM hangs in Arch Linux due to some obscure [bug](https://github.com/npm/npm/issues/13833). Two workarounds:
+    
+    1. Downgrade to NPM 6.4., or
+    2. install the hanging elements indivdidually with `npm install xxx`, and then rerun the global `npm install` (This steps must be repeated several times, though)
+    
+    
+    
