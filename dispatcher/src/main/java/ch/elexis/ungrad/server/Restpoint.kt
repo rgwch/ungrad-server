@@ -17,6 +17,7 @@ package ch.elexis.ungrad.server
 import ch.rgw.tools.JsonUtil
 import io.vertx.core.*
 import io.vertx.core.eventbus.Message
+import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
@@ -53,6 +54,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
     }
     val registrar=Registrar(this)
     val launchManager=LaunchManager(this)
+    lateinit var httpServer:HttpServer
 
     override fun start(future: Future<Void>) {
         super.start()
@@ -183,7 +185,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
             // calls to other resources go to the web interface
             router.route("/ui/*").handler(UIHandler(config()))
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
-            vertx.createHttpServer(hso)
+            httpServer=vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }
                     .listen(JsonUtil(config()).getOptional("rest_port", 2016)) {
                         result ->
@@ -206,17 +208,22 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
      */
     override fun stop(stopResult:Future<Void>) {
         val futures=ArrayList<Future<Any>>()
+        httpServer.close()
         verticles.forEach {
             val undeployResult= Future.future<Void>()
             log.info("stopping ${it.key} - ${it.value}")
-            vertx.undeploy(it.value,undeployResult.completer())
             futures.add(undeployResult as Future<Any>)
+            vertx.undeploy(it.value,undeployResult.completer())
         }
-        CompositeFuture.all(futures).setHandler { result ->
-            if(result.succeeded()){
-                stopResult.complete()
-            }else{
-                stopResult.fail(result.cause())
+        if(futures.isEmpty()){
+            stopResult.complete()
+        }else {
+            CompositeFuture.all(futures).setHandler { result ->
+                if (result.succeeded()) {
+                    stopResult.complete()
+                } else {
+                    stopResult.fail(result.cause())
+                }
             }
         }
     }
