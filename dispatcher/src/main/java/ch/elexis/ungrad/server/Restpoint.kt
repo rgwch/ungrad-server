@@ -222,6 +222,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
                 if (result.succeeded()) {
                     stopResult.complete()
                 } else {
+                    log.error("fail: ${result.toString()}; ${result.result()}; ${result.cause().message}")
                     stopResult.fail(result.cause())
                 }
             }

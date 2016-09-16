@@ -29,6 +29,7 @@ class LaunchManager(val restPoint:Restpoint) : Handler<Message<JsonObject>> {
         } else {
             try {
                 val options = DeploymentOptions().setConfig(verticle_config)
+                // If no class attribute is given, it's an uncompiled Verticle
                 if(verticle_class==null){
                     restPoint.vertx.deployVerticle(file.absolutePath,options){ handler ->
                         if(handler.succeeded()){

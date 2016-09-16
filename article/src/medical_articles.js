@@ -13,6 +13,9 @@ var server = require('./params.js')
 var base_addr = "ch.elexis.ungrad.articles."
 var model = require('./model')
 
+exports.vertxStop=function(){
+  console.log("Articles stopped")
+}
 /*
  * Internal method: Register a REST endpoint for an eventBus address.
  * @param rest REST endpoint to use (will always be preixed with "1.0/articles/"
