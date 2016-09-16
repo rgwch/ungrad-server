@@ -36,6 +36,7 @@ class Communicator: AbstractVerticle() {
     override fun stop(stopResult:Future<Void>){
         indexManager?.shutDown()
         stopResult.complete()
+        log.info("Lucinda Communicator stopped")
     }
 
     override fun start(startResult:Future<Void>) {

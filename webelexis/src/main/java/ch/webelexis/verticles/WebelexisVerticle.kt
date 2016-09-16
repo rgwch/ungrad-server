@@ -30,12 +30,20 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
         }
     }
 */
+    override fun stop(stopResult:Future<Void>){
+        database.close(){result ->
+            if(result.succeeded()){
+                stopResult.complete()
+                log.info("${getName()} stopped.")
+            }else{
+                stopResult.fail(result.cause())
+            }
+        }
+    }
     override fun start() {
         super.start()
         val eb = vertx.eventBus()
-        if(database==null) {
-            database = MySQLClient.createNonShared(vertx, config())
-        }
+        database = MySQLClient.createNonShared(vertx, config())
 
         vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR) { msg ->
             when (msg.body().getString("command")) {
@@ -132,7 +140,7 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
 
     }
     companion object{
-        var database: AsyncSQLClient? = null
+        lateinit var database: AsyncSQLClient
     }
 
 }

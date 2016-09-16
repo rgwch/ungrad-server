@@ -16,6 +16,7 @@ package ch.elexis.ungrad.server_test
 import ch.rgw.tools.JsonUtil
 import ch.rgw.tools.TimeTool
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
@@ -34,6 +35,10 @@ class SelfTest: AbstractVerticle() {
 
     val log=LoggerFactory.getLogger(this.javaClass)
 
+    override fun stop(stopResult:Future<Void>){
+        stopResult.complete()
+        log.info("Server Info stopped")
+    }
     override fun start() {
         super.start()
         /**
