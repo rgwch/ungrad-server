@@ -119,6 +119,10 @@
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>rgwch</groupId>
+            <artifactId>rgw-toolbox</artifactId>
+        </dependency>
     </dependencies>
     <properties>
         <kotlin.version>1.0.3</kotlin.version>

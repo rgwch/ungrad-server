@@ -1,6 +1,7 @@
 package ch.elexis.ungrad.server
 
 import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.*
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
@@ -17,7 +18,8 @@ class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
 
 
     override fun handle(msg: Message<JsonObject>) {
-        val j = JsonUtil(msg.body())
+
+        val j = msg.body()
         if (!j.validate("rest:string", "method:string", "ebaddress:string")) {
             msg.reply(JsonUtil.create("status:error", "message:format error of register message " + j.encodePrettily()))
         } else {
@@ -28,7 +30,7 @@ class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
             val server = j.getJsonObject("server")
             if (server != null) {
                 if (JsonUtil(server).validate("id:string", "name:string", "address:string")) {
-                    servers.put(server.getString("id"), server)
+                    servers.put(server["id"], server)
                 } else {
                     msg.reply(JsonUtil.create("status:error", "message:format error of server definition " + j.encodePrettily()))
                     log.error("message:format error of server definition " + j.encode())
