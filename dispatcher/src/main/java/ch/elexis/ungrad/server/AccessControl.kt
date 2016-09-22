@@ -25,20 +25,20 @@ import io.vertx.ext.auth.AuthProvider
  */
 
 class AccessController(val bootstrapIdentity: JsonObject) : AuthProvider {
-    override fun authenticate(identity: JsonObject?, handler: Handler<AsyncResult<io.vertx.ext.auth.User>>?) {
+    override fun authenticate(identity: JsonObject, handler: Handler<AsyncResult<io.vertx.ext.auth.User>>) {
         if (config.getString("mode", "prod") == "debug") {
-            handler?.handle(Future.succeededFuture(User("admin", this)))
+            handler.handle(Future.succeededFuture(User("admin", this)))
         } else {
-            val userid = identity?.getString("username")
-            val pwd = identity?.getString("password")
+            val userid = identity.getString("username")
+            val pwd = identity.getString("password")
             val entry = bootstrapIdentity.getJsonObject(userid)
             if (entry == null) {
-                handler?.handle(Future.failedFuture("bad userid or password"))
+                handler.handle(Future.failedFuture("bad userid or password"))
             } else {
                 if (pwd.equals(entry.getString("password"))) {
-                    handler?.handle(Future.succeededFuture(User(userid, this)))
+                    handler.handle(Future.succeededFuture(User(userid, this)))
                 } else {
-                    handler?.handle(Future.failedFuture("bad userid or password"))
+                    handler.handle(Future.failedFuture("bad userid or password"))
                 }
             }
         }
@@ -53,7 +53,7 @@ class AccessController(val bootstrapIdentity: JsonObject) : AuthProvider {
                 return true
             }
             if (roles.contains("admin")) {
-                return true;
+                return true
             }
         }
         return false
@@ -79,26 +79,6 @@ class User(val userid: String?, ac: AccessController) : AbstractUser() {
     override fun doIsPermitted(role: String?, handler: Handler<AsyncResult<Boolean>>) {
         val usr = this
         handler.handle(Future.succeededFuture(provider.hasRole(usr, role)))
-        /*
-        handler.handle(object : AsyncResult<Boolean> {
-            override fun cause(): Throwable {
-                return Exception("operation not permitted")
-            }
-
-            override fun failed(): Boolean {
-                return false;
-            }
-
-            override fun result(): Boolean {
-                return provider.hasRole(usr, role);
-            }
-
-            override fun succeeded(): Boolean {
-                return true
-            }
-
-        })
-        */
     }
 }
 

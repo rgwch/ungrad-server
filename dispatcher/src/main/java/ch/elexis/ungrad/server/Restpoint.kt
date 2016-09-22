@@ -15,6 +15,7 @@
 package ch.elexis.ungrad.server
 
 import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.get
 import io.vertx.core.*
 import io.vertx.core.eventbus.Message
 import io.vertx.core.http.HttpServer
@@ -28,9 +29,6 @@ import io.vertx.ext.web.handler.RedirectAuthHandler
 import io.vertx.ext.web.handler.SessionHandler
 import io.vertx.ext.web.sstore.LocalSessionStore
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.net.URL
-import java.net.URLClassLoader
 import java.util.*
 
 /**
@@ -79,9 +77,9 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
          * Create the Router and HTTP Server and add some handlers for session management and authentication/authorizastion
          */
         try {
-            router.route().handler(io.vertx.ext.web.handler.CookieHandler.create());
-            router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-            router.route().handler(io.vertx.ext.web.handler.UserSessionHandler.create(authProvider));
+            router.route().handler(io.vertx.ext.web.handler.CookieHandler.create())
+            router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+            router.route().handler(io.vertx.ext.web.handler.UserSessionHandler.create(authProvider))
             if (config.getString("mode", "prod") != "debug") {
                 // if not in debug mode: pass all calls to /api/* through authentication and let users login first
 
@@ -143,7 +141,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
             router.get("/api/services/:service/getParam/:name").handler { ctx ->
                 registrar.checkAuth(ctx, "admin") {
                     val serverID = ctx.request().getParam("service")
-                    val serviceDesc = registrar.servers.get(serverID)
+                    val serviceDesc = registrar.servers[serverID]
                     if (serviceDesc != null) {
                         val serviceAddr = serviceDesc.getString("address")
                         vertx.eventBus().send<JsonObject>(serviceAddr, JsonUtil.create("command:getParam", "param:${ctx.request().getParam("name")}"), ResultHandler(ctx))
@@ -158,7 +156,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
                     ctx.request().bodyHandler { buffer ->
                         val cmd = buffer.toJsonObject()
                         val serverID = cmd.getString("service")
-                        val serviceDesc = registrar.servers.get(serverID)
+                        val serviceDesc = registrar.servers[serverID]
                         if (serviceDesc != null) {
                             val serviceAddr = serviceDesc.getString("address")
                             cmd.put("command","setParam")
@@ -172,7 +170,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
             router.get("/api/services/:service/exec/:action").handler{ ctx ->
                 registrar.checkAuth(ctx, "admin"){
                     val serverID = ctx.request().getParam("service")
-                    val serviceDesc = registrar.servers.get(serverID)
+                    val serviceDesc = registrar.servers[serverID]
                     if (serviceDesc != null) {
                         val serviceAddr = serviceDesc.getString("address")
                         vertx.eventBus().send<JsonObject>(serviceAddr, JsonUtil.create("command:exec", "action:${ctx.request().getParam("action")}"), ResultHandler(ctx))
@@ -209,11 +207,12 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
     override fun stop(stopResult:Future<Void>) {
         val futures=ArrayList<Future<Any>>()
         httpServer.close()
-        verticles.forEach {
+        for((name, deploymentID) in verticles){
             val undeployResult= Future.future<Void>()
-            log.info("stopping ${it.key} - ${it.value}")
+            log.info("stopping ${name} - ${deploymentID}")
             futures.add(undeployResult as Future<Any>)
-            vertx.undeploy(it.value,undeployResult.completer())
+            vertx.undeploy(deploymentID,undeployResult.completer())
+
         }
         if(futures.isEmpty()){
             stopResult.complete()
@@ -236,7 +235,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
 
 
     companion object {
-        val ADDR_REGISTER = "ch.elexis.ungrad.server.register";
+        val ADDR_REGISTER = "ch.elexis.ungrad.server.register"
         val ADDR_LAUNCH = "ch.elexis.ungrad.server.launch"
         val ADDR_CONFIG_GET="ch.elexis.ungrad.server.getconfig"
         val ADDR_CONFIG_SET="ch.elexis.ungrad.server.setconfig"
@@ -257,19 +256,19 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
             if (result.succeeded()) {
                 // message returned technically correct but might still indicate an error condition
                 val msg = result.result().body()
-                if ("ok" == msg.getString("status")) {
+                if ("ok" == msg["status"]) {
                     // request completed successfully - send answer to the client.
                     ctx.response().setStatusCode(200).putHeader("content-type", "application/json; charset=utf-8")
-                            .end(result.result().body().encode())
+                            .end(msg.encode())
                 } else {
                     // some error while processing the request. The service hopefully provided a meaningful error message
                     log.error(result.result().body().encodePrettily(), result.cause())
                     ctx.response().setStatusCode(400).putHeader("content-type", "text/plain; charset=utf-8")
-                            .end(result.result().body().encodePrettily())
+                            .end(msg.encodePrettily())
                 }
             } else {
                 // message was not handled or returned correctly -> internal server error
-                log.error(result?.result()?.body()?.encodePrettily() ?: "error", result?.cause())
+                log.error(result.result().body()?.encodePrettily() ?: "error", result.cause())
                 ctx.response().setStatusCode(500).end(result.cause().message)
             }
         }

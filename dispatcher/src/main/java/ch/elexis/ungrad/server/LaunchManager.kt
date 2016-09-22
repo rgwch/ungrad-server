@@ -1,6 +1,21 @@
+/*******************************************************************************
+ * Copyright (c) 2016 by G. Weirich
+ *
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ *
+ * Contributors:
+ * G. Weirich - initial implementation
+ */
+
 package ch.elexis.ungrad.server
 
 import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.get
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Handler
 import io.vertx.core.Verticle
@@ -12,13 +27,18 @@ import java.net.URLClassLoader
 
 /**
  * Created by gerry on 05.09.16.
+ * Launch Verticles from definitions in JsonObjects:
+ * * name: Human readable name of the Verticle
+ * * url: Where to load the Verticle from (can be local or remote location, can point to a Verticle source or to a *.jar file)
+ * * verticle: class containing the verticle (if url was a *.jar-file). Full qualified class name.
+ * * config: JsonObject containing configuration for the Verticle
  */
 class LaunchManager(val restPoint:Restpoint) : Handler<Message<JsonObject>> {
     override fun handle(msg: Message<JsonObject>) {
         val jo = msg.body()
-        val verticle_name = jo.getString("name")
-        val verticle_url = jo.getString("url")
-        val verticle_class:String?=jo.getString("verticle")
+        val verticle_name = jo["name"]
+        val verticle_url = jo["url"]
+        val verticle_class:String?=jo["verticle"]
         val static_config = jo.getJsonObject("config", JsonObject())
         val dynamic_config=restPoint.persist.read(verticle_name)
         val verticle_config= JsonUtil(static_config).mergeIn(dynamic_config)
@@ -42,10 +62,11 @@ class LaunchManager(val restPoint:Restpoint) : Handler<Message<JsonObject>> {
                         }
                     }
                 }else {
+                    // If we have a class attribute - instantiate the class
                     val cl = URLClassLoader(Array<URL>(1, { url }))
                     val clazz = cl.loadClass(verticle_class)
-                    val verticle = clazz.newInstance()
-                    restPoint.vertx.deployVerticle(verticle as Verticle, options) { handler ->
+                    val verticle = clazz.newInstance() as? Verticle
+                    restPoint.vertx.deployVerticle(verticle, options) { handler ->
                         if (handler.succeeded()) {
                             restPoint.verticles.put(verticle_name, handler.result())
                             log.info("launched $verticle_name")

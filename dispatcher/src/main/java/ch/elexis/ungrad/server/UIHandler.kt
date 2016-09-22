@@ -29,6 +29,8 @@ import java.util.jar.Manifest
 
 /**
  * Created by gerry on 06.08.16.
+ * Handle requests on the /ui interface. Load static resources from the file system or from the *.jar of the application.
+ * Set file times and expire times correctly
  */
 class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
 
@@ -44,7 +46,6 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
     }
 
     override fun handle(ctx: RoutingContext) {
-        val date = Date()
         ctx.response().putHeader("Date", df.format(Date()))
         ctx.response().putHeader("Server", "Elexis Ungrad Server")
         val rawPath = ctx.request().path()
@@ -69,8 +70,7 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
                 }
 
                 scanner = Scanner(index.stream, "UTF-8")
-                var modified = ""
-                modified = scanner.useDelimiter("\\A").next().replace("GUID".toRegex(), rnd).replace("GOOGLE_CLIENT_ID".toRegex(), cid)
+                var modified = scanner.useDelimiter("\\A").next().replace("GUID".toRegex(), rnd).replace("GOOGLE_CLIENT_ID".toRegex(), cid)
                 ctx.response().putHeader("Content-Length", java.lang.Long.toString(modified.length.toLong()))
                 ctx.response().write(modified)
             } catch (e: Throwable) {
@@ -190,11 +190,10 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
      */
     @Throws(ParseException::class)
     internal fun getResource(root: String, name: String): RscObject {
-        val className = javaClass.simpleName + ".class"
-        val classPath = javaClass.getResource(className).toString()
-        var timestamp: String? = null
-        log.debug(classPath)
         try {
+            val className = javaClass.simpleName + ".class"
+            val classPath = javaClass.getResource(className).toString()
+            log.debug(classPath)
             if (!classPath.startsWith("jar")) {
                 // Class not from JAR
                 val file = File(root, name)
@@ -206,21 +205,22 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
             log.debug(manifestPath)
             val manifest = Manifest(URL(manifestPath).openStream())
             val attr = manifest.mainAttributes
-            timestamp = attr.getValue("timestamp")
+            val timestamp = attr.getValue("timestamp")
+            val dat = dm.parse(timestamp)
+            val jarfile=classPath.substring(4, classPath.lastIndexOf("!"))
+            // log.debug("Jarfile is $jarfile")
+            val jarURL=URL(jarfile)
+            // log.debug("URL of jar file is: ${jarURL.path}")
+            val urlcs=URLClassLoader(Array<URL>(1,{jarURL}))
+            val rsr=urlcs.findResource(root+name)
+            log.debug("Resource loader: trying to load (${root+name}) from $classPath with timestamp ${dat.toString()}")
+            return RscObject(rsr.openStream(),true,dat.time)
+
         } catch (e: IOException) {
             e.printStackTrace()
             return RscObject(null, false, 0L)
         }
 
-        val dat = dm.parse(timestamp)
-        val jarfile=classPath.substring(4, classPath.lastIndexOf("!"))
-        // log.debug("Jarfile is $jarfile")
-        val jarURL=URL(jarfile)
-        // log.debug("URL of jar file is: ${jarURL.path}")
-        val urlcs=URLClassLoader(Array<URL>(1,{jarURL}))
-        val rsr=urlcs.findResource(root+name)
-        log.debug("Resource loader: trying to load (${root+name}) from $classPath with timestamp ${dat.toString()}")
-        return RscObject(rsr.openStream(),true,dat.time)
         /*
         val resource = classPath.substring(0, classPath.lastIndexOf("!") + 1)+"/" + root + name
         log.debug("Resource loader: trying to load ${resource} with timestamp ${dat.toString()}")
