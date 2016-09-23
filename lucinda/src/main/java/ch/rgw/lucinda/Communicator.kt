@@ -14,9 +14,7 @@
 
 package ch.rgw.lucinda
 
-
-import ch.rgw.tools.Configuration
-import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.json.JsonUtil
 import io.vertx.core.*
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message

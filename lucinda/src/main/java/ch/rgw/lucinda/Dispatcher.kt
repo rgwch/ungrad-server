@@ -38,7 +38,7 @@ import java.nio.file.Paths
 class Dispatcher(val vertx: Vertx, val basedir: String) {
     val log = LoggerFactory.getLogger("lucinda")
     val fs = vertx.fileSystem()
-    val iMgr=Communicator.indexManager!!
+    val iMgr=Communicator.indexManager
 
     fun makeDirPath(parms: JsonObject): File {
         val fname = parms.getString("filename")

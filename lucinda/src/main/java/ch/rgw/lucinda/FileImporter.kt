@@ -107,7 +107,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
             if (fileMetadata.getString("_id").isNullOrBlank()) {
                 fileMetadata.put("_id", Autoscanner.makeID(file))
             }
-            val doc = Communicator.indexManager!!.addDocument(ByteArrayInputStream(payload), fileMetadata);
+            val doc = Communicator.indexManager.addDocument(ByteArrayInputStream(payload), fileMetadata);
             val text = doc.getField("text").stringValue()
             if ( (text.length < 15) and (doc.get("content-type").equals("application/pdf"))) {
                 if (text == "unparseable") {
@@ -140,7 +140,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                                         if (plaintext.exists() and plaintext.canRead() and (plaintext.length() > 10L)) {
                                             val newtext = FileTool.readTextFile(plaintext)
                                             doc.add(TextField("text", newtext, Field.Store.NO))
-                                            Communicator.indexManager!!.updateDocument(doc)
+                                            Communicator.indexManager.updateDocument(doc)
                                             plaintext.delete()
                                         } else {
                                             log.warn("no text content found in ${filename}")

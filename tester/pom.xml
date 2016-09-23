@@ -6,7 +6,12 @@
 
     <groupId>ch.rgw</groupId>
     <artifactId>ungrad-server-tester</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
+    <parent>
+        <groupId>ch.rgw</groupId>
+        <artifactId>ungrad-server</artifactId>
+        <version>0.2.0-SNAPSHOT</version>
+    </parent>
 
     <properties>
         <kotlin.version>1.0.3</kotlin.version>
@@ -53,10 +58,5 @@
     </build>
 
 
-    <parent>
-        <groupId>ch.rgw</groupId>
-        <artifactId>ungrad-server</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
-    </parent>
 
 </project>

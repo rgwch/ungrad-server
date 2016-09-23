@@ -14,7 +14,7 @@
 
 package ch.elexis.ungrad.server
 
-import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.json.JsonUtil
 import java.io.File
 
 /**

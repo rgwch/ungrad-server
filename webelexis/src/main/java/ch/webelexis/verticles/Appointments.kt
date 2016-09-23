@@ -1,6 +1,6 @@
 package ch.webelexis.verticles
 
-import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.TimeTool
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message

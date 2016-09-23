@@ -1,6 +1,6 @@
 package ch.webelexis.verticles
 
-import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.json.JsonUtil
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.AsyncResultHandler
@@ -45,7 +45,7 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
         val eb = vertx.eventBus()
         database = MySQLClient.createNonShared(vertx, config())
 
-        vertx.eventBus().consumer<JsonObject>(CONTROL_ADDR) { msg ->
+        eb.consumer<JsonObject>(CONTROL_ADDR) { msg ->
             when (msg.body().getString("command")) {
                 "getParam" -> {
                     val result = getParam(msg)
@@ -75,13 +75,13 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
 
     override fun stop() {
         log.info(getName()+" stopped.")
-        database!!.close()
+        database.close()
     }
 
     fun sendQuery(query: String, handler: ((AsyncResult<List<JsonArray>>) -> Unit)) {
         log.debug("got query: " + query)
         try {
-            database!!.getConnection { con ->
+            database.getConnection { con ->
                 if (con.succeeded()) {
                     val conn = con.result()
                     conn.query(query) { result ->
@@ -105,7 +105,7 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
     }
 
     fun getConnection(msg: Message<JsonObject>, handler: ((AsyncResult<SQLConnection>) -> Unit)) {
-        database!!.getConnection() { con ->
+        database.getConnection() { con ->
             if (con.succeeded()) {
                 handler.invoke(con)
             } else {

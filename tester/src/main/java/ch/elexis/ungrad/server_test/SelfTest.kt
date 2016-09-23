@@ -13,7 +13,7 @@
  */
 package ch.elexis.ungrad.server_test
 
-import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.TimeTool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future

@@ -196,7 +196,7 @@ class Autoscanner : AbstractVerticle() {
                 val absolute = file.toFile().absolutePath
                 log.info("checking ${absolute}")
                 val id = makeID(file)
-                val doc = Communicator.indexManager?.getDocument(id)
+                val doc = Communicator.indexManager.getDocument(id)
                 if (doc == null) {
                     log.fine("did not find ${file}/${id} in index. Adding")
                     addFile(file)
@@ -246,7 +246,7 @@ class Autoscanner : AbstractVerticle() {
             val absolute = file.toFile().absolutePath
             log.info("removing ${absolute}")
             val id = makeID(file)
-            Communicator.indexManager?.removeDocument(id)
+            Communicator.indexManager.removeDocument(id)
         }
     }
 

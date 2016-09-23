@@ -13,8 +13,8 @@
  */
 
 package ch.elexis.ungrad.server
+import ch.rgw.tools.json.JsonUtil
 
-import ch.rgw.tools.JsonUtil
 import io.vertx.core.json.JsonObject
 
 /**

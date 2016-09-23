@@ -14,8 +14,7 @@
 
 package ch.elexis.ungrad.server
 
-import ch.rgw.tools.JsonUtil
-import ch.rgw.tools.get
+import ch.rgw.tools.json.*
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Handler
 import io.vertx.core.Verticle

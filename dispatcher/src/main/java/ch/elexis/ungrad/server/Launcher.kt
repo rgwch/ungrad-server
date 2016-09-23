@@ -15,7 +15,7 @@
 package ch.elexis.ungrad.server
 
 import ch.rgw.tools.CmdLineParser
-import ch.rgw.tools.JsonUtil
+import ch.rgw.tools.json.*
 import ch.rgw.tools.net.NetTool
 import com.hazelcast.config.Config
 import io.vertx.core.DeploymentOptions
