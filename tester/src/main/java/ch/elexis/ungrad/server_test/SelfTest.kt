@@ -117,15 +117,15 @@ class SelfTest: AbstractVerticle() {
         val os_version=System.getProperty("os.version")
         val java_version=System.getProperty("java.version")
         val java_vendor=System.getProperty("java.vendor")
-        fun processors()=Runtime.getRuntime().availableProcessors()
-        fun total_memory()=Runtime.getRuntime().totalMemory()
-        fun max_memory()=Runtime.getRuntime().maxMemory()
-        fun avail_memory()=Runtime.getRuntime().freeMemory()
+        fun processors()=Runtime.getRuntime().availableProcessors().toString()
+        fun total_memory()=roundKB(Runtime.getRuntime().totalMemory()).toString()
+        fun max_memory()= roundKB(Runtime.getRuntime().maxMemory()).toString()
+        fun avail_memory()=roundKB(Runtime.getRuntime().freeMemory()).toString()
         fun system_time()=TimeTool().toString(TimeTool.DATETIME_XML)
         fun roundKB(b:Long)=Math.round(b.toDouble()/(1024*1024))
         val os_desc="$os_name $os_version / $os_arch"
         val java_desc="$java_version / $java_vendor"
-        fun system()="${processors()} Processors, JVM-Memory total ${roundKB(max_memory())}M / free ${roundKB(avail_memory())}M / max usable ${roundKB(max_memory())}M"
+        fun system()="${processors()} Processors, JVM-Memory total ${max_memory()}M / free ${avail_memory()}M / max usable ${max_memory()}M"
         fun systime()=system_time()
         fun params()="""
         [

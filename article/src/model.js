@@ -17,9 +17,9 @@ var bag = []
 var swissmedic=[]
 
 /*
- * Check and load a file from the data dir of cli-robot
+ * Check and load a file asynchroneously from the data dir of cli-robot
  * @param name name of the file
- * @param handler the handler is called upon compkletion with two parameters. On success, the first parameter
+ * @param handler the handler is called upon completion with two parameters. On success, the first parameter
  * is the contents of the file, the second null. On error, the first parameter will be null and the second an error message.
  */
 var checkFile = function (name, handler) {
