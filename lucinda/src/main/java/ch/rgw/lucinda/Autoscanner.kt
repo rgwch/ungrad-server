@@ -43,7 +43,6 @@ const val ADDR_STOP = "stop"
 /** Full rescan or first scan of watch directories */
 const val ADDR_RESCAN = "rescan"
 var refiner: Refiner = DefaultRefiner()
-val log: Logger = Logger.getLogger("lucinda.autoscanner")
 val watchedDirs = ArrayList<Path>()
 fun makeID(file: Path): String = makeHash(file.toFile().absolutePath)
 
@@ -56,6 +55,7 @@ class Autoscanner : AbstractVerticle() {
     val watcher : WatchService = FileSystems.getDefault().newWatchService()
     val keys = HashMap<WatchKey, Path>()
     val BASEADDR = Communicator.BASEADDR
+    var running=false
 
     override fun start() {
         super.start()
@@ -63,16 +63,11 @@ class Autoscanner : AbstractVerticle() {
         eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_START) { msg ->
             val j = msg.body() as JsonObject
             if (j.validate("dirs:object", "interval:number")) {
-                log.fine("got start message ${Json.encodePrettily(j)}")
+                log.debug("got start message ${Json.encodePrettily(j)}")
                 register(j.getJsonArray("dirs"))
-
-                timer = vertx.setPeriodic(j.getLong("interval") ?: 500L) { h ->
-                    try {
-                        loop()
-                    } catch(e: Exception) {
-                        e.printStackTrace()
-                        log.severe("exception in work loop " + e.message)
-                    }
+                timer=vertx.setTimer(100L){h ->
+                    running=true
+                    loop()
                 }
                 msg.reply(JsonObject().put("status", "ok"))
             } else {
@@ -80,10 +75,8 @@ class Autoscanner : AbstractVerticle() {
             }
         }
         eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_STOP) {
-            log.fine("got stop message")
-            if (timer > 0L) {
-                vertx.cancelTimer(timer)
-            }
+            log.info("got stop message")
+            running=false
         }
         eb.consumer<Message<String>>(BASEADDR + ADDR_RESCAN) {
             log.info("got rescan message")
@@ -94,44 +87,26 @@ class Autoscanner : AbstractVerticle() {
     }
 
     fun loop() {
-        // check if there's a key to be signalled
-        val key: WatchKey? = watcher.poll()
-
-        if (key != null) {
-            val dir = keys[key]
-            if (dir == null) {
-                log.warning("WatchKey not recognized!!")
-                return
-            }
-
-            for (event in key.pollEvents()) {
-                val kind = event.kind()
-
-                // Context for directory entry event is the file name of entry
-                //val ev = cast<Path>(event)
-                val ev = event as WatchEvent<Path>
-                val name = ev.context()
-                val child = dir.resolve(name)
-
-                // print out event
-                // System.out.format("%s: %s\n", event.kind().name(), child)
-                log.fine("Event: ${event.kind().name()}, file: $child")
-                when (kind) {
-                    ENTRY_CREATE -> addFile(child)
-                    ENTRY_DELETE -> removeFile(child)
-                    ENTRY_MODIFY -> checkFile(child)
-                    OVERFLOW -> rescan(dir)
-                    else -> log.warning("unknown event kind ${kind.name()}")
-                }
-
-                // reset key and remove from set if directory no longer accessible
-                val valid = key.reset()
-                if (!valid) {
-                    keys.remove(key)
-
-                    // all directories are inaccessible
-                    if (keys.isEmpty()) {
-                        return
+        while(running) {
+            watcher.poll()?.let { key ->
+                keys[key]?.let{ dir ->
+                    for (event in key.pollEvents()) {
+                        val kind = event.kind()
+                        val ev = event as WatchEvent<Path>
+                        val name = ev.context()
+                        val child = dir.resolve(name)
+                        log.debug("Event: ${event.kind().name()}, file: $child")
+                        when (kind) {
+                            ENTRY_CREATE -> addFile(child,key)
+                            ENTRY_DELETE -> removeFile(child,key)
+                            ENTRY_MODIFY -> checkFile(child,key)
+                            OVERFLOW -> rescan(dir)
+                            else -> log.warn("unknown event kind ${kind.name()}")
+                        }
+                        if(keys.isEmpty()){
+                            running=false;
+                            return
+                        }
                     }
                 }
             }
@@ -160,9 +135,9 @@ class Autoscanner : AbstractVerticle() {
             Files.walkFileTree(dir, object : SimpleFileVisitor<Path>() {
                 override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
                     try {
-                        checkFile(file)
+                        checkFile(file,null)
                     } catch(e: Exception) {
-                        log.severe("Exception while checking ${file.toAbsolutePath()}, ${e.message}")
+                        log.error("Exception while checking ${file.toAbsolutePath()}, ${e.message}")
                     }
                     return FileVisitResult.CONTINUE
                 }
@@ -181,7 +156,7 @@ class Autoscanner : AbstractVerticle() {
             if (result.succeeded()) {
                 log.info("imported $dir")
             } else {
-                log.severe("import $dir failed (${result.cause().message})")
+                log.error("import $dir failed (${result.cause().message})")
             }
         })
 
@@ -197,60 +172,63 @@ class Autoscanner : AbstractVerticle() {
      * if it is a directory: walk the directory tree for all files and directories
      *
      */
-    fun checkFile(file: Path) {
-        log.entering("Autoscanner", "checkFile")
+    fun checkFile(file: Path, watchKey: WatchKey?) {
+        log.info("Autoscanner", "checkFile")
         if (!exclude(file)) {
             if (Files.isRegularFile(file) && (!Files.isHidden(file))) {
                 val absolute = file.toFile().absolutePath
                 log.info("checking $absolute")
                 val id = makeID(file)
-                Communicator.indexManager.getDocument(id) ?: addFile(file)
+                Communicator.indexManager.getDocument(id) ?: addFile(file,watchKey)
             }
         }
-        log.exiting("Autoscanner", "checkFile")
-
+        checkKey(watchKey)
     }
 
     private fun exclude(file: Path) =
         (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L))
 
-
+    private fun checkKey(key: WatchKey?){
+        if(key!=null){
+            if(!key.reset()){
+                keys.remove(key)
+            }
+        }
+    }
 
     /**
      * Add an Item. If it is a directory, add it to the watch list. If it is a file, add it to the index
      */
-    fun addFile(file: Path) {
+    fun addFile(file: Path, watchKey:WatchKey?) {
         if (!exclude(file)) {
             val filename = file.toFile().absolutePath
             log.info("adding $filename")
             if (Files.isDirectory(file, NOFOLLOW_LINKS)) {
                 val key = file.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
                 keys.put(key, file)
+                checkKey(watchKey)
             } else {
                 val fileMetadata = refiner.preProcess(filename, JsonObject()).put("_id", makeID(file))
                 vertx.executeBlocking<Int>(FileImporter(file, fileMetadata), Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
                     if (result.failed()) {
                         val errmsg = "import ${file.toAbsolutePath()} failed." + result.cause().message
-                        log.severe(errmsg)
+                        log.error(errmsg)
                         vertx.eventBus().publish(Communicator.FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
                     }
+                    checkKey(watchKey)
                 })
             }
         }
     }
 
-    fun removeFile(file: Path) {
+    fun removeFile(file: Path, watchKey:WatchKey) {
         if (!exclude(file)) {
             val absolute = file.toFile().absolutePath
             log.info("removing $absolute")
             val id = makeID(file)
             Communicator.indexManager.removeDocument(id)
+            checkKey(watchKey)
         }
-    }
-
-
-    fun setRefiner(ref: Refiner) {
-        refiner = ref
     }
 
 }

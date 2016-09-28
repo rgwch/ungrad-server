@@ -47,9 +47,6 @@ import java.util.logging.Logger
  */
 class IndexManager(directory: String,val language:String) {
 
-    //val dir: Path =
-    val log = Logger.getLogger("lucinda.indexManager")
-
     val analyzer = when (language) {
         "de" -> GermanAnalyzer()
         "fr" -> FrenchAnalyzer()
@@ -127,7 +124,7 @@ class IndexManager(directory: String,val language:String) {
             // e.g. org.apache.tika.sax.WriteLimitReachedException
             // In that case, Data up to the limit (100K) will be available and can be read.
             // so, just write a log entry and continue
-            log.warning(ex.message)
+            log.warn(ex.message)
         }
 
         val text = handler.toString()
@@ -183,9 +180,7 @@ class IndexManager(directory: String,val language:String) {
      * @throws IOException
      */
     fun queryDocuments(queryExpression: String, numHits: Int = 1000): JsonArray {
-        log.level = Level.FINEST
         require(queryExpression.isNotBlank())
-        log.finer("querying for $queryExpression")
         val query = parser.parse(queryExpression)
         //searcherManager.maybeRefreshBlocking()
         //val searcher=searcherManager.acquire()
@@ -221,7 +216,7 @@ class IndexManager(directory: String,val language:String) {
             val searcher = IndexSearcher(reader)
             val result = searcher.search(query, 10)
             if (result.totalHits > 1) {
-                log.severe("Lucene index corrupt: Duplicate _id: $id")
+                log.error("Lucene index corrupt: Duplicate _id: $id")
             }
             if (result.totalHits == 0) {
                 return null
@@ -231,7 +226,7 @@ class IndexManager(directory: String,val language:String) {
             reader.close()
             return ret
         } catch(ex: Exception) {
-            log.warning("could not open lucene index " + ex.message)
+            log.warn("could not open lucene index " + ex.message)
             return null
         }
     }

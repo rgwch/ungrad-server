@@ -5,7 +5,6 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
-import ch.rgw.lucinda.lucindaConfig
 
 /**
  * This is a Singleton implementation of a Message handler, used for handling of admin messages from the Communicator

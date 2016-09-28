@@ -22,6 +22,7 @@ import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
+import java.util.*
 
 /**
     Verticle for handling Lucinda requests from the EventBus
@@ -35,22 +36,44 @@ fun saveConfig(){
     Communicator.eb.send(EB_SETCONFIG,JsonObject().put("id","ch.rgw.lucinda.lucindaConfig").put("value", lucindaConfig))
 }
 val lucindaConfig = JsonUtil()
+val log = LoggerFactory.getLogger("Lucinda")
+
 
 class Communicator: AbstractVerticle() {
+    lateinit var autoScanner:String
 
     override fun stop(stopResult:Future<Void>){
         indexManager.shutDown()
+        vertx.undeploy(autoScanner)
         stopResult.complete()
         log.info("Lucinda Communicator stopped")
     }
 
     override fun start(startResult:Future<Void>) {
+        val autoScannerResult=Future.future<Void>()
+        val launchResult=Future.future<Void>()
+        val consolidatedResult= listOf(
+            autoScannerResult, launchResult
+        )
+        CompositeFuture.all(consolidatedResult).setHandler { result ->
+            if(result.succeeded()){
+                startResult.complete()
+            }else{
+                startResult.fail(result.cause())
+            }
+        }
+
         super.start()
         eb=vertx.eventBus()
         lucindaConfig.mergeIn(config())
         indexManager = IndexManager(lucindaConfig.getString("fs_indexdir", "target/store"), lucindaConfig.getString("default_language", "de"))
         val dispatcher = Dispatcher(vertx, lucindaConfig.getString("fs_import", "target/store"))
-
+        vertx.deployVerticle(Autoscanner(),DeploymentOptions().setConfig(lucindaConfig)){result ->
+            if(result.succeeded()){
+                autoScanner=result.result()
+                autoScannerResult.complete()
+            }
+        }
         fun register(func: RegSpec) {
             eb.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
                     .put("ebaddress", BASEADDR + func.addr)
@@ -209,7 +232,8 @@ class Communicator: AbstractVerticle() {
 
             }
         }
-        startResult.complete()
+
+        launchResult.complete()
 
     }
 
@@ -282,7 +306,6 @@ class Communicator: AbstractVerticle() {
         val FUNC_UPDATE = RegSpec(".update", "lucinda/update", "docmgr","post")
         /** Connection check */
         val FUNC_PING = RegSpec(".ping", "lucinda/ping/:var", "guest", "get")
-        val log = LoggerFactory.getLogger("lucinda.Communicator")
 
         lateinit var indexManager: IndexManager
         lateinit var eb:EventBus
