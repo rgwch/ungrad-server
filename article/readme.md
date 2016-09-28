@@ -23,7 +23,7 @@ This Verticle needs cli-robot, original copyright by epha. So first
     npm run all
     
 Then enter the path to cli-robot as a configuration parameter for Article Manager 
-to the ungrad launcher config, as in:
+to the ungrad launcher lucindaConfig, as in:
         
         // user.json
          "launch":[
@@ -32,7 +32,7 @@ to the ungrad launcher config, as in:
                 {
                     "name":"Articles",
                     "url":"file:./article/src/medical_articles.js",
-                    "config":{
+                    "lucindaConfig":{
                         "epha":"/some/path/to/cli-robot"
                     }
                 }

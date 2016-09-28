@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit
 
 class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Future<Int>> {
     val temppath: String by lazy {
-        val checkDir = File(Communicator.config.getString("fs_basedir", "target/store"), "tempfiles")
+        val checkDir = File(lucindaConfig.getString("fs_basedir", "target/store"), "tempfiles")
         if (checkDir.exists()) {
             if (checkDir.isFile) {
                 log.error("temporary directory exists but is a file")
@@ -51,7 +51,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         checkDir.absolutePath
     }
     val failures: String by lazy {
-        val checkDir = File(Communicator.config.getString("fs_basedir", System.getenv("java.io.tmpdir")), "failures")
+        val checkDir = File(lucindaConfig.getString("fs_basedir", System.getenv("java.io.tmpdir")), "failures")
         if (checkDir.exists()) {
             if (checkDir.isFile) {
                 log.error("failure directory $checkDir exists but is a file")

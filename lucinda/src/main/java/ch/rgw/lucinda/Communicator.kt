@@ -28,8 +28,13 @@ import org.slf4j.LoggerFactory
  */
 
 const val API = "1.0"
-data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
+const val EB_SETCONFIG="ch.elexis.ungrad.server.setconfig"
 
+data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
+fun saveConfig(){
+    Communicator.eb.send(EB_SETCONFIG,JsonObject().put("id","ch.rgw.lucinda.lucindaConfig").put("value", lucindaConfig))
+}
+val lucindaConfig = JsonUtil()
 
 class Communicator: AbstractVerticle() {
 
@@ -42,9 +47,9 @@ class Communicator: AbstractVerticle() {
     override fun start(startResult:Future<Void>) {
         super.start()
         eb=vertx.eventBus()
-        config.mergeIn(config())
-        indexManager = IndexManager(config.getString("fs_indexdir", "target/store"),config.getString("default_language", "de"))
-        val dispatcher = Dispatcher(vertx,config.getString("fs_import", "target/store"))
+        lucindaConfig.mergeIn(config())
+        indexManager = IndexManager(lucindaConfig.getString("fs_indexdir", "target/store"), lucindaConfig.getString("default_language", "de"))
+        val dispatcher = Dispatcher(vertx, lucindaConfig.getString("fs_import", "target/store"))
 
         fun register(func: RegSpec) {
             eb.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
@@ -54,9 +59,9 @@ class Communicator: AbstractVerticle() {
         }
 
 
-        eb.send<JsonObject>("ch.elexis.ungrad.server.getconfig",JsonUtil.create("id:ch.rgw.lucinda.config")){ reply ->
+        eb.send<JsonObject>("ch.elexis.ungrad.server.getconfig",JsonUtil.create("id:ch.rgw.lucinda.lucindaConfig")){ reply ->
             if(reply.succeeded()) {
-                config.mergeIn(reply.result().body())
+                lucindaConfig.mergeIn(reply.result().body())
             }else{
                 log.error("could not retrieve configuration")
             }
@@ -281,7 +286,6 @@ class Communicator: AbstractVerticle() {
 
         lateinit var indexManager: IndexManager
         lateinit var eb:EventBus
-        val config= JsonUtil()
         val params= """
         [
            {
@@ -302,9 +306,6 @@ class Communicator: AbstractVerticle() {
         """
         val serverDesc : JsonObject=JsonUtil.create("id:ch.rgw.lucinda","name:Lucinda","address:$CONTROL_ADDR")
         .put("params", JsonArray(params))
-        fun saveConfig(){
-            eb.send("ch.elexis.ungrad.server.setconfig",JsonObject().put("id","ch.rgw.lucinda.config").put("value",config))
-        }
     }
 }
 

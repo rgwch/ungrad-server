@@ -5,6 +5,7 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
+import ch.rgw.lucinda.lucindaConfig
 
 /**
  * This is a Singleton implementation of a Message handler, used for handling of admin messages from the Communicator
@@ -16,7 +17,7 @@ object Admin : Handler<Message<JsonObject>> {
         val result:Future<Any> = when(msg.getString("command")) {
             "getParam" -> getParam(msg)
             "setParam" -> setParam(msg)
-            "exec" -> Future.failedFuture("Not implemented")
+            "exec" -> exec(msg)
             else -> Future.failedFuture("Not implemented ${msg.getString("command")}")
         }
         if(result.failed()){
@@ -26,12 +27,16 @@ object Admin : Handler<Message<JsonObject>> {
         }
     }
 
+    fun exec(msg: JsonObject) : Future<Any>{
+        return Future.failedFuture("Not implemented")
+    }
+
     fun getParam(msg: JsonObject): Future<Any> {
         val ret = Future.future<Any>()
         val param = msg.getString("param")
         val value = when (param) {
-            "indexdir" -> Communicator.config.getString("fs_indexdir", "not set")
-            "datadir" -> Communicator.config.getString("fs_basedir", "not set")
+            "indexdir" -> lucindaConfig.getString("fs_indexdir", "not set")
+            "datadir" -> lucindaConfig.getString("fs_basedir", "not set")
             else -> ""
 
         }
@@ -45,15 +50,15 @@ object Admin : Handler<Message<JsonObject>> {
 
     fun setParam(msg: JsonObject): Future<Any> {
         val ret=Future.future<Any>()
-        val param=msg.getString("name")
+        val param=msg.getString("param")
         val value=msg.getValue("value")
 
-        Communicator.config.put(when(param){
+        lucindaConfig.put(when(param){
             "indexdir" -> "fs_indexdir"
             "datadir" -> "fs_basedir"
             else -> "error"
         },value)
-        Communicator.saveConfig()
+        saveConfig()
         ret.complete(true)
         return ret
     }

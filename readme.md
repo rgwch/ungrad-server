@@ -39,7 +39,7 @@ After successful build, the server is in dispatcher/target.
 Run it from there or copy to somewhere else (there are no external runtime dependencies except Java 8). 
 Then create a configuration file (use `dispatcher/src/main/resources/default.json` as a reference) and launch the server with:
 
-    java -jar dispatcher/target/ungrad-server-dispatcher-x.y.z-SNAPSHOT.jar --config=<your-configuration.json>
+    java -jar dispatcher/target/ungrad-server-dispatcher-x.y.z-SNAPSHOT.jar --lucindaConfig=<your-configuration.json>
 
 (Please note that relative paths in the configuration file are relative to the current directory when launching).
 Launch your favorite web browser and navigate to `http://localhost:2016/ui/index.hml`. You'll (hopefully) see a login screen. Enter username and password as defined in `user.json`, and there you are.
@@ -64,7 +64,7 @@ In Ungrad-Server, Verticles are added and launched in a number of ways:
 
 ## Configuration
 
-If a --config parameter was given at launch, the launcher uses this file as configuration. If no --config was given, the launcher searches the classpath 
+If a --lucindaConfig parameter was given at launch, the launcher uses this file as configuration. If no --lucindaConfig was given, the launcher searches the classpath 
 for a file named "default.json" and then for a file called "user.json". If both exist, user.json will overlay default.json.
     
 ## Further reading

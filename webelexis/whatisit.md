@@ -14,7 +14,7 @@ This subproject is a generic way to access the [Elexis](http://www.elexis.ch/ung
 
 The configuration must contain instructions to connect to the database, as in:
     
-    config:{
+    lucindaConfig:{
          "host":"localhost",
          "database":"elexis",
          "charset":"utf-8",
