@@ -26,6 +26,7 @@ import org.apache.lucene.document.Field
 import org.apache.lucene.document.TextField
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
+import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectForm
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectImage
 import java.io.*
 import java.nio.file.Files
@@ -136,36 +137,47 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         var failed = false
         val basename = temppath + "/" + makeHash(filename)
         log.info("Seems to be a PDF with only image(s). Trying OCR as $basename")
+        var numImages = 0
+        fun writeImage(img: PDXObjectImage){
+            val imgName = basename + "_" + (++numImages).toString()
+            img.write2file(imgName)
+            val sourcename = imgName + "." + img.suffix
+            val result = runTesseract(sourcename, imgName)
+            FileTool.deleteFile(sourcename)
+            if (result) {
+                val plaintext = File(imgName + ".txt")
+                if (plaintext.exists() and plaintext.canRead() and (plaintext.length() > 10L)) {
+                    val newtext = FileTool.readTextFile(plaintext)
+                    doc.add(TextField("text", newtext, Field.Store.NO))
+                    Communicator.indexManager.updateDocument(doc)
+                    plaintext.delete()
+                } else {
+                    log.warn("no text content found in $filename")
+                }
+            } else {
+                failed = true
+            }
+        }
         try {
             // This will throw an exception if the pdf is invalid.
             val document = PDDocument.load(filename)
             val list = document.documentCatalog.allPages
-            var numImages = 0
             list.forEach { page ->
                 val pdResources = (page as? PDPage)?.resources
                 val pageImages = pdResources?.xObjects
                 val imageIter = pageImages?.keys?.iterator()
                 imageIter?.forEach {
                     val pdxObjectImage = pageImages?.get(it)
-                    if (pdxObjectImage is PDXObjectImage) {
-                        val imgName = basename + "_" + (++numImages).toString()
-                        pdxObjectImage.write2file(imgName)
-                        val sourcename = imgName + "." + pdxObjectImage.suffix
-                        val result = runTesseract(sourcename, imgName)
-                        FileTool.deleteFile(sourcename)
-                        if (result) {
-                            val plaintext = File(imgName + ".txt")
-                            if (plaintext.exists() and plaintext.canRead() and (plaintext.length() > 10L)) {
-                                val newtext = FileTool.readTextFile(plaintext)
-                                doc.add(TextField("text", newtext, Field.Store.NO))
-                                Communicator.indexManager.updateDocument(doc)
-                                plaintext.delete()
-                            } else {
-                                log.warn("no text content found in $filename")
+                    if(pdxObjectImage is PDXObjectForm){
+                        val xrs=pdxObjectImage.resources?.xObjects
+                        xrs?.keys?.forEach { kk ->
+                            val subimg=xrs.get(kk)
+                            if(subimg is PDXObjectImage){
+                                writeImage(subimg)
                             }
-                        } else {
-                            failed = true
                         }
+                    } else if (pdxObjectImage is PDXObjectImage) {
+                        writeImage(pdxObjectImage);
                     }
                 }
             }
