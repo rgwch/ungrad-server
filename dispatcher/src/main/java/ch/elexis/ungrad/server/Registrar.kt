@@ -43,7 +43,7 @@ class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
             val server = j.getJsonObject("server")
             if (server != null) {
                 if (JsonUtil(server).validate("id:string", "name:string", "address:string")) {
-                    servers.put(server["id"], server)
+                    servers.put(server["id"]!!, server)
                 } else {
                     msg.reply(JsonUtil.create("status:error", "message:format error of server definition " + j.encodePrettily()))
                     log.error("message:format error of server definition " + j.encode())

@@ -26,12 +26,12 @@ The format is strict json, but comments are allowed like this one here.
     "launch":[
         {
             "name":"Server info",
-            "url": "file:./tester/target/ungrad-server-tester-0.0.1-SNAPSHOT.jar",
+            "url": "file:./tester/target/ungrad-server-tester-*.jar",
             "verticle": "ch.elexis.ungrad.server_test.SelfTest"
         },
         {
             "name":"Lucinda",
-            "url": "file:./lucinda/target/lucinda-1.0.0-SNAPSHOT.jar",
+            "url": "file:./lucinda/target/lucinda-*.jar",
             "verticle": "ch.rgw.lucinda.Communicator",
             "config": {
                 "default_language":"de",
@@ -45,7 +45,7 @@ The format is strict json, but comments are allowed like this one here.
         },
         {
             "name":"Patients",
-            "url":"file:./webelexis/target/webelexis-0.1.0-SNAPSHOT.jar",
+            "url":"file:./webelexis/target/webelexis-*.jar",
             "verticle":"ch.webelexis.verticles.Patients",
             "config":{
                 "host":"localhost",
@@ -56,7 +56,7 @@ The format is strict json, but comments are allowed like this one here.
             }
         },{
             "name":"Agenda",
-            "url":"file:./webelexis/target/webelexis-0.1.0-SNAPSHOT.jar",
+            "url":"file:./webelexis/target/webelexis-*.jar",
             "verticle":"ch.webelexis.verticles.Appointments",
             "config":{
                 "host":"localhost",
