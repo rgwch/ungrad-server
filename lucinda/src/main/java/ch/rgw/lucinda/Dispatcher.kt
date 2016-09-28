@@ -20,6 +20,7 @@ import ch.rgw.tools.StringTool
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
+import io.vertx.core.file.FileSystem
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import org.apache.lucene.document.Document
@@ -37,8 +38,7 @@ import java.nio.file.Paths
  */
 class Dispatcher(val vertx: Vertx, val basedir: String) {
     val log = LoggerFactory.getLogger("lucinda")
-    val fs = vertx.fileSystem()
-    val iMgr=Communicator.indexManager!!
+    val fs: FileSystem = vertx.fileSystem()
 
     fun makeDirPath(parms: JsonObject): File {
         val fname = parms.getString("filename")
@@ -73,12 +73,9 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
         val temp = File.createTempFile("__lucinda__", "_addToIndex_")
         temp.deleteOnExit()
         FileTool.writeFile(temp, payload)
-        vertx.executeBlocking<Int>(FileImporter(Paths.get(temp.absolutePath), parm), object : Handler<AsyncResult<Int>> {
-            override fun handle(result: AsyncResult<Int>) {
-                temp.delete()
-                handler.handle(result);
-            }
-
+        vertx.executeBlocking<Int>(FileImporter(Paths.get(temp.absolutePath), parm), Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
+            temp.delete()
+            handler.handle(result)
         })
     }
 
@@ -99,10 +96,10 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
         val output = makeDirPath(parms)
         val dir = output.parentFile
         if (!dir.exists()) {
-            dir.mkdirs();
+            dir.mkdirs()
         }
         parms.put("url", output.absolutePath)
-        FileTool.writeFile(output, parms.getBinary("payload"));
+        FileTool.writeFile(output, parms.getBinary("payload"))
         vertx.executeBlocking<Int>(FileImporter(Paths.get(parms.getString("url")), parms), handler)
     }
 
@@ -111,12 +108,12 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
      */
     fun find(parm: JsonObject): JsonArray {
         val ret =
-                iMgr.queryDocuments(parm.getString("query"), parm.getInteger("numhits") ?: 100)
+                Communicator.indexManager.queryDocuments(parm.getString("query"), parm.getInteger("numhits") ?: 100)
         return ret
     }
 
     fun get(id: String): ByteArray? {
-        val doc: Document? = iMgr.getDocument(id)
+        val doc: Document? = Communicator.indexManager.getDocument(id)
         if (doc != null) {
             val file = File(doc.get("url"))
             if (file.exists() && file.canRead()) {
@@ -125,11 +122,11 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
                 throw FileNotFoundException(file.absolutePath)
             }
         }
-        return null;
+        return null
     }
 
     fun update(o: JsonObject) {
-        val doc: Document? = iMgr.getDocument(o.getString("_id"))
+        val doc: Document? = Communicator.indexManager.getDocument(o.getString("_id"))
         if (doc != null) {
             o.map.forEach {
                 if(it.key!="_id" && it.key!="payload") {
@@ -140,7 +137,7 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
                     doc.add(TextField(it.key, it.value.toString(), Field.Store.YES))
                 }
             }
-            iMgr.updateDocument(doc)
+            Communicator.indexManager.updateDocument(doc)
         }
     }
 }

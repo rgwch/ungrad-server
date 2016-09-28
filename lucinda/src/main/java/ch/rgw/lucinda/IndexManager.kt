@@ -140,7 +140,7 @@ class IndexManager(directory: String,val language:String) {
                 continue
             }
             if (key == "keywords") {
-                for (keyword in value.split(",?(\\s+)".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
+                for (keyword in value.split(",?(\\s+)".toRegex()).dropLastWhile(String::isEmpty).toTypedArray()) {
                     doc.add(TextField(key, keyword, Field.Store.YES))
                 }
             } else {
@@ -166,9 +166,9 @@ class IndexManager(directory: String,val language:String) {
     fun updateDocument(doc: Document) {
         require(doc.get("_id") != null)
         val term = Term("_id", doc.get("_id"))
-        val writer = createWriter();
+        val writer = createWriter()
         writer.updateDocument(term, doc)
-        writer.close();
+        writer.close()
         //searcherManager.maybeRefreshBlocking()
     }
 
@@ -199,7 +199,7 @@ class IndexManager(directory: String,val language:String) {
         for (sd in score) {
             val hit = searcher.doc(sd.doc)
             val jo = JsonObject()
-            hit.getFields().forEach { field ->
+            hit.fields.forEach { field ->
                 jo.put(field.name(), field.stringValue())
             }
             ret.add(jo)
@@ -241,15 +241,12 @@ class IndexManager(directory: String,val language:String) {
      */
     fun getMetadata(id: String): JsonObject? {
         require(id.isNotBlank())
-        val doc = getDocument(id)
-        if (doc == null) {
-            return null
-        }
+        val doc = getDocument(id) ?: return null
         val ret = JsonObject()
         doc.fields.forEach {
             ret.put(it.name(), it.stringValue())
         }
-        return ret;
+        return ret
     }
 
 

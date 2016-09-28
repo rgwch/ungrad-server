@@ -1,10 +1,6 @@
 import ch.rgw.lucinda.Communicator;
-import ch.rgw.tools.Configuration;
-import ch.rgw.tools.JsonUtil;
-import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -20,7 +16,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(VertxUnitRunner.class)
 public class Test_LucindaInterface {
-    static Vertx vertx;
+    private static Vertx vertx;
 
     @BeforeClass
     public static void createClient(TestContext ctx){

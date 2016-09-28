@@ -14,8 +14,8 @@
 
 package ch.rgw.lucinda
 
-import ch.rgw.tools.crypt.makeHash
 import ch.rgw.io.FileTool
+import ch.rgw.tools.crypt.makeHash
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
@@ -24,6 +24,7 @@ import org.apache.lucene.document.TextField
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectImage
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -53,7 +54,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         val checkDir = File(Communicator.config.getString("fs_basedir", System.getenv("java.io.tmpdir")), "failures")
         if (checkDir.exists()) {
             if (checkDir.isFile) {
-                log.error("failure directory ${checkDir} exists but is a file")
+                log.error("failure directory $checkDir exists but is a file")
             }
         } else {
             if (!checkDir.mkdirs()) {
@@ -73,7 +74,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         var errmsg = ""
         while (retryCount < 2) {
             log.debug("handle: ${file.fileName}")
-            errmsg = process();
+            errmsg = process()
             if (errmsg.isEmpty()) {
                 future.complete()
                 return
@@ -88,7 +89,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
             }
         }
         log.warn("${file.toAbsolutePath()} failed.")
-        future.fail("Failed: ${file.toFile().absolutePath}; ${errmsg}")
+        future.fail("Failed: ${file.toFile().absolutePath}; $errmsg")
     }
 
     fun process(): String {
@@ -98,40 +99,40 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                 fileMetadata.getBinary("payload")
             } else {
                 val plc = FileTool.readFileWithChecksum(File(fileMetadata.getString("url")))
-                fileMetadata.put("uuid", plc.get("checksumString"))
-                plc.get("contents") as ByteArray
+                fileMetadata.put("uuid", plc["checksumString"])
+                plc["contents"] as ByteArray
             }
 
             log.info("FileImporter: Importing ${filename}")
             fileMetadata.remove("payload")
             if (fileMetadata.getString("_id").isNullOrBlank()) {
-                fileMetadata.put("_id", Autoscanner.makeID(file))
+                fileMetadata.put("_id", makeID(file))
             }
-            val doc = Communicator.indexManager!!.addDocument(ByteArrayInputStream(payload), fileMetadata);
+            val doc = Communicator.indexManager.addDocument(ByteArrayInputStream(payload), fileMetadata)
             val text = doc.getField("text").stringValue()
-            if ( (text.length < 15) and (doc.get("content-type").equals("application/pdf"))) {
+            if ( (text.length < 15) and (doc.get("content-type") == ("application/pdf"))) {
                 if (text == "unparseable") {
                     log.info("unparseable text")
-                    return "";
+                    return ""
                 } else {
-                    var failed = false;
+                    var failed = false
                     // if we don't get much text out of a pdf, it's probably a scan containing only one or more images.
                     val basename = temppath + "/" + makeHash(filename)
-                    log.info("Seems to be a PDF with only image(s). Trying OCR as ${basename}")
+                    log.info("Seems to be a PDF with only image(s). Trying OCR as $basename")
                     try {
                         // This will throw an exception if the pdf is invalid.
-                        val document = PDDocument.load(filename);
-                        val list = document.getDocumentCatalog().getAllPages();
-                        var numImages = 0;
+                        val document = PDDocument.load(filename)
+                        val list = document.documentCatalog.allPages
+                        var numImages = 0
                         list.forEach { page ->
-                            val pdResources = (page as? PDPage)?.getResources();
+                            val pdResources = (page as? PDPage)?.resources
                             val pageImages = pdResources?.xObjects
-                            val imageIter = pageImages?.keys?.iterator();
+                            val imageIter = pageImages?.keys?.iterator()
                             imageIter?.forEach {
-                                val pdxObjectImage = pageImages?.get(it);
+                                val pdxObjectImage = pageImages?.get(it)
                                 if (pdxObjectImage is PDXObjectImage) {
                                     val imgName = basename + "_" + (++numImages).toString()
-                                    pdxObjectImage.write2file(imgName);
+                                    pdxObjectImage.write2file(imgName)
                                     val sourcename = imgName + "." + pdxObjectImage.suffix
                                     val result = doOCR(sourcename, imgName)
                                     FileTool.deleteFile(sourcename)
@@ -140,7 +141,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                                         if (plaintext.exists() and plaintext.canRead() and (plaintext.length() > 10L)) {
                                             val newtext = FileTool.readTextFile(plaintext)
                                             doc.add(TextField("text", newtext, Field.Store.NO))
-                                            Communicator.indexManager!!.updateDocument(doc)
+                                            Communicator.indexManager.updateDocument(doc)
                                             plaintext.delete()
                                         } else {
                                             log.warn("no text content found in ${filename}")
@@ -156,12 +157,12 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                             FileTool.copyFile(file.toFile(), File(failures, file.fileName.toString()), FileTool.BACKUP_IF_EXISTS)
                             return ("import failed.")
                         } else {
-                            return "";
+                            return ""
                         }
 
                     } catch(ex: Exception) {
                         ex.printStackTrace()
-                        log.error("Fatal error in pdf file ${filename}: ${ex.message}")
+                        log.error("Fatal error in pdf file $filename: ${ex.message}")
                         return ("Exception thrown: ${ex.message}")
                     }
                 }
@@ -183,7 +184,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
      * stopit
      */
 
-    val TIMEOUT = 300L;
+    val TIMEOUT = 300L
 
     fun doOCR(source: String, dest: String): Boolean {
         val process = Runtime.getRuntime().exec(listOf("tesseract", source, dest).toTypedArray())
@@ -193,14 +194,14 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         }
         val errmsg = StringBuilder()
 
-        val err = StreamBuffer(process.errorStream, errmsg);
+        val err = StreamBuffer(process.errorStream, errmsg)
         val output = StringBuilder()
-        val out = StreamBuffer(process.inputStream, output);
+        val out = StreamBuffer(process.inputStream, output)
         err.start()
         out.start()
         if (process.waitFor(TIMEOUT, TimeUnit.SECONDS)) {
             val exitValue = process.exitValue()
-            log.info("tesseract ${source} ended, " + output.toString())
+            log.info("tesseract $source ended, " + output.toString())
             return exitValue == 0
         } else {
             log.error("Tesseract process hangs")
@@ -210,7 +211,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
     }
 
     companion object {
-        val log = LoggerFactory.getLogger("lucinda.fileImporter")
+        val log: Logger = LoggerFactory.getLogger("lucinda.fileImporter")
 
     }
 

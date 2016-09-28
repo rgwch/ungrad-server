@@ -16,7 +16,7 @@
         <lucene-version>6.0.0</lucene-version>
         <tika-version>1.12</tika-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.0.3</kotlin.version>
+        <kotlin.version>1.0.4</kotlin.version>
     </properties>
     <build>
         <plugins>
@@ -116,7 +116,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
+            <artifactId>kotlin-test-junit</artifactId>
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>

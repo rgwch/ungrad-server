@@ -32,7 +32,7 @@ interface Refiner{
 class DefaultRefiner : Refiner {
 
     override fun preProcess(url: String, metadata:JsonObject): JsonObject {
-        metadata.put("url","${url}")
+        metadata.put("url", url)
         val file=File(url)
         if(file.exists() && file.canRead()){
             val contents= FileTool.readFileWithChecksum(file)
@@ -51,7 +51,7 @@ class DefaultRefiner : Refiner {
             }
 
         }else{
-            throw Exception("${url} not found or not readable")
+            throw Exception("$url not found or not readable")
         }
         return metadata
     }

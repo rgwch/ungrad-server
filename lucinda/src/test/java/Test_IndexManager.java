@@ -24,8 +24,8 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(VertxUnitRunner.class)
 
 public class Test_IndexManager {
-    static IndexManager indexManager;
-    static String id="893f8fbfe7b6483a0fa24c97ee18bca98d431e8e";
+    private static IndexManager indexManager;
+    private static final String id="893f8fbfe7b6483a0fa24c97ee18bca98d431e8e";
 
 
     @BeforeClass
@@ -86,10 +86,9 @@ public class Test_IndexManager {
     }
 
     private JsonObject insert(){
-        JsonObject jo=new JsonObject()
+        return new JsonObject()
                 .put("AAA", "Test aaa")
                 .put("BBB", "Test bbb")
                 .put("_id",id);
-        return jo;
     }
 }
