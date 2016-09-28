@@ -13,7 +13,7 @@
  */
 package ch.elexis.ungrad.server_test
 
-import ch.rgw.tools.json.JsonUtil
+import ch.rgw.tools.json.*
 import ch.rgw.tools.TimeTool
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
@@ -59,8 +59,8 @@ class SelfTest: AbstractVerticle() {
          * just show some server parameters.
          */
         vertx.eventBus().consumer<JsonObject>(SERVER_CONTROL){msg ->
-            if(msg.body().getString("command")=="getParam"){
-                val answer=when(msg.body().getString("param")){
+            if(msg.body()["command"]=="getParam"){
+                val answer=when(msg.body()["param"]){
                     "os_desc" -> os_desc
                     "java_desc" -> java_desc
                     "system"->system()
@@ -78,10 +78,10 @@ class SelfTest: AbstractVerticle() {
                     else -> "unknown parameter"
                 }
                 msg.reply(JsonUtil.create("status:ok","value:$answer"))
-            }else if(msg.body().getString("command")=="setParam"){
+            }else if(msg.body()["command"]=="setParam"){
                 msg.reply(JsonUtil.create("status:error","message:all parameters are read only"))
 
-            }else if(msg.body().getString("command")=="exec"){
+            }else if(msg.body()["command"]=="exec"){
                 msg.reply(JsonUtil.create("status:ok").put("answer",make_overview()))
             }
         }

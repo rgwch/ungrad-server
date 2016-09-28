@@ -27,12 +27,14 @@ import org.slf4j.LoggerFactory
     Verticle for handling Lucinda requests from the EventBus
  */
 
+const val API = "1.0"
+data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
+
 
 class Communicator: AbstractVerticle() {
-    val API = "1.0"
 
     override fun stop(stopResult:Future<Void>){
-        indexManager?.shutDown()
+        indexManager.shutDown()
         stopResult.complete()
         log.info("Lucinda Communicator stopped")
     }
@@ -83,20 +85,17 @@ class Communicator: AbstractVerticle() {
             } else {
                 if (j.getBoolean("dry-run")) {
                     j.put("status", "ok").put("method", "import")
-                    message.reply(j);
+                    message.reply(j)
                 } else {
                     try {
-                        dispatcher.indexAndStore(j, object : Handler<AsyncResult<Int>> {
-                            override fun handle(result: AsyncResult<Int>) {
-                                if (result.succeeded()) {
-                                    log.info("imported ${j.getString("url")}")
-                                    message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                                } else {
-                                    log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
-                                    message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
-                                }
+                        dispatcher.indexAndStore(j, Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
+                            if (result.succeeded()) {
+                                log.info("imported ${j.getString("url")}")
+                                message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
+                            } else {
+                                log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
+                                message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
                             }
-
                         })
                     } catch(e: Exception) {
                         e.printStackTrace()
@@ -112,23 +111,20 @@ class Communicator: AbstractVerticle() {
             log.info("got message ADDR_INDEX " + Json.encodePrettily(j))
             if (checkRequired(j, "payload")) {
                 if (j.getBoolean("dry-run")) {
-                    j.put("status", "ok").put("method", "index");
+                    j.put("status", "ok").put("method", "index")
                     msg.reply(j)
                 } else {
                     try {
-                        dispatcher.addToIndex(j, object : Handler<AsyncResult<Int>> {
-                            override fun handle(result: AsyncResult<Int>) {
-                                if (result.succeeded()) {
-                                    log.info("indexed ${j.getString("title")}")
-                                    msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                                } else {
-                                    log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
-                                    msg.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
-                                }
+                        dispatcher.addToIndex(j, Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
+                            if (result.succeeded()) {
+                                log.info("indexed ${j.getString("title")}")
+                                msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
+                            } else {
+                                log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
+                                msg.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
                             }
-
                         })
-                        msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")));
+                        msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
                     } catch(e: Exception) {
                         fail("can't index", e)
                     }
@@ -224,10 +220,10 @@ class Communicator: AbstractVerticle() {
     fun checkRequired(cmd: JsonObject, vararg required: String): Boolean {
         for (arg in required) {
             if (cmd.getString(arg).isNullOrBlank()) {
-                return false;
+                return false
             }
         }
-        return true;
+        return true
     }
 
     fun success(msg: Message<Any>, result: JsonObject = JsonObject()) {
@@ -261,7 +257,6 @@ class Communicator: AbstractVerticle() {
 
     }
 
-    data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
 
     companion object{
         const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
@@ -269,22 +264,22 @@ class Communicator: AbstractVerticle() {
         const val CONTROL_ADDR=BASEADDR+".admin"
 
         /** reply address for error messages */
-        val FUNC_ERROR = Communicator.RegSpec(".error", "lucinda/error", "user", "get")
+        val FUNC_ERROR = RegSpec(".error", "lucinda/error", "user", "get")
         /** Add a file to the storage */
-        val FUNC_IMPORT = Communicator.RegSpec(".import", "lucinda/import", "docmgr", "post")
+        val FUNC_IMPORT = RegSpec(".import", "lucinda/import", "docmgr", "post")
         /** Index a file in-place (don't add it to the storage) */
-        val FUNC_INDEX = Communicator.RegSpec(".index", "lucinda/index/:url", "docmgr", "get")
+        val FUNC_INDEX = RegSpec(".index", "lucinda/index/:url", "docmgr", "get")
         /** Retrieve a file by _id*/
-        val FUNC_GETFILE = Communicator.RegSpec(".get", "lucinda/get/:id", "user", "get")
+        val FUNC_GETFILE = RegSpec(".get", "lucinda/get/:id", "user", "get")
         /** Get Metadata of files matching a search query */
-        val FUNC_FINDFILES = Communicator.RegSpec(".find", "lucinda/find/:spec", "user", "get")
+        val FUNC_FINDFILES = RegSpec(".find", "lucinda/find/:spec", "user", "get")
         /** Update Metadata of a file by _id*/
-        val FUNC_UPDATE = Communicator.RegSpec(".update", "lucinda/update", "docmgr","post")
+        val FUNC_UPDATE = RegSpec(".update", "lucinda/update", "docmgr","post")
         /** Connection check */
-        val FUNC_PING = Communicator.RegSpec(".ping", "lucinda/ping/:var", "guest", "get")
+        val FUNC_PING = RegSpec(".ping", "lucinda/ping/:var", "guest", "get")
         val log = LoggerFactory.getLogger("lucinda.Communicator")
 
-        lateinit var indexManager: IndexManager;
+        lateinit var indexManager: IndexManager
         lateinit var eb:EventBus
         val config= JsonUtil()
         val params= """

@@ -15,9 +15,8 @@
 package ch.rgw.lucinda
 
 import ch.rgw.tools.crypt.makeHash
+import ch.rgw.tools.json.validate
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.AsyncResult
-import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
@@ -39,6 +38,15 @@ import java.util.logging.Logger
  * a Long 'interval' with the number of milliseconds to wait after a change before accepting the next one.
  * Created by gerry on 25.04.16.
  */
+const val ADDR_START = "start"
+const val ADDR_STOP = "stop"
+/** Full rescan or first scan of watch directories */
+const val ADDR_RESCAN = "rescan"
+var refiner: Refiner = DefaultRefiner()
+val log: Logger = Logger.getLogger("lucinda.autoscanner")
+val watchedDirs = ArrayList<Path>()
+fun makeID(file: Path): String = makeHash(file.toFile().absolutePath)
+
 class Autoscanner : AbstractVerticle() {
 
     val eb: EventBus by lazy {
@@ -54,18 +62,22 @@ class Autoscanner : AbstractVerticle() {
 
         eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_START) { msg ->
             val j = msg.body() as JsonObject
-            log.fine("got start message ${Json.encodePrettily(j)}")
-            register(j.getJsonArray("dirs"))
+            if (j.validate("dirs:object", "interval:number")) {
+                log.fine("got start message ${Json.encodePrettily(j)}")
+                register(j.getJsonArray("dirs"))
 
-            timer = vertx.setPeriodic(j.getLong("interval") ?: 500L) { h ->
-                try {
-                    loop()
-                } catch(e: Exception) {
-                    e.printStackTrace()
-                    log.severe("exception in work loop " + e.message)
+                timer = vertx.setPeriodic(j.getLong("interval") ?: 500L) { h ->
+                    try {
+                        loop()
+                    } catch(e: Exception) {
+                        e.printStackTrace()
+                        log.severe("exception in work loop " + e.message)
+                    }
                 }
+                msg.reply(JsonObject().put("status", "ok"))
+            } else {
+                msg.fail(0, "bad parameters")
             }
-            msg.reply(JsonObject().put("status", "ok"))
         }
         eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_STOP) {
             log.fine("got stop message")
@@ -96,7 +108,8 @@ class Autoscanner : AbstractVerticle() {
                 val kind = event.kind()
 
                 // Context for directory entry event is the file name of entry
-                val ev = cast<Path>(event)
+                //val ev = cast<Path>(event)
+                val ev = event as WatchEvent<Path>
                 val name = ev.context()
                 val child = dir.resolve(name)
 
@@ -136,44 +149,39 @@ class Autoscanner : AbstractVerticle() {
             watchedDirs.add(dir)
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir)
-                log.info("created directory ${dir.toString()}")
+                log.info("created directory $dir")
             }
             rescan(dir)
         }
     }
 
     fun rescan(dir: Path) {
-        vertx.executeBlocking<Int>(object : Handler<Future<Int>> {
-            override fun handle(future: Future<Int>) {
-                Files.walkFileTree(dir, object : SimpleFileVisitor<Path>() {
-                    override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
-                        try {
-                            checkFile(file)
-                        } catch(e: Exception) {
-                            log.severe("Exception while checking ${file.toAbsolutePath()}, ${e.message}")
-                        }
-                        return FileVisitResult.CONTINUE
+        vertx.executeBlocking<Int>(Handler<io.vertx.core.Future<kotlin.Int>> { future ->
+            Files.walkFileTree(dir, object : SimpleFileVisitor<Path>() {
+                override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+                    try {
+                        checkFile(file)
+                    } catch(e: Exception) {
+                        log.severe("Exception while checking ${file.toAbsolutePath()}, ${e.message}")
                     }
-
-                    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-                        if (!(keys.containsValue(dir))) {
-                            val key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
-                            log.info("added watch key for ${dir.toAbsolutePath().toString()}")
-                            keys.put(key, dir)
-                        }
-                        return FileVisitResult.CONTINUE
-                    }
-                })
-                future.complete()
-            }
-
-        }, object : Handler<AsyncResult<Int>> {
-            override fun handle(result: AsyncResult<Int>) {
-                if (result.succeeded()) {
-                    log.info("imported ${dir}")
-                } else {
-                    log.severe("import ${dir} failed (${result.cause().message})")
+                    return FileVisitResult.CONTINUE
                 }
+
+                override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+                    if (!(keys.containsValue(dir))) {
+                        val key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
+                        log.info("added watch key for ${dir.toAbsolutePath()}")
+                        keys.put(key, dir)
+                    }
+                    return FileVisitResult.CONTINUE
+                }
+            })
+            future.complete()
+        }, Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
+            if (result.succeeded()) {
+                log.info("imported ${dir}")
+            } else {
+                log.severe("import ${dir} failed (${result.cause().message})")
             }
         })
 
@@ -194,27 +202,19 @@ class Autoscanner : AbstractVerticle() {
         if (!exclude(file)) {
             if (Files.isRegularFile(file) && (!Files.isHidden(file))) {
                 val absolute = file.toFile().absolutePath
-                log.info("checking ${absolute}")
+                log.info("checking $absolute")
                 val id = makeID(file)
-                val doc = Communicator.indexManager.getDocument(id)
-                if (doc == null) {
-                    log.fine("did not find ${file}/${id} in index. Adding")
-                    addFile(file)
-                }
+                Communicator.indexManager.getDocument(id) ?: addFile(file)
             }
         }
         log.exiting("Autoscanner", "checkFile")
 
     }
 
-    private fun exclude(file: Path): Boolean {
-        if (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L)) {
-            return true
-        } else {
-            return false;
-        }
+    private fun exclude(file: Path) =
+        (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L))
 
-    }
+
 
     /**
      * Add an Item. If it is a directory, add it to the watch list. If it is a file, add it to the index
@@ -228,13 +228,11 @@ class Autoscanner : AbstractVerticle() {
                 keys.put(key, file)
             } else {
                 val fileMetadata = refiner.preProcess(filename, JsonObject()).put("_id", makeID(file))
-                vertx.executeBlocking<Int>(FileImporter(file, fileMetadata), object : Handler<AsyncResult<Int>> {
-                    override fun handle(result: AsyncResult<Int>) {
-                        if (result.failed()) {
-                            val errmsg = "import ${file.toAbsolutePath()} failed." + result.cause().message
-                            log.severe(errmsg)
-                            vertx.eventBus().publish(Communicator.FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
-                        }
+                vertx.executeBlocking<Int>(FileImporter(file, fileMetadata), Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
+                    if (result.failed()) {
+                        val errmsg = "import ${file.toAbsolutePath()} failed." + result.cause().message
+                        log.severe(errmsg)
+                        vertx.eventBus().publish(Communicator.FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
                     }
                 })
             }
@@ -255,23 +253,6 @@ class Autoscanner : AbstractVerticle() {
         refiner = ref
     }
 
-    @SuppressWarnings("unchecked")
-    internal fun <T> cast(event: WatchEvent<*>): WatchEvent<T> {
-        return event as WatchEvent<T>
-    }
-
-    companion object {
-        const val ADDR_START = "start"
-        const val ADDR_STOP = "stop"
-        /** Full rescan or first scan of watch directories */
-        const val ADDR_RESCAN = "rescan"
-        var refiner: Refiner = DefaultRefiner()
-        val log = Logger.getLogger("lucinda.autoscanner")
-        val watchedDirs = ArrayList<Path>()
-
-        fun makeID(file: Path): String = makeHash(file.toFile().absolutePath)
-
-    }
 }
 
 

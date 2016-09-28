@@ -204,19 +204,19 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
      * Stop all Verticles previously launched by this RestPoint.
      */
     override fun stop(stopResult:Future<Void>) {
-        val futures=ArrayList<Future<Any>>()
+        val futures=ArrayList<Future<Void>>()
         httpServer.close()
         for((name, deploymentID) in verticles){
             val undeployResult= Future.future<Void>()
             log.info("stopping ${name} - ${deploymentID}")
-            futures.add(undeployResult as Future<Any>)
+            futures.add(undeployResult)
             vertx.undeploy(deploymentID,undeployResult.completer())
 
         }
         if(futures.isEmpty()){
             stopResult.complete()
         }else {
-            CompositeFuture.all(futures).setHandler { result ->
+            CompositeFuture.all(futures as List<Future<*>>?).setHandler { result ->
                 if (result.succeeded()) {
                     stopResult.complete()
                 } else {
