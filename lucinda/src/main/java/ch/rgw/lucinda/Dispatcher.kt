@@ -15,7 +15,6 @@
 package ch.rgw.lucinda
 
 import ch.rgw.io.FileTool
-import ch.rgw.tools.Configuration
 import ch.rgw.tools.StringTool
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
@@ -27,10 +26,8 @@ import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.TextField
 import org.slf4j.LoggerFactory
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileNotFoundException
-import java.nio.file.Files
 import java.nio.file.Paths
 
 /**

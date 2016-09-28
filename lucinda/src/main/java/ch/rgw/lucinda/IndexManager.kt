@@ -185,7 +185,7 @@ class IndexManager(directory: String,val language:String) {
     fun queryDocuments(queryExpression: String, numHits: Int = 1000): JsonArray {
         log.level = Level.FINEST
         require(queryExpression.isNotBlank())
-        log.finer("querying for ${queryExpression}")
+        log.finer("querying for $queryExpression")
         val query = parser.parse(queryExpression)
         //searcherManager.maybeRefreshBlocking()
         //val searcher=searcherManager.acquire()
@@ -221,7 +221,7 @@ class IndexManager(directory: String,val language:String) {
             val searcher = IndexSearcher(reader)
             val result = searcher.search(query, 10)
             if (result.totalHits > 1) {
-                log.severe("Lucene index corrupt: Duplicate _id: ${id}")
+                log.severe("Lucene index corrupt: Duplicate _id: $id")
             }
             if (result.totalHits == 0) {
                 return null

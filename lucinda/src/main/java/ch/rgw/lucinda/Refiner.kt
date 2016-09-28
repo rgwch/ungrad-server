@@ -17,9 +17,6 @@ package ch.rgw.lucinda
 import ch.rgw.io.FileTool
 import ch.rgw.tools.TimeTool
 import io.vertx.core.json.JsonObject
-import org.apache.pdfbox.pdfparser.PDFParser
-import org.apache.pdfbox.pdfparser.PDFStreamParser
-import java.io.ByteArrayInputStream
 import java.io.File
 
 /**

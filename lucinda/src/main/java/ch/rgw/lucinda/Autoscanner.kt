@@ -53,7 +53,7 @@ class Autoscanner : AbstractVerticle() {
         vertx.eventBus()
     }
     var timer = 0L
-    val watcher = FileSystems.getDefault().newWatchService()
+    val watcher : WatchService = FileSystems.getDefault().newWatchService()
     val keys = HashMap<WatchKey, Path>()
     val BASEADDR = Communicator.BASEADDR
 
@@ -115,7 +115,7 @@ class Autoscanner : AbstractVerticle() {
 
                 // print out event
                 // System.out.format("%s: %s\n", event.kind().name(), child)
-                log.fine("Event: ${event.kind().name()}, file: ${child}")
+                log.fine("Event: ${event.kind().name()}, file: $child")
                 when (kind) {
                     ENTRY_CREATE -> addFile(child)
                     ENTRY_DELETE -> removeFile(child)
@@ -156,7 +156,7 @@ class Autoscanner : AbstractVerticle() {
     }
 
     fun rescan(dir: Path) {
-        vertx.executeBlocking<Int>(Handler<io.vertx.core.Future<kotlin.Int>> { future ->
+        vertx.executeBlocking<Int>({ future ->
             Files.walkFileTree(dir, object : SimpleFileVisitor<Path>() {
                 override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
                     try {
@@ -177,11 +177,11 @@ class Autoscanner : AbstractVerticle() {
                 }
             })
             future.complete()
-        }, Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
+        }, { result ->
             if (result.succeeded()) {
-                log.info("imported ${dir}")
+                log.info("imported $dir")
             } else {
-                log.severe("import ${dir} failed (${result.cause().message})")
+                log.severe("import $dir failed (${result.cause().message})")
             }
         })
 
@@ -222,7 +222,7 @@ class Autoscanner : AbstractVerticle() {
     fun addFile(file: Path) {
         if (!exclude(file)) {
             val filename = file.toFile().absolutePath
-            log.info("adding ${filename}")
+            log.info("adding $filename")
             if (Files.isDirectory(file, NOFOLLOW_LINKS)) {
                 val key = file.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
                 keys.put(key, file)
@@ -242,7 +242,7 @@ class Autoscanner : AbstractVerticle() {
     fun removeFile(file: Path) {
         if (!exclude(file)) {
             val absolute = file.toFile().absolutePath
-            log.info("removing ${absolute}")
+            log.info("removing $absolute")
             val id = makeID(file)
             Communicator.indexManager.removeDocument(id)
         }

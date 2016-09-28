@@ -58,7 +58,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
             }
         } else {
             if (!checkDir.mkdirs()) {
-                log.error("Can't create directory ${checkDir}")
+                log.error("Can't create directory $checkDir")
             }
         }
         checkDir.absolutePath
@@ -103,7 +103,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                 plc["contents"] as ByteArray
             }
 
-            log.info("FileImporter: Importing ${filename}")
+            log.info("FileImporter: Importing $filename")
             fileMetadata.remove("payload")
             if (fileMetadata.getString("_id").isNullOrBlank()) {
                 fileMetadata.put("_id", makeID(file))
@@ -144,7 +144,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                                             Communicator.indexManager.updateDocument(doc)
                                             plaintext.delete()
                                         } else {
-                                            log.warn("no text content found in ${filename}")
+                                            log.warn("no text content found in $filename")
                                         }
                                     } else {
                                         failed = true
@@ -174,7 +174,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
 
         } catch(ex: Exception) {
             ex.printStackTrace()
-            log.error("fatal error reading ${filename}")
+            log.error("fatal error reading $filename")
             return ("read error ${ex.message}")
         }
     }

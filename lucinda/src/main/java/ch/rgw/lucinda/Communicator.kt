@@ -49,7 +49,7 @@ class Communicator: AbstractVerticle() {
         fun register(func: RegSpec) {
             eb.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
                     .put("ebaddress", BASEADDR + func.addr)
-                    .put("rest", "${API}/${func.rest}").put("method", func.method).put("role",func.role)
+                    .put("rest", "$API/${func.rest}").put("method", func.method).put("role",func.role)
                     .put("server", serverDesc), RegHandler(func))
         }
 
@@ -300,7 +300,7 @@ class Communicator: AbstractVerticle() {
             }
         ]
         """
-        val serverDesc=JsonUtil.create("id:ch.rgw.lucinda","name:Lucinda","address:${CONTROL_ADDR}")
+        val serverDesc : JsonObject=JsonUtil.create("id:ch.rgw.lucinda","name:Lucinda","address:$CONTROL_ADDR")
         .put("params", JsonArray(params))
         fun saveConfig(){
             eb.send("ch.elexis.ungrad.server.setconfig",JsonObject().put("id","ch.rgw.lucinda.config").put("value",config))
