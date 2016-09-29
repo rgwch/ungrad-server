@@ -116,7 +116,7 @@ class Autoscanner : AbstractVerticle() {
 
     fun delay(exe : ()->Unit){
         vertx.setTimer(1000) {
-            exe
+            exe()
         }
     }
     /**
