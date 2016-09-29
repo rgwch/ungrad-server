@@ -11,3 +11,11 @@ Lucinda is a document indexing and management plugin for the Ungrad Server
 * Mac with Homebrew: `brew install imagemagick && brew install tesseract --all-languages`
 * Windows: ?.
 
+### build an run environment
+
+* java 8
+* maven 3.x
+
+## Building and testing
+
+`mvn clean package`
