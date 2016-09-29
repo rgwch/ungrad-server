@@ -1,7 +1,7 @@
 import ch.rgw.lucinda.Admin;
 import ch.rgw.lucinda.Communicator;
 import ch.rgw.lucinda.CommunicatorKt;
-import ch.rgw.tools.JsonUtil;
+import ch.rgw.tools.json.*;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;

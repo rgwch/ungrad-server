@@ -29,6 +29,7 @@ import java.nio.file.LinkOption.NOFOLLOW_LINKS
 import java.nio.file.StandardWatchEventKinds.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
 /**
@@ -87,7 +88,8 @@ class Autoscanner : AbstractVerticle() {
 
     fun loop() {
         while(running) {
-            watcher.poll()?.let { key ->
+            // Wait a minute for events, then check if we should still be watching
+            watcher.poll(60,TimeUnit.SECONDS)?.let { key ->
                 keys[key]?.let{ dir ->
                     for (event in key.pollEvents()) {
                         val kind = event.kind()
@@ -96,25 +98,25 @@ class Autoscanner : AbstractVerticle() {
                         val child = dir.resolve(name)
                         log.debug("Event: ${event.kind().name()}, file: $child")
                         when (kind) {
-                            ENTRY_CREATE -> addFile(child,key)
-                            ENTRY_DELETE -> removeFile(child,key)
-                            ENTRY_MODIFY -> checkFile(child,key)
+                            ENTRY_CREATE -> delay({ addFile(child,key)})
+                            ENTRY_DELETE -> delay({removeFile(child,key)})
+                            ENTRY_MODIFY -> delay({checkFile(child,key)})
                             OVERFLOW -> rescan(dir)
                             else -> log.warn("unknown event kind ${kind.name()}")
-                        }
-                        if(keys.isEmpty()){
-                            running=false;
-                            return
                         }
                     }
                 }
             }
+            if(keys.isEmpty()){
+                running=false;
+                return
+            }
         }
     }
 
-    fun delay(exe: (Path, WatchKey) -> Unit,file:Path, watchKey: WatchKey){
-        vertx.setTimer(1000){ time ->
-            exe(file,watchKey)
+    fun delay(exe : ()->Unit){
+        vertx.setTimer(1000) {
+            exe
         }
     }
     /**
@@ -122,7 +124,7 @@ class Autoscanner : AbstractVerticle() {
      * @param dirs: JsonArray of Strings denoting Paths
      */
     @Throws(IOException::class)
-    private fun register(dirs: JsonArray) {
+    fun register(dirs: JsonArray) {
         dirs.forEach {
             val dir = Paths.get(it as String)
             watchedDirs.add(dir)
