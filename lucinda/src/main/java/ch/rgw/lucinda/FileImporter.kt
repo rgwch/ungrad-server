@@ -54,7 +54,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         checkDir.absolutePath
     }
     val failures: String by lazy {
-        val checkDir = File(lucindaConfig.getString("fs_basedir", System.getenv("java.io.tmpdir")), "failures")
+        val checkDir = File(lucindaConfig.getString("fs_basedir", "target/store"), "failures")
         if (checkDir.exists()) {
             if (checkDir.isFile) {
                 log.error("failure directory $checkDir exists but is a file")
@@ -69,8 +69,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
 
 
     /*
-     * Handle a file to import. Sometimes, a file can't be parsed, because it was not yet fully written at the
-     * time, this method is called. So We'll retry in such cases after a while
+     * Handle a file to import.
      */
     override fun handle(future: Future<Int>) {
         log.debug("handle: ${file.fileName}")

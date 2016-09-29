@@ -34,8 +34,7 @@ import java.util.logging.Logger
 /**
  * Observe one ore more directories for file changes. If such changes occur, add, remove or renew concerned
  * files with the lucinda's index.
- * Usage: Send an ADDR_START message with a JsonObject cotaining a JsonArray 'dirs' with the Directories to scan and
- * a Long 'interval' with the number of milliseconds to wait after a change before accepting the next one.
+ * Usage: Send an ADDR_START message with a JsonObject cotaining a JsonArray 'dirs'.
  * Created by gerry on 25.04.16.
  */
 const val ADDR_START = "start"
@@ -113,6 +112,11 @@ class Autoscanner : AbstractVerticle() {
         }
     }
 
+    fun delay(exe: (Path, WatchKey) -> Unit,file:Path, watchKey: WatchKey){
+        vertx.setTimer(1000){ time ->
+            exe(file,watchKey)
+        }
+    }
     /**
      * Register the given directories with the WatchService
      * @param dirs: JsonArray of Strings denoting Paths

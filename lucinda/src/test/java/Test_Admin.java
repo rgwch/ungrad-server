@@ -26,6 +26,7 @@ public class Test_Admin {
     public static void setUp() {
         vertx = Vertx.vertx();
         Communicator.Companion.setEb(vertx.eventBus());
+        CommunicatorKt.getLucindaConfig().clear();
         vertx.eventBus().consumer(CommunicatorKt.EB_SETCONFIG, msg -> {
             msg.reply(JsonUtil.Companion.ok());
         });
@@ -65,9 +66,9 @@ public class Test_Admin {
         Async async1 = ctx.async();
         Async async2 = ctx.async();
         Async async3 = ctx.async();
-        Future<Object> future1 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:indexdir", "value:oezelditz"));
-        Future<Object> future2 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:datadir", "value:oezelditz"));
-        Future<Object> future3 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:wrong", "value:oezelditz"));
+        Future<Object> future1 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:indexdir", "value:target/store/foobar"));
+        Future<Object> future2 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:datadir", "value:target/store/foobar"));
+        Future<Object> future3 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:wrong", "value:target/store/foobar"));
         future1.setHandler(result -> {
             Assert.assertTrue(result.succeeded());
             async1.complete();
