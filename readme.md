@@ -64,7 +64,7 @@ In Ungrad-Server, Verticles are added and launched in a number of ways:
 
 ## Configuration
 
-If a --lucindaConfig parameter was given at launch, the launcher uses this file as configuration. If no --lucindaConfig was given, the launcher searches the classpath 
+If a --config parameter was given at launch, the launcher uses this file as configuration. If no --config was given, the launcher searches the classpath 
 for a file named "default.json" and then for a file called "user.json". If both exist, user.json will overlay default.json.
     
 ## Further reading
@@ -114,12 +114,5 @@ Then, launch your favourite browser and navigate to `http://localhost:2016/ui/in
 Arch linux:
 
     sudo pacman -S nodejs npm jdk8-openjdk maven git
-    
-    
-NOTE: At the time of this writing (9. sept. 2016), NPM hangs in Arch Linux due to some obscure [bug](https://github.com/npm/npm/issues/13833). Two workarounds:
-    
-    1. Downgrade to NPM 6.4., or
-    2. install the hanging elements indivdidually with `npm install xxx`, and then rerun the global `npm install` (This steps must be repeated several times, though)
-    
     
     
