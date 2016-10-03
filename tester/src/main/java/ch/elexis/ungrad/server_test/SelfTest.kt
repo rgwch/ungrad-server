@@ -77,19 +77,19 @@ class SelfTest: AbstractVerticle() {
                     "system_time" -> system_time()
                     else -> "unknown parameter"
                 }
-                msg.reply(JsonUtil.create("status:ok","value:$answer"))
+                msg.reply(json_ok().add("value",answer))
             }else if(msg.body()["command"]=="setParam"){
-                msg.reply(JsonUtil.create("status:error","message:all parameters are read only"))
+                msg.reply(json_error("message:all parameters are read only"))
 
             }else if(msg.body()["command"]=="exec"){
-                msg.reply(JsonUtil.create("status:ok").put("answer",make_overview()))
+                msg.reply(json_ok().put("answer",make_overview()))
             }
         }
         /**
          * On startup, register our EventBus address with the dispatcher and tell him, that we are
          * interested in "get" requests with the given address scheme.
          */
-        fun registerMsg()= JsonUtil.create("ebaddress:${MY_ADDRESS}","method:get")
+        fun registerMsg()= json_create("ebaddress:${MY_ADDRESS}","method:get")
                 .put("rest","1.0/ping/:plus/:minus")
                 .put("server",make_overview())
 
@@ -104,7 +104,7 @@ class SelfTest: AbstractVerticle() {
 
     }
     fun make_overview(): JsonObject{
-        return JsonUtil.create("id:ch.elexis.ungrad.server_info","name:Server info","address:$SERVER_CONTROL")
+        return json_create("id:ch.elexis.ungrad.server_info","name:Server info","address:$SERVER_CONTROL")
                 .put("params",JsonArray(params()))
     }
 

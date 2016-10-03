@@ -24,7 +24,7 @@
     <properties>
         <vertx-version>3.3.2</vertx-version>
         <kotlin.version>1.0.3</kotlin.version>
-        <toolbox-version>4.2.1</toolbox-version>
+        <toolbox-version>4.2.2</toolbox-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
     </properties>

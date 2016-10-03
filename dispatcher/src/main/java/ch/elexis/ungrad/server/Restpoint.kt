@@ -111,7 +111,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
                                         context.response().putHeader("Location", srt).setStatusCode(302).end()
                                     } else {
                                         context.response().putHeader("content-type", "application/json; charset=utf-8")
-                                                .end(JsonUtil.create("status:ok").encode())
+                                                .end(json_ok().encode())
                                     }
                                 } else {
                                     context.response().setStatusCode(901).end(AUTH_ERR)
@@ -143,7 +143,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
                     val serviceDesc = registrar.servers[serverID]
                     if (serviceDesc != null) {
                         val serviceAddr = serviceDesc.getString("address")
-                        vertx.eventBus().send<JsonObject>(serviceAddr, JsonUtil.create("command:getParam", "param:${ctx.request().getParam("name")}"), ResultHandler(ctx))
+                        vertx.eventBus().send<JsonObject>(serviceAddr, json_create("command:getParam", "param:${ctx.request().getParam("name")}"), ResultHandler(ctx))
                     } else {
                         ctx.response().setStatusCode(404).end("${serverID} not found")
                     }
@@ -172,7 +172,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
                     val serviceDesc = registrar.servers[serverID]
                     if (serviceDesc != null) {
                         val serviceAddr = serviceDesc.getString("address")
-                        vertx.eventBus().send<JsonObject>(serviceAddr, JsonUtil.create("command:exec", "action:${ctx.request().getParam("action")}"), ResultHandler(ctx))
+                        vertx.eventBus().send<JsonObject>(serviceAddr, json_create("command:exec", "action:${ctx.request().getParam("action")}"), ResultHandler(ctx))
                     } else {
                         ctx.response().setStatusCode(404).end("${serverID} not found")
                     }
@@ -184,7 +184,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
             httpServer=vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }
-                    .listen(JsonUtil(config()).getOptional("rest_port", 2016)) {
+                    .listen(config().getInteger("rest_port", 2016)) {
                         result ->
                         if (result.succeeded()) {
                             future.complete()

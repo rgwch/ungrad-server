@@ -34,7 +34,7 @@ class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
 
         val j = msg.body()
         if (!j.validate("rest:string", "method:string", "ebaddress:string")) {
-            msg.reply(JsonUtil.create("status:error", "message:format error of register message " + j.encodePrettily()))
+            msg.reply(json_create("status:error", "message:format error of register message " + j.encodePrettily()))
         } else {
             val rest = j.getString("rest")
             val ebmsg = j.getString("ebaddress")
@@ -45,16 +45,16 @@ class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
                 if (JsonUtil(server).validate("id:string", "name:string", "address:string")) {
                     servers.put(server["id"]!!, server)
                 } else {
-                    msg.reply(JsonUtil.create("status:error", "message:format error of server definition " + j.encodePrettily()))
+                    msg.reply(json_create("status:error", "message:format error of server definition " + j.encodePrettily()))
                     log.error("message:format error of server definition " + j.encode())
 
                 }
             }
 
             if (handlers.containsKey(rest)) {
-                msg.reply(JsonUtil.create("status:error", "message:REST address already registered"))
+                msg.reply(json_create("status:error", "message:REST address already registered"))
             } else if (handlers.containsValue(ebmsg)) {
-                msg.reply(JsonUtil.create("status:error", "message:EventBus address already registered"))
+                msg.reply(json_create("status:error", "message:EventBus address already registered"))
             } else {
                 handlers.put(rest, ebmsg)
                 log.debug("registering /api/${rest} for ${ebmsg}")
@@ -79,7 +79,7 @@ class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
                         }
                     }
                 }
-                msg.reply(JsonUtil.create("status:ok"))
+                msg.reply(json_create("status:ok"))
             }
         }
     }

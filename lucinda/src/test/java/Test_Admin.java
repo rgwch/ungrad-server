@@ -1,7 +1,8 @@
 import ch.rgw.lucinda.Admin;
 import ch.rgw.lucinda.Communicator;
 import ch.rgw.lucinda.CommunicatorKt;
-import ch.rgw.tools.json.*;
+import ch.rgw.tools.json.JsonUtil;
+import ch.rgw.tools.json.JsonUtilKt;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
@@ -28,7 +29,7 @@ public class Test_Admin {
         Communicator.Companion.setEb(vertx.eventBus());
         CommunicatorKt.getLucindaConfig().clear();
         vertx.eventBus().consumer(CommunicatorKt.EB_SETCONFIG, msg -> {
-            msg.reply(JsonUtil.Companion.ok());
+            msg.reply(JsonUtilKt.json_ok());
         });
     }
 
@@ -42,19 +43,19 @@ public class Test_Admin {
         Async async1 = ctx.async();
         Async async2 = ctx.async();
         Async async3 = ctx.async();
-        Future<Object> future1 = Admin.INSTANCE.getParam(JsonUtil.Companion.create("param:indexdir"));
+        Future<Object> future1 = Admin.INSTANCE.getParam(JsonUtilKt.json_create("param:indexdir"));
         future1.setHandler(result -> {
             Assert.assertTrue(result.succeeded());
             Assert.assertNotNull(result.result());
             async1.complete();
         });
-        Future<Object> future2 = Admin.INSTANCE.getParam(JsonUtil.Companion.create("param:datadir"));
+        Future<Object> future2 = Admin.INSTANCE.getParam(JsonUtilKt.json_create("param:datadir"));
         future2.setHandler(result -> {
             Assert.assertTrue(result.succeeded());
             Assert.assertNotNull(result.result());
             async2.complete();
         });
-        Future<Object> future3 = Admin.INSTANCE.getParam(JsonUtil.Companion.create("param:wrong"));
+        Future<Object> future3 = Admin.INSTANCE.getParam(JsonUtilKt.json_create("param:wrong"));
         future3.setHandler(result -> {
             Assert.assertTrue(result.failed());
             async3.complete();
@@ -66,9 +67,9 @@ public class Test_Admin {
         Async async1 = ctx.async();
         Async async2 = ctx.async();
         Async async3 = ctx.async();
-        Future<Object> future1 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:indexdir", "value:target/store/foobar"));
-        Future<Object> future2 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:datadir", "value:target/store/foobar"));
-        Future<Object> future3 = Admin.INSTANCE.setParam(JsonUtil.Companion.create("param:wrong", "value:target/store/foobar"));
+        Future<Object> future1 = Admin.INSTANCE.setParam(JsonUtilKt.json_create("param:indexdir", "value:target/store/foobar"));
+        Future<Object> future2 = Admin.INSTANCE.setParam(JsonUtilKt.json_create("param:datadir", "value:target/store/foobar"));
+        Future<Object> future3 = Admin.INSTANCE.setParam(JsonUtilKt.json_create("param:wrong", "value:target/store/foobar"));
         future1.setHandler(result -> {
             Assert.assertTrue(result.succeeded());
             async1.complete();
@@ -87,7 +88,7 @@ public class Test_Admin {
     @Test
     public void test_badCommand(TestContext ctx) {
         Async async1 = ctx.async();
-        Future<Object> future1 = Admin.INSTANCE.exec(JsonUtil.Companion.create("command:test"));
+        Future<Object> future1 = Admin.INSTANCE.exec(JsonUtilKt.json_create("command:test"));
         future1.setHandler(result -> {
             Assert.assertTrue(result.failed());
             async1.complete();

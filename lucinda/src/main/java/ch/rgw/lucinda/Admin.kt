@@ -1,6 +1,8 @@
 package ch.rgw.lucinda
 
 import ch.rgw.tools.json.JsonUtil
+import ch.rgw.tools.json.json_error
+import ch.rgw.tools.json.json_ok
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.Message
@@ -20,9 +22,9 @@ object Admin : Handler<Message<JsonObject>> {
             else -> Future.failedFuture("Not implemented ${msg.getString("command")}")
         }
         if(result.failed()){
-            message.reply(JsonObject().put("status", "error").put("message", "illegal function call"))
+            message.reply(json_error("illegal function call"))
         }else {
-            message.reply(JsonUtil.create("status:ok", "value:${result.result()}"))
+            message.reply(json_ok().put("value",result.result()))
         }
     }
 

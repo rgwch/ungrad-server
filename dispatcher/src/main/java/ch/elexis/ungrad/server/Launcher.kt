@@ -86,7 +86,7 @@ fun main(args: Array<String>) {
                 if (rpResult.succeeded()) {
                     restpointID = rpResult.result()
                     log.info("Launched Restpoint")
-                    config.getArray("launch", JsonArray()).forEach {
+                    config.getJsonArray("launch", JsonArray()).forEach {
                         val jo = it as JsonObject
                         vertx.eventBus().send<JsonObject>(Restpoint.ADDR_LAUNCH, jo) { answer ->
                             if(answer.failed()){

@@ -1,7 +1,7 @@
 package ch.webelexis.verticles
 
-import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.TimeTool
+import ch.rgw.tools.json.*
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
@@ -32,10 +32,10 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
                         if (result.succeeded()) {
                             val rs = result.result()
                             val output = rs.rows
-                            msg.reply(JsonUtil.create("status:ok").put("result", output))
+                            msg.reply(json_ok().put("result", output))
                         } else {
                             log.error("error executing SQL_APPTS.", result.cause())
-                            msg.reply(JsonUtil.create("status:error", "message:${result.cause().message}"))
+                            msg.reply(json_error("${result.cause().message}"))
                         }
                     }
 
@@ -54,9 +54,9 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
                         val rs = result.result()
                         if (rs.size > 0) {
                             val r = rs.get(0)
-                            ret.complete(JsonUtil.create("status:ok").put("value", r.getLong(0)))
+                            ret.complete(json_ok().put("value", r.getLong(0)))
                         } else {
-                            ret.complete(JsonUtil.create("status:ok", "value:${0}"))
+                            ret.complete(json_ok().put("value",0))
                         }
                     } else {
                         ret.fail(result.cause())
@@ -69,10 +69,10 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
                         val rs = result.result()
                         if (rs.size > 0) {
                             val r = rs.get(0)
-                            ret.complete(JsonUtil.create("status:ok").put("value", r.getLong(0)))
+                            ret.complete(json_ok().put("value", r.getLong(0)))
 
                         } else {
-                            ret.complete(JsonUtil.create("status:ok", "value:${0}"))
+                            ret.complete(json_ok().put("value",0))
                         }
                     } else {
                         ret.fail(result.cause())
@@ -87,13 +87,13 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
 
     override fun createParams(): JsonArray {
         val ret = JsonArray()
-                .add(JsonUtil.create("name:totalEntries",
+                .add(json_create("name:totalEntries",
                         "caption:Number of appointments",
                         "type:number",
                         "value:${0}")
                         .put("writable",false)
                 )
-                .add(JsonUtil.create("name:deletedEntries",
+                .add(json_create("name:deletedEntries",
                         "caption:Number of deleted entries",
                         "type:number",
                         "value:${0}")

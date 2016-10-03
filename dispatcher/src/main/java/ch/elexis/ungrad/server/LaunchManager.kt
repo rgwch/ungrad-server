@@ -17,6 +17,7 @@ package ch.elexis.ungrad.server
 import ch.rgw.io.FileTool
 import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.get
+import ch.rgw.tools.json.json_ok
 import ch.rgw.tools.json.validate
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Handler
@@ -70,7 +71,7 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
                         if (handler.succeeded()) {
                             restPoint.verticles.put(verticle_name, handler.result())
                             log.info("launched uncompiled Verticle ${verticle_name}")
-                            msg.reply(JsonUtil.ok())
+                            msg.reply(json_ok())
                         } else {
                             log.error(" *** could not launch ${verticle_name}", handler.cause())
                             msg.fail(1, handler.cause().message)
@@ -85,7 +86,7 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
                         if (handler.succeeded()) {
                             restPoint.verticles.put(verticle_name, handler.result())
                             log.info("launched $verticle_name")
-                            msg.reply(JsonUtil.ok())
+                            msg.reply(json_ok())
                         } else {
                             log.error(" *** could not launch $verticle_name", handler.cause())
                             msg.fail(1, handler.cause().message)

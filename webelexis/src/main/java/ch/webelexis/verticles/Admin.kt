@@ -1,6 +1,7 @@
 package ch.webelexis.verticles
 
 import ch.rgw.tools.json.JsonUtil
+import ch.rgw.tools.json.json_error
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
@@ -10,7 +11,7 @@ import io.vertx.core.json.JsonObject
  */
 object Admin : Handler<Message<JsonObject>> {
     override fun handle(msg: Message<JsonObject>) {
-        msg.reply(JsonUtil.create("status:error","message:not implemented"))
+        msg.reply(json_error("not implemented"))
     }
 
 }

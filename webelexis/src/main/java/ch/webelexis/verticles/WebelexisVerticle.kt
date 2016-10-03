@@ -1,6 +1,7 @@
 package ch.webelexis.verticles
 
-import ch.rgw.tools.json.JsonUtil
+import ch.rgw.tools.json.json_create
+import ch.rgw.tools.json.json_error
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.AsyncResultHandler
@@ -30,16 +31,17 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
         }
     }
 */
-    override fun stop(stopResult:Future<Void>){
-        database.close(){result ->
-            if(result.succeeded()){
+    override fun stop(stopResult: Future<Void>) {
+        database.close() { result ->
+            if (result.succeeded()) {
                 stopResult.complete()
                 log.info("${getName()} stopped.")
-            }else{
+            } else {
                 stopResult.fail(result.cause())
             }
         }
     }
+
     override fun start() {
         super.start()
         val eb = vertx.eventBus()
@@ -53,7 +55,7 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
                         if (async.succeeded()) {
                             msg.reply(async.result())
                         } else {
-                            msg.reply(JsonUtil.create("status:error", "message:${async.cause().message}"))
+                            msg.reply(json_error(async.cause().message))
                         }
                     }
                 }
@@ -74,7 +76,7 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
 
 
     override fun stop() {
-        log.info(getName()+" stopped.")
+        log.info(getName() + " stopped.")
         database.close()
     }
 
@@ -110,7 +112,7 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
                 handler.invoke(con)
             } else {
                 log.error("could not connect to database", con.cause())
-                msg.reply(JsonUtil.create("status:error", "message:internal server error: database"))
+                msg.reply(json_error("message:internal server error: database"))
             }
         }
     }
@@ -119,7 +121,7 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
         vertx.eventBus().send(REGISTER_ADDRESS, JsonObject()
                 .put("ebaddress", func.addr)
                 .put("rest", "${API}/${func.rest}").put("method", func.method).put("role", func.role)
-                .put("server", JsonUtil.create("id:$ID", "name:${getName()}", "address:$CONTROL_ADDR").put("params", createParams())))
+                .put("server", json_create("id:$ID", "name:${getName()}", "address:$CONTROL_ADDR").put("params", createParams())))
 
     }
 
@@ -139,7 +141,8 @@ abstract class WebelexisVerticle(val ID: String, val CONTROL_ADDR: String) : Abs
         }
 
     }
-    companion object{
+
+    companion object {
         lateinit var database: AsyncSQLClient
     }
 
