@@ -29,6 +29,11 @@ import java.io.File
 
 
 /**
+ * Launch the ungrad server and deploy all registered verticles
+ * parse the command line for the following optional arguments:
+ * * --ip=<ipv4> (Address to listen)
+ * * --config=<file> (Config file to use)
+ * * --daemon (run in detached mode)
  * Created by gerry on 06.07.16.
  */
 

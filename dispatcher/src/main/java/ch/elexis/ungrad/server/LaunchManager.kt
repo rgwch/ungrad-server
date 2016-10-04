@@ -49,12 +49,13 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
         val verticle_class: String? = jo["verticle"]
         val static_config = jo.getJsonObject("config", JsonObject())
         val dynamic_config = restPoint.persist.read(verticle_name)
-        val verticle_config = JsonUtil(static_config).mergeIn(dynamic_config)
+        val verticle_config = static_config.mergeIn(dynamic_config)
         val url = if (verticle_url.startsWith("file:") && verticle_url.contains("[\\*\\?]".toRegex())) {
             val fullname = verticle_url.substring(5)
             val pname = FileTool.getFilepath(fullname)
             val fname = FileTool.getFilename(fullname)
             val dirlist = Files.newDirectoryStream(Paths.get(pname), fname)
+            // if the filespec contains wildcards, we consider only the first match
             URL("file:"+dirlist.first().toAbsolutePath().toString())
         } else {
             URL(verticle_url)

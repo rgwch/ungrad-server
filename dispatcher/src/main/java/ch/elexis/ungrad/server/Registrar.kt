@@ -36,16 +36,16 @@ class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
         if (!j.validate("rest:string", "method:string", "ebaddress:string")) {
             msg.reply(json_create("status:error", "message:format error of register message " + j.encodePrettily()))
         } else {
-            val rest = j.getString("rest")
-            val ebmsg = j.getString("ebaddress")
-            val method = j.getString("method")
-            val role = j.getString("role") ?: "guest"
+            val rest = j["rest"]!!  // it's not null, we've validated. But the compiler didn't know yet.
+            val ebmsg = j["ebaddress"]!!
+            val method = j["method"]!!
+            val role = j["role"] ?: "guest"
             val server = j.getJsonObject("server")
             if (server != null) {
-                if (JsonUtil(server).validate("id:string", "name:string", "address:string")) {
+                if (server.validate("id:string", "name:string", "address:string")) {
                     servers.put(server["id"]!!, server)
                 } else {
-                    msg.reply(json_create("status:error", "message:format error of server definition " + j.encodePrettily()))
+                    msg.reply(json_error("format error of server definition " + j.encodePrettily()))
                     log.error("message:format error of server definition " + j.encode())
 
                 }
