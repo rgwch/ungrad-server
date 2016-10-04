@@ -16,6 +16,7 @@ package ch.rgw.lucinda
 
 import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.json_create
+import ch.rgw.tools.json.json_error
 import io.vertx.core.*
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
@@ -257,19 +258,10 @@ class Communicator : AbstractVerticle() {
         return true
     }
 
-    fun success(msg: Message<Any>, result: JsonObject = JsonObject()) {
-        msg.reply(result.put("status", "ok"))
-    }
 
     fun fail(msg: String, ex: Exception? = null) {
-        val j = JsonObject().put("message", msg)
-        log.warn("failed " + ex)
-        if (ex == null) {
-            j.put("status", "failed")
-        } else {
-            j.put("status", "exception").put("message", ex.message)
-            log.warn(ex.message + "\n\n" + ex.stackTrace.toString())
-        }
+        val j = json_error(msg + (ex?.message ?: "."))
+        log.warn(msg + " - " + ex?.message + "\n\n" + ex?.stackTrace.toString())
         eb.send(FUNC_ERROR.addr, j)
     }
 

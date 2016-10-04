@@ -32,12 +32,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
-/**
- * Observe one ore more directories for file changes. If such changes occur, add, remove or renew concerned
- * files with the lucinda's index.
- * Usage: Send an ADDR_START message with a JsonObject cotaining a JsonArray 'dirs'.
- * Created by gerry on 25.04.16.
- */
 const val ADDR_START = "start"
 const val ADDR_STOP = "stop"
 /** Full rescan or first scan of watch directories */
@@ -46,12 +40,17 @@ var refiner: Refiner = DefaultRefiner()
 val watchedDirs = ArrayList<Path>()
 fun makeID(file: Path): String = makeHash(file.toFile().absolutePath)
 
+/**
+ * Observe one ore more directories for file changes. If such changes occur, add, remove or renew concerned
+ * files with the lucinda's index.
+ * Usage: Send an ADDR_START message with a JsonObject cotaining a JsonArray 'dirs'.
+ * Created by gerry on 25.04.16.
+ */
 class Autoscanner : AbstractVerticle() {
 
     val eb: EventBus by lazy {
         vertx.eventBus()
     }
-    var timer = 0L
     val watcher : WatchService = FileSystems.getDefault().newWatchService()
     val keys = HashMap<WatchKey, Path>()
     val BASEADDR = Communicator.BASEADDR
@@ -65,7 +64,7 @@ class Autoscanner : AbstractVerticle() {
             if (j.validate("dirs:object", "interval:number")) {
                 log.debug("got start message ${Json.encodePrettily(j)}")
                 register(j.getJsonArray("dirs"))
-                timer=vertx.setTimer(100L){h ->
+                vertx.setTimer(100L){
                     running=true
                     loop()
                 }
@@ -86,9 +85,12 @@ class Autoscanner : AbstractVerticle() {
         }
     }
 
+    /**
+     * Main loop: Runs until running==false or all WatchKeys are removed
+     */
     fun loop() {
         while(running) {
-            // Wait a minute for events, then check if we should still be watching
+            // Wait up to a minute for events, then check if we should still be watching
             watcher.poll(60,TimeUnit.SECONDS)?.let { key ->
                 keys[key]?.let{ dir ->
                     for (event in key.pollEvents()) {
@@ -114,6 +116,10 @@ class Autoscanner : AbstractVerticle() {
         }
     }
 
+    /**
+     * The WatchKey ist triggered immediately if a file is touched. Give the system some time to complete the file operation
+     * before running the autoscanner job.
+     */
     fun delay(exe : ()->Unit){
         vertx.setTimer(1000L) {
             exe()
@@ -174,9 +180,7 @@ class Autoscanner : AbstractVerticle() {
      * <ul>
      *     <li>if it exists in the index: test if it has the same checksum, and if not: reimport</li>
      *     <li>if it does not yet exist, import it
-     * </ul><br />
-     * if it is a directory: walk the directory tree for all files and directories
-     *
+     * </ul>
      */
     fun checkFile(file: Path, watchKey: WatchKey?) {
         log.info("Autoscanner", "checkFile")
@@ -227,6 +231,9 @@ class Autoscanner : AbstractVerticle() {
         }
     }
 
+    /**
+     * Remove a deleted file from the index
+     */
     fun removeFile(file: Path, watchKey:WatchKey) {
         if (!exclude(file)) {
             val absolute = file.toFile().absolutePath

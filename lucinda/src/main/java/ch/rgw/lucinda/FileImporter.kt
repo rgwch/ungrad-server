@@ -29,9 +29,7 @@ import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectForm
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectImage
 import java.io.*
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 /**
@@ -76,22 +74,22 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         val errmsg = process()
         if (errmsg.isNullOrEmpty()) {
             future.complete()
-        }else {
+        } else {
             log.warn("${file.toAbsolutePath()} failed.")
             future.fail("Failed: ${file.toFile().absolutePath}; $errmsg")
         }
     }
 
     fun process(): String {
-        val filename = fileMetadata["url"]?:file.toFile().absolutePath
-        with(File(filename)){
-            if(!exists()){
+        val filename = fileMetadata["url"] ?: file.toFile().absolutePath
+        with(File(filename)) {
+            if (!exists()) {
                 return "file not found"
             }
-            if(!canRead()){
+            if (!canRead()) {
                 return "can't read"
             }
-            if(length()<10){
+            if (length() < 10) {
                 return "too short"
             }
             log.info("FileImporer: importing $absolutePath")
@@ -117,7 +115,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                     return ""
                 } else {
                     // if we don't get much text out of a pdf, it's probably a scan containing only one or more images.
-                    return tryOCR(doc,filename)
+                    return tryOCR(doc, filename)
                 }
             } else {
                 // no pdf or text too short
@@ -132,12 +130,16 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         }
     }
 
-    fun tryOCR(doc: Document, filename:String) : String{
+    /**
+     * send a pdf file through OCR: Extract all images from the file and call tesseract-ocr with
+     * each of them. If tesseract finds some text, add this text to the lucene index.
+     */
+    fun tryOCR(doc: Document, filename: String): String {
         var failed = false
         val basename = temppath + "/" + makeHash(filename)
         log.info("Seems to be a PDF with only image(s). Trying OCR as $basename")
         var numImages = 0
-        fun writeImage(img: PDXObjectImage){
+        fun writeImage(img: PDXObjectImage) {
             val imgName = basename + "_" + (++numImages).toString()
             img.write2file(imgName)
             val sourcename = imgName + "." + img.suffix
@@ -167,11 +169,11 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                 val imageIter = pageImages?.keys?.iterator()
                 imageIter?.forEach {
                     val pdxObjectImage = pageImages?.get(it)
-                    if(pdxObjectImage is PDXObjectForm){
-                        val xrs=pdxObjectImage.resources?.xObjects
+                    if (pdxObjectImage is PDXObjectForm) {
+                        val xrs = pdxObjectImage.resources?.xObjects
                         xrs?.keys?.forEach { kk ->
-                            val subimg=xrs.get(kk)
-                            if(subimg is PDXObjectImage){
+                            val subimg = xrs.get(kk)
+                            if (subimg is PDXObjectImage) {
                                 writeImage(subimg)
                             }
                         }
@@ -197,7 +199,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
 
     /**
      * Try to OCR an image document. If tesseract doesn't return after TIMEOUT seconds,
-     * stopit
+     * stop it
      */
 
     val TIMEOUT = 300L
