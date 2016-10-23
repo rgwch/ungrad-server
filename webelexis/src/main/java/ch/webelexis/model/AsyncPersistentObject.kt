@@ -5,6 +5,7 @@ import io.vertx.core.Future
 import io.vertx.ext.asyncsql.AsyncSQLClient
 import io.vertx.ext.asyncsql.MySQLClient
 import java.util.*
+import java.util.Map
 
 /**
  * Created by gerry on 22.10.2016.
@@ -15,7 +16,7 @@ abstract class AsyncPersistentObject(val id:String) : Observable(){
     val fields=hashMapOf<String,String>("id" to id)
     abstract val collection:String
     abstract val fieldnames: Array<String>
-    fun fetch(field: String): Future<String>{
+    fun get(field: String): Future<String>{
         val ret=Future.future<String>()
         if(lastUpdate==0L || (System.currentTimeMillis()-lastUpdate)> TIMEOUT){
             persistence.fetch(collection,id) { result ->
@@ -23,7 +24,7 @@ abstract class AsyncPersistentObject(val id:String) : Observable(){
                     result.result().forEach { entry ->
                         if (entry.value != fields[entry.key]) {
                             fields[entry.key] = entry.value
-                            notifyObservers(entry)
+                            notifyObservers(Pair(entry.key,entry.value))
                         }
                     }
                     lastUpdate = System.currentTimeMillis()
@@ -39,9 +40,26 @@ abstract class AsyncPersistentObject(val id:String) : Observable(){
         return ret
     }
 
+    fun set(field:String,value:String) : Future<Boolean>{
+        val ret=Future.future<Boolean>()
+        if(!(field in fieldnames)){
+            ret.fail("illegal field name: $field")
+        }else {
+            fields[field] = value
+            persistence.flush(this) { result ->
+                if (result.succeeded()) {
+                    notifyObservers(Pair(field, value))
+                    ret.complete(true)
+                } else {
+                    ret.fail(result.cause())
+                }
+            }
+        }
+        return ret
+    }
     companion object{
         const val TIMEOUT=60000L;
-        var persistence = MysqlPersistence()
+        var persistence = InMemoryPersistence()
     }
 
 }
