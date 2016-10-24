@@ -1,11 +1,10 @@
+import ch.webelexis.model.DummyPersistentObject;
 import io.vertx.core.Future;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.Map;
 
 /**
  * Created by gerry on 24.10.16.
@@ -57,4 +56,5 @@ public class Test_AsyncPO {
         });
 
     }
+
 }

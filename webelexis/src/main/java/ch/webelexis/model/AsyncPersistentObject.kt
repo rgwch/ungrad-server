@@ -43,13 +43,7 @@ abstract class AsyncPersistentObject(val id:String) : Observable(){
     val fields=hashMapOf<String,String>("id" to id)
     abstract val collection:String
     abstract val fieldnames: Array<String>
-    init{
-        persistence.fetch(collection,id){result ->
-            if(result.succeeded()){
 
-            }
-        }
-    }
 
     fun get(field: String): Future<String?>{
         val ret=Future.future<String>()
