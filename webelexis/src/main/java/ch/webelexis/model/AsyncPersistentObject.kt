@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2016 by G. Weirich
+ *
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ *
+ * Contributors:
+ * G. Weirich - initial implementation
+ */
 package ch.webelexis.model
 
 import io.vertx.core.AsyncResultHandler
@@ -8,6 +21,20 @@ import java.util.*
 import java.util.Map
 
 /**
+ * An AsyncPersistentObject is a PersistentObject with asynchroneous access methods (you don't say).
+ * As such, it suits better the needs of modern distributed clients (in-house, web, cloud based).
+ * All methods return a Future which can be used consequently to retrieve the result of the operation.
+ *
+ * This is an abstract base class. Subclasses must implement
+ * * val collection: String - name of the collection this class belongs to
+ * * val fieldnames: Array<String> - name of fields of this class. Any attempt to read or write a field not named here will
+ * result in a failure.
+ *
+ * Implementations can chose to replace the companion's persistence object with any other IPersistence. This must be done before
+ * the first access to any of the AsyncPersistentObjects in the application.
+ *
+ * The default constructor takes a String which should be a GUID.
+ *
  * Created by gerry on 22.10.2016.
  */
 
@@ -16,6 +43,14 @@ abstract class AsyncPersistentObject(val id:String) : Observable(){
     val fields=hashMapOf<String,String>("id" to id)
     abstract val collection:String
     abstract val fieldnames: Array<String>
+    init{
+        persistence.fetch(collection,id){result ->
+            if(result.succeeded()){
+
+            }
+        }
+    }
+
     fun get(field: String): Future<String?>{
         val ret=Future.future<String>()
         if(lastUpdate==0L || (System.currentTimeMillis()-lastUpdate)> TIMEOUT){
