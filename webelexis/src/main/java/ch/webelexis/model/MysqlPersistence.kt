@@ -11,7 +11,7 @@ class MysqlPersistence : Persistence{
         throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun fetch(collection: String, objid: String, handler: (AsyncResult<Map<String, String>>)->Unit) {
+    override fun fetch(collection: String, objid: String, handler: (AsyncResult<AsyncPersistentObject>)->Unit) {
         throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

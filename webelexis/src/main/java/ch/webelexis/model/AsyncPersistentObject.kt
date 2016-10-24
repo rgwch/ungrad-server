@@ -16,19 +16,19 @@ abstract class AsyncPersistentObject(val id:String) : Observable(){
     val fields=hashMapOf<String,String>("id" to id)
     abstract val collection:String
     abstract val fieldnames: Array<String>
-    fun get(field: String): Future<String>{
+    fun get(field: String): Future<String?>{
         val ret=Future.future<String>()
         if(lastUpdate==0L || (System.currentTimeMillis()-lastUpdate)> TIMEOUT){
             persistence.fetch(collection,id) { result ->
                 if (result.succeeded()) {
-                    result.result().forEach { entry ->
+                    result.result()?.fields?.forEach { entry ->
                         if (entry.value != fields[entry.key]) {
                             fields[entry.key] = entry.value
                             notifyObservers(Pair(entry.key,entry.value))
                         }
                     }
                     lastUpdate = System.currentTimeMillis()
-                    ret.complete(fields[field])
+                    ret.complete(fields[field] ?: "")
                 } else {
                     ret.fail(result.cause())
                 }

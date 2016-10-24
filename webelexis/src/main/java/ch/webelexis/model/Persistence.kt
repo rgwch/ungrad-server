@@ -9,18 +9,19 @@ import io.vertx.core.Future
  */
 interface Persistence {
 
-    fun fetch(collection: String, objid: String, handler: (AsyncResult<Map<String, String>>) -> Unit)
+    fun fetch(collection: String, objid: String, handler: (AsyncResult<AsyncPersistentObject>) -> Unit)
     fun flush(obj:AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit)
 }
 
 class InMemoryPersistence:Persistence{
-    val objects= hashMapOf<String,Map<String,String>>()
+    val objects= hashMapOf<String,AsyncPersistentObject>()
 
-    override fun fetch(collection: String, objid: String, handler: (AsyncResult<Map<String, String>>) -> Unit) {
+    override fun fetch(collection: String, objid: String, handler: (AsyncResult<AsyncPersistentObject>) -> Unit) {
         handler(Future.succeededFuture(objects[objid]))
     }
 
     override fun flush(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>)->Unit) {
+        objects.put(obj.id,obj)
         handler(Future.succeededFuture(true))
     }
 
