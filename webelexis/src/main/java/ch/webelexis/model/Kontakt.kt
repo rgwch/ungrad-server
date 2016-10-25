@@ -1,5 +1,6 @@
 package ch.webelexis.model
 
+import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 
 /**
@@ -26,6 +27,18 @@ open class Contact(id: String) : AsyncPersistentObject(id) {
 
     override fun getLabel(): Future<String> {
         val ret = Future.future<String>()
+        persistence.fetch(collection,id) {
+            if(it.succeeded()){
+                val apo=it.result()
+                if(apo!=null) {
+                    ret.complete(apo.fields["Bezeichnung1"]+" "+apo.fields["Bezeichnung2"])
+                }else{
+                    ret.fail("object not found")
+                }
+            }else{
+                ret.fail(it.cause())
+            }
+        }
         return ret
     }
 
