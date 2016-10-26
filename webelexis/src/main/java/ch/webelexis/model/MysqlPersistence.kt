@@ -15,12 +15,21 @@ package ch.webelexis.model
 
 import io.vertx.core.AsyncResult
 import io.vertx.core.AsyncResultHandler
+import io.vertx.core.json.JsonObject
 
 /**
  * Created by gerry on 22.10.2016.
  */
 class MysqlPersistence : IPersistence {
-    override fun fetch(collection: String, objid: String, handler: (AsyncResult<AsyncPersistentObject?>) -> Unit) {
+    override fun delete(id: String, ack: (Boolean) -> Unit) {
+        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun fetch(collection: String, objid: String, handler: (AsyncResult<JsonObject?>) -> Unit) {
+        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun find(template: JsonObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
         throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

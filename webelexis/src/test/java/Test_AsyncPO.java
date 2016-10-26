@@ -23,7 +23,7 @@ public class Test_AsyncPO {
             ctx.assertTrue(result1.result());
             async1.complete();
             Async async2=ctx.async();
-            Future<String> res2=dpo.get("p_1");
+            Future<Object> res2=dpo.get("p_1");
             res2.setHandler(result2 -> {
                 ctx.assertTrue(result2.succeeded());
                 ctx.assertEquals("val_1",result2.result());
@@ -48,10 +48,10 @@ public class Test_AsyncPO {
     public void test_emptyField(TestContext ctx){
         Async async=ctx.async();
         DummyPersistentObject dpo=new DummyPersistentObject("3");
-        Future<String> result=dpo.get("p_1");
+        Future<Object> result=dpo.get("p_1");
         result.setHandler(result2 -> {
             ctx.assertTrue(result2.succeeded());
-            ctx.assertTrue(result2.result().isEmpty());
+            ctx.assertTrue(result2.result().toString().isEmpty());
             async.complete();
         });
 

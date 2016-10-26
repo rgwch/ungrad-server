@@ -8,7 +8,7 @@ import io.vertx.core.Future
  */
 
 open class Contact(id: String) : AsyncPersistentObject(id) {
-    override val collection = "KONTAKT"
+    override val collection = coll
     override val fieldnames = arrayOf(
             Field("Bezeichnung1"),
             Field("Bezeichnung2"),
@@ -31,7 +31,7 @@ open class Contact(id: String) : AsyncPersistentObject(id) {
             if(it.succeeded()){
                 val apo=it.result()
                 if(apo!=null) {
-                    ret.complete(apo.fields["Bezeichnung1"]+" "+apo.fields["Bezeichnung2"])
+                    ret.complete(apo.getString("Bezeichnung1") as String+" "+apo.getString("Bezeichnung2"))
                 }else{
                     ret.fail("object not found")
                 }
@@ -41,11 +41,27 @@ open class Contact(id: String) : AsyncPersistentObject(id) {
         }
         return ret
     }
+    companion object{
+        val coll="KONTAKT"
+        fun load(id:String) : Future<Contact>{
+            val ret=Future.future<Contact>()
+            val ctk=Contact(id)
+            AsyncPersistentObject.load(ctk) {
+                if(it.succeeded() && it.result()){
+                    ret.complete(ctk)
+                }else{
+                    ret.fail(it.cause())
+                }
+            }
+            return ret
+        }
+
+    }
 
 }
 
 open class Person(id: String) : Contact(id) {
-    val pfields = arrayOf(
+    val pfields = listOf(
             Field("name", "Bezeichnung1"),
             Field("firstname", "Bezeichnung2"),
             Field("gender", "Geschlecht"),
@@ -53,7 +69,7 @@ open class Person(id: String) : Contact(id) {
             Field("title", "Titel"),
             Field("suffix", "Titelsuffix"))
 
-    val t = super.fieldnames.union(pfields.asIterable())
+    val t = super.fieldnames.union(pfields)
     override val fieldnames by lazy {
         super.fieldnames.union(pfields.asIterable()).toTypedArray()
     }
