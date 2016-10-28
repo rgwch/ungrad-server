@@ -43,12 +43,22 @@ class InMemoryPersistence: IPersistence {
     }
 
     override fun find(template: JsonObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
+
         val result=objects.values.filter { obj->
             var matches=true
             for((key,value) in obj.map.entries){
-                if(template.containsKey(key) && value!=template.getValue(key)) {
-                    matches=false
-                    break;
+                if(key!="id" && template.containsKey(key)){
+                    val tval=template.getValue(key)
+                    val cmpfun = if(tval is String && tval.endsWith("*")){
+                        { x: Any,y: Any -> if((x as String).startsWith((y as String).substringBefore('*'))) true else false}
+                    }else{
+                        { x: Any,y:Any -> if(x==y) true else false}
+
+                    }
+                    matches=cmpfun(value,tval)
+                    if(matches==false){
+                        break
+                    }
                 }
             }
             matches

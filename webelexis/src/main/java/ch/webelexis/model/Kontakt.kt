@@ -2,12 +2,16 @@ package ch.webelexis.model
 
 import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
+import java.util.*
 
 /**
  * Created by gerry on 24.10.16.
  */
 
 open class Contact(id: String) : AsyncPersistentObject(id) {
+
+    constructor():this(UUID.randomUUID().toString())
+
     override val collection = coll
     override val fieldnames = arrayOf(
             Field("Bezeichnung1"),

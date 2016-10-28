@@ -1,10 +1,18 @@
+import ch.rgw.tools.json.JsonUtil;
+import ch.rgw.tools.json.JsonUtilKt;
+import ch.webelexis.model.AsyncPersistentObject;
+import ch.webelexis.model.Contact;
 import ch.webelexis.model.DummyPersistentObject;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by gerry on 24.10.16.
@@ -53,6 +61,27 @@ public class Test_AsyncPO {
             ctx.assertTrue(result2.succeeded());
             ctx.assertTrue(result2.result().toString().isEmpty());
             async.complete();
+        });
+
+    }
+
+    @Test
+    public void test_contact(TestContext ctx){
+        Contact contact=new Contact();
+        Async async=ctx.async();
+        contact.set("Bezeichnung1:Testperson","Bezeichnung2:Armeswesen","phone1:555-555 55 55").setHandler(result -> {
+            ctx.assertTrue(result.succeeded());
+            ctx.assertTrue(result.result());
+            Contact query=new Contact();
+            query.put("phone1","555*");
+            AsyncPersistentObject.Companion.find(query).setHandler(result2 -> {
+                ctx.assertTrue(result2.succeeded());
+                List<JsonObject> found=result2.result();
+                ctx.assertEquals(found.size(),1);
+                JsonObject jo=found.get(0);
+                ctx.assertEquals("Testperson",jo.getString("Bezeichnung1"));
+                async.complete();
+            });
         });
 
     }

@@ -14,14 +14,11 @@
 package ch.webelexis.model
 
 import ch.rgw.tools.json.JsonUtil
+import ch.rgw.tools.json.json_create
 import io.vertx.core.AsyncResult
-import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
-import io.vertx.ext.asyncsql.AsyncSQLClient
-import io.vertx.ext.asyncsql.MySQLClient
 import java.util.*
-import java.util.Map
 
 /**
  * An AsyncPersistentObject is a PersistentObject with asynchroneous access methods (you don't say).
@@ -43,24 +40,24 @@ import java.util.Map
  * Created by gerry on 22.10.2016.
  */
 
-abstract class AsyncPersistentObject(val id:String) : JsonUtil("""{"id":$id}"""){
-    var lastUpdate: Long=0
-    val observers= mutableListOf<IObserver>()
-    abstract val collection:String
+abstract class AsyncPersistentObject(val id: String) : JsonUtil("""{"id":"$id"}""") {
+    var lastUpdate: Long = 0
+    val observers = mutableListOf<IObserver>()
+    abstract val collection: String
     abstract val fieldnames: Array<Field>
-    abstract fun getLabel():Future<String>
+    abstract fun getLabel(): Future<String>
 
-    fun get(field: String): Future<Any>{
-        val ret=Future.future<Any>()
-        if(field in fieldnames) {
+    fun get(field: String): Future<Any> {
+        val ret = Future.future<Any>()
+        if (field in fieldnames) {
             if (lastUpdate == 0L || (System.currentTimeMillis() - lastUpdate) > TIMEOUT) {
                 persistence.fetch(collection, id) { result ->
                     if (result.succeeded()) {
                         result.result()?.forEach {
-                            val (key,value)=it
+                            val (key, value) = it
                             if (value != getValue(key)) {
-                                val observation=Observation(key,getValue(key)?:"",value)
-                                put(key,value)
+                                val observation = Observation(this, key, getValue(key) ?: "", value)
+                                put(key, value)
                                 notifyObservers(observation)
                             }
                         }
@@ -74,19 +71,40 @@ abstract class AsyncPersistentObject(val id:String) : JsonUtil("""{"id":$id}""")
             } else {
                 ret.complete(getValue(field))
             }
-        }else{
+        } else {
             ret.fail("illegal field name: $field")
         }
         return ret
     }
 
-    fun set(field:String,value:String) : Future<Boolean>{
-        val ret=Future.future<Boolean>()
-        if(!(field in fieldnames)){
+    fun set(vararg fields: String)=set(json_create(*fields))
+
+    fun set(fields: JsonObject): Future<Boolean> {
+        val ret = Future.future<Boolean>()
+        for ((key) in fields.map) {
+            if (key !in fieldnames) {
+                ret.fail("illegal field name: $key")
+            }
+        }
+        if (!ret.failed()) {
+            mergeIn(fields)
+            persistence.flush(this) {
+                if (it.succeeded()) {
+                    notifyObservers(Observation(this))
+                    ret.complete(true)
+                }
+            }
+        }
+        return ret
+    }
+
+    fun set(field: String, value: String): Future<Boolean> {
+        val ret = Future.future<Boolean>()
+        if (field !in fieldnames) {
             ret.fail("illegal field name: $field")
-        }else {
-            val observation=Observation(field,getValue(field)?:"",value)
-            put(field,value)
+        } else {
+            val observation = Observation(this, field, getValue(field), value)
+            put(field, value)
             persistence.flush(this) { result ->
                 if (result.succeeded()) {
                     notifyObservers(observation)
@@ -99,47 +117,51 @@ abstract class AsyncPersistentObject(val id:String) : JsonUtil("""{"id":$id}""")
         return ret
     }
 
-    fun addObserver(observer:IObserver){
+    fun addObserver(observer: IObserver) {
         observers.add(observer)
     }
-    fun removeObserver(observer:IObserver){
+
+    fun removeObserver(observer: IObserver) {
         observers.remove(observer)
     }
-    fun notifyObservers(observation:Observation){
-        val (name,oldv,newv)=observation
-        for(ob in observers){
-            ob.changed(name,oldv,newv)
+
+    fun notifyObservers(observation: Observation) {
+        val (obj, name, oldv, newv) = observation
+        for (ob in observers) {
+            ob.changed(obj, name, oldv, newv)
         }
     }
 
-    companion object{
-        const val TIMEOUT=60000L;
+    companion object {
+        const val TIMEOUT = 60000L;
         var persistence = InMemoryPersistence()
-        fun load(obj:AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit){
-            persistence.fetch(obj.collection,obj.id) {
-                if(it.succeeded()){
-                    if(it.result()==null){
+        fun load(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit) {
+            persistence.fetch(obj.collection, obj.id) {
+                if (it.succeeded()) {
+                    if (it.result() == null) {
                         handler(Future.succeededFuture(false))
-                    }else {
+                    } else {
                         obj.mergeIn(it.result())
                         handler(Future.succeededFuture(false))
                     }
-                }else{
+                } else {
                     handler(Future.failedFuture(it.cause()))
                 }
             }
         }
-        fun delete(id: String){
-            persistence.delete(id){
+
+        fun delete(id: String) {
+            persistence.delete(id) {
 
             }
         }
-        fun find(template:JsonObject) : Future<List<JsonObject>>{
-            val ret=Future.future<List<JsonObject>>()
-            persistence.find(template){
-                if(it.succeeded()){
+
+        fun find(template: JsonObject): Future<List<JsonObject>> {
+            val ret = Future.future<List<JsonObject>>()
+            persistence.find(template) {
+                if (it.succeeded()) {
                     ret.complete(it.result())
-                }else{
+                } else {
                     ret.fail(it.cause())
                 }
             }
@@ -149,14 +171,16 @@ abstract class AsyncPersistentObject(val id:String) : JsonUtil("""{"id":$id}""")
     }
 }
 
-interface IObserver{
-    fun changed(property:String,oldValue:Any,newValue:Any)
+interface IObserver {
+    fun changed(obj: AsyncPersistentObject, property: String, oldValue: Any?, newValue: Any?)
 }
-data class Observation(val prop:String, val oldVal:Any, val newVal:Any)
-data class Field(val label:String,val name:String=label,val caption:String=label)
-operator fun Array<Field>.contains(field:String)=this.any { it.label==field }
-fun Array<Field>.merge(other:Array<Field>):Array<Field>{
-    val ret=mutableListOf<Field>()
+
+data class Observation(val obj: AsyncPersistentObject, val prop: String = "", val oldVal: Any? = null, val newVal: Any? = null)
+data class Field(val label: String, val name: String = label, val caption: String = label)
+
+operator fun Array<Field>.contains(field: String) = this.any { it.label == field }
+fun Array<Field>.merge(other: Array<Field>): Array<Field> {
+    val ret = mutableListOf<Field>()
 
     return ret.toTypedArray()
 }
