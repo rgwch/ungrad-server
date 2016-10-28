@@ -42,6 +42,7 @@ import java.util.*
 
 abstract class AsyncPersistentObject(val id: String) : JsonUtil("""{"id":"$id"}""") {
     var lastUpdate: Long = 0
+    var persistence = defaultPersistence
     val observers = mutableListOf<IObserver>()
     abstract val collection: String
     abstract val fieldnames: Array<Field>
@@ -131,42 +132,36 @@ abstract class AsyncPersistentObject(val id: String) : JsonUtil("""{"id":"$id"}"
             ob.changed(obj, name, oldv, newv)
         }
     }
+    fun load(handler: (AsyncResult<Boolean>) -> Unit) {
+        persistence.fetch(collection, id) {
+            if (it.succeeded()) {
+                if (it.result() == null) {
+                    handler(Future.succeededFuture(false))
+                } else {
+                    mergeIn(it.result())
+                    handler(Future.succeededFuture(false))
+                }
+            } else {
+                handler(Future.failedFuture(it.cause()))
+            }
+        }
+    }
+
+    fun find(): Future<List<JsonObject>> {
+        val ret = Future.future<List<JsonObject>>()
+        persistence.find(this) {
+            if (it.succeeded()) {
+                ret.complete(it.result())
+            } else {
+                ret.fail(it.cause())
+            }
+        }
+        return ret
+    }
 
     companion object {
         const val TIMEOUT = 60000L;
-        var persistence = InMemoryPersistence()
-        fun load(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit) {
-            persistence.fetch(obj.collection, obj.id) {
-                if (it.succeeded()) {
-                    if (it.result() == null) {
-                        handler(Future.succeededFuture(false))
-                    } else {
-                        obj.mergeIn(it.result())
-                        handler(Future.succeededFuture(false))
-                    }
-                } else {
-                    handler(Future.failedFuture(it.cause()))
-                }
-            }
-        }
-
-        fun delete(id: String) {
-            persistence.delete(id) {
-
-            }
-        }
-
-        fun find(template: JsonObject): Future<List<JsonObject>> {
-            val ret = Future.future<List<JsonObject>>()
-            persistence.find(template) {
-                if (it.succeeded()) {
-                    ret.complete(it.result())
-                } else {
-                    ret.fail(it.cause())
-                }
-            }
-            return ret
-        }
+        var defaultPersistence=InMemoryPersistence()
 
     }
 }

@@ -50,7 +50,7 @@ open class Contact(id: String) : AsyncPersistentObject(id) {
         fun load(id:String) : Future<Contact>{
             val ret=Future.future<Contact>()
             val ctk=Contact(id)
-            AsyncPersistentObject.load(ctk) {
+            ctk.load() {
                 if(it.succeeded() && it.result()){
                     ret.complete(ctk)
                 }else{

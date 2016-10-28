@@ -74,7 +74,7 @@ public class Test_AsyncPO {
             ctx.assertTrue(result.result());
             Contact query=new Contact();
             query.put("phone1","555*");
-            AsyncPersistentObject.Companion.find(query).setHandler(result2 -> {
+            query.find().setHandler(result2 -> {
                 ctx.assertTrue(result2.succeeded());
                 List<JsonObject> found=result2.result();
                 ctx.assertEquals(found.size(),1);

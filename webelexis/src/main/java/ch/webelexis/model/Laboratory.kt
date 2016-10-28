@@ -48,3 +48,7 @@ class LabResult(id:String): AsyncPersistentObject(id){
     }
 
 }
+
+class Labor(id:String):Contact(id){
+
+}
