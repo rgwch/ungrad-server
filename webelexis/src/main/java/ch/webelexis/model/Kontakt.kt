@@ -1,18 +1,19 @@
 package ch.webelexis.model
 
-import io.vertx.core.CompositeFuture
 import io.vertx.core.Future
 import java.util.*
 
 /**
+ * Some Contact-related classes. Since this is Kotlin, we can have these classes together in one file
  * Created by gerry on 24.10.16.
  */
 
-open class Contact(id: String) : AsyncPersistentObject(id) {
+/**
+ * A general contact
+ */
+open class Contact(id: String=uuid) : AsyncPersistentObject(id) {
 
-    constructor():this(UUID.randomUUID().toString())
-
-    override val collection = coll
+    override val collection = "KONTAKT"
     override val fieldnames = arrayOf(
             Field("Bezeichnung1"),
             Field("Bezeichnung2"),
@@ -31,41 +32,27 @@ open class Contact(id: String) : AsyncPersistentObject(id) {
 
     override fun getLabel(): Future<String> {
         val ret = Future.future<String>()
-        persistence.fetch(collection,id) {
-            if(it.succeeded()){
-                val apo=it.result()
-                if(apo!=null) {
-                    ret.complete(apo.getString("Bezeichnung1") as String+" "+apo.getString("Bezeichnung2"))
-                }else{
+        persistence.fetch(collection, id) {
+            if (it.succeeded()) {
+                val apo = it.result()
+                if (apo != null) {
+                    ret.complete(apo.getString("Bezeichnung1") as String + " " + apo.getString("Bezeichnung2"))
+                } else {
                     ret.fail("object not found")
                 }
-            }else{
+            } else {
                 ret.fail(it.cause())
             }
         }
         return ret
     }
-    companion object{
-        val coll="KONTAKT"
-        fun load(id:String) : Future<Contact>{
-            val ret=Future.future<Contact>()
-            val ctk=Contact(id)
-            ctk.load() {
-                if(it.succeeded() && it.result()){
-                    ret.complete(ctk)
-                }else{
-                    ret.fail(it.cause())
-                }
-            }
-            return ret
-        }
-
-    }
 
 }
 
-open class Person(id: String) : Contact(id) {
-    constructor():this(UUID.randomUUID().toString())
+/**
+ *  A Person is a Contact with some personal properties
+ */
+open class Person(id: String=uuid) : Contact(id) {
     val pfields = listOf(
             Field("name", "Bezeichnung1"),
             Field("firstname", "Bezeichnung2"),
@@ -74,15 +61,28 @@ open class Person(id: String) : Contact(id) {
             Field("title", "Titel"),
             Field("suffix", "Titelsuffix"))
 
-    val t = super.fieldnames.union(pfields)
     override val fieldnames by lazy {
         super.fieldnames.union(pfields.asIterable()).toTypedArray()
     }
 
 }
 
-class Patient(id: String) : Person(id) {
-    constructor():this(UUID.randomUUID().toString())
+/**
+ * A User is a Person with the right to use our application
+ */
+open class User(id: String=uuid) : Person(id) {
+    override val fieldnames by lazy {
+        super.fieldnames.union(listOf(
+                Field("username"),
+                Field("password"))
+        ).toTypedArray()
+    }
+}
+
+/**
+ * A Patient is a Person with medical data attached
+ */
+class Patient(id: String=uuid) : Person(id) {
 
     override val fieldnames by lazy {
         super.fieldnames.union(listOf(
