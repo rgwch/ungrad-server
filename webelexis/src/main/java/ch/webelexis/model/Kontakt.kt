@@ -65,6 +65,7 @@ open class Contact(id: String) : AsyncPersistentObject(id) {
 }
 
 open class Person(id: String) : Contact(id) {
+    constructor():this(UUID.randomUUID().toString())
     val pfields = listOf(
             Field("name", "Bezeichnung1"),
             Field("firstname", "Bezeichnung2"),
@@ -81,6 +82,7 @@ open class Person(id: String) : Contact(id) {
 }
 
 class Patient(id: String) : Person(id) {
+    constructor():this(UUID.randomUUID().toString())
 
     override val fieldnames by lazy {
         super.fieldnames.union(listOf(
