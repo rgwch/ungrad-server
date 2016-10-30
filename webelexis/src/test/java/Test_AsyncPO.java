@@ -88,7 +88,7 @@ public class Test_AsyncPO {
     public void test_patient(TestContext ctx) {
         Patient pat = new Patient();
         Async async = ctx.async();
-        pat.set("name:Testperson", "firstname:Armeswesen", "phone1:550-555 55 55").setHandler(result -> {
+        pat.set("lastname:Testperson", "firstname:Armeswesen", "phone1:550-555 55 55").setHandler(result -> {
             ctx.assertTrue(result.succeeded());
             ctx.assertTrue(result.result());
             Patient query = new Patient();
@@ -98,7 +98,7 @@ public class Test_AsyncPO {
                 List<JsonObject> found = result2.result();
                 ctx.assertEquals(found.size(), 1);
                 JsonObject jo = found.get(0);
-                ctx.assertEquals("Testperson", jo.getString("name"));
+                ctx.assertEquals("Testperson", jo.getString("lastname"));
                 async.complete();
             });
         });

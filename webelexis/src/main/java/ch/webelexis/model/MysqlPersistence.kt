@@ -33,12 +33,17 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
         MySQLClient.createShared(vertx, config)
     }
 
+    /**
+     * Execute a list of [sql] commands. Execution is not parallel, but in the given order, each line waiting to
+     * complete before sending the next.
+     * @return a Future which resolves to true on success or carries the bad line on failure.
+     */
     fun exec(sql: List<String>): Future<Boolean> {
         val ret = Future.future<Boolean>()
         database.getConnection { con ->
             if (con.succeeded()) {
                 val conn = con.result()
-                fun exec(list: List<String>) {
+                fun internal_exec(list: List<String>) {
                     if (list.isEmpty() && !ret.isComplete) {
                         ret.complete(true)
                     } else {
@@ -46,7 +51,7 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
                         try {
                             conn.execute(line) {
                                 if (it.succeeded()) {
-                                    exec(list.drop(1))
+                                    internal_exec(list.drop(1))
                                 } else {
                                     ret.fail(line + " -\n - " + it.cause().message)
                                 }
@@ -57,7 +62,7 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
                         }
                     }
                 }
-                exec(sql)
+                internal_exec(sql)
             } else {
                 ret.fail(con.cause())
             }
@@ -119,6 +124,11 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
     }
 
 
+    /**
+     * Write an AsyncPersistentObject [obj] to the backing store. The method will check if the remote object
+     * is newer and fail if so.
+     * Success or failure is reported to the [handler]
+     */
     override fun flush(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit) {
         database.getConnection() { con ->
             if (con.succeeded()) {

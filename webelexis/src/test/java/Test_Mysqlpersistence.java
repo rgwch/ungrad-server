@@ -69,7 +69,6 @@ public class Test_Mysqlpersistence {
         });
     }
 
-    @Ignore
     @Test
     public void test_createSQL(){
         Patient pat=new Patient();
