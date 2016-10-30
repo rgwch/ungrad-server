@@ -38,10 +38,10 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
         database.getConnection { con ->
             if (con.succeeded()) {
                 val conn = con.result()
-                fun exec(list:List<String>){
-                    if(list.isEmpty()){
+                fun exec(list: List<String>) {
+                    if (list.isEmpty() && !ret.isComplete) {
                         ret.complete(true)
-                    }else {
+                    } else {
                         val line = list.first()
                         try {
                             conn.execute(line) {
@@ -51,7 +51,7 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
                                     ret.fail(line + " -\n - " + it.cause().message)
                                 }
                             }
-                        }catch(ex:Exception){
+                        } catch(ex: Exception) {
                             log.error(ex.message)
                             ret.fail(ex.message)
                         }
@@ -123,7 +123,7 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
         database.getConnection() { con ->
             if (con.succeeded()) {
                 val conn = con.result()
-                fun insert() {
+                fun insert(): Unit {
                     val sql = apo2sql(obj)
                     conn.update(sql) { updateresult ->
                         if (updateresult.succeeded()) {
@@ -143,7 +143,7 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
                             val remote_lastupdate = ro1.getLong("lastupdate")
                             if (obj.getLong("lastupdate") < remote_lastupdate) {
                                 handler(Future.failedFuture("conflict: remote update"))
-                            }else{
+                            } else {
                                 insert()
                             }
                         } else {
@@ -154,20 +154,24 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
                         handler(Future.failedFuture(remoteObj.cause()))
                     }
                 }
+                conn.close()
 
             } else {
                 log.error("failed to connect ", con.cause())
                 handler(Future.failedFuture(con.cause()))
             }
+
         }
+
     }
 
     fun apo2sql(obj: AsyncPersistentObject): String {
-        fun findField(label:String):String?{
+        fun findField(label: String): String? {
             return obj.fieldnames.find {
-                it.label==label
+                it.label == label
             }?.name
         }
+
         val fields = StringBuilder()
         val values = StringBuilder()
         val upd = StringBuilder()
@@ -178,7 +182,7 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
                 upd.append("$key='$value',")
             }
         }
-        val now=System.currentTimeMillis()
+        val now = System.currentTimeMillis()
         val ret = "INSERT INTO ${obj.collection} (" + fields.toString() + "deleted,lastupdate) VALUES (" +
                 values.toString() + "'0',$now) ON DUPLICATE KEY UPDATE " + upd.toString() +
                 "deleted='0', lastupdate=$now;"

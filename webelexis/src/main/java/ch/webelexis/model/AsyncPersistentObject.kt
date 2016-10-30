@@ -15,6 +15,7 @@ package ch.webelexis.model
 
 import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.json_create
+import ch.webelexis.model.AsyncPersistentObject.Companion.defaultPersistence
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
@@ -43,12 +44,12 @@ import java.util.*
  * Created by gerry on 22.10.2016.
  */
 
-abstract class AsyncPersistentObject(val id: String=uuid) : JsonUtil("""{"id":"$id"}""") {
+abstract class AsyncPersistentObject(val id: String = uuid) : JsonUtil("""{"id":"$id"}""") {
     var lastUpdate: Long = 0
     var persistence = defaultPersistence
     val observers = mutableListOf<IObserver>()
     abstract val collection: String
-    open val fieldnames = arrayOf(Field("id","ID"),Field("deleted"),Field("lastupdate"))
+    open val fieldnames = arrayOf(Field("id", "ID"), Field("deleted"), Field("lastupdate"))
     abstract fun getLabel(): Future<String>
 
     /**
@@ -92,7 +93,7 @@ abstract class AsyncPersistentObject(val id: String=uuid) : JsonUtil("""{"id":"$
      * @return a Future resolving to a Boolean 'true' on success.
      * fails if: One or more of the fields are not found in [fieldnames] or if a write error occurred
      */
-    fun set(vararg fields: String)=set(json_create(*fields))
+    fun set(vararg fields: String) = set(json_create(*fields))
 
     /**
      * set several [fields] in one call, using a JsonObject to carry the fields and their values.
@@ -131,12 +132,12 @@ abstract class AsyncPersistentObject(val id: String=uuid) : JsonUtil("""{"id":"$
         } else {
             val observation = Observation(this, field, getValue(field), value)
             put(field, value)
-            persistence.flush(this) { result ->
-                if (result.succeeded()) {
+            persistence.flush(this) { flushresult ->
+                if (flushresult.succeeded()) {
                     notifyObservers(observation)
                     ret.complete(true)
                 } else {
-                    ret.fail(result.cause())
+                    ret.fail(flushresult.cause())
                 }
             }
         }
@@ -209,9 +210,9 @@ abstract class AsyncPersistentObject(val id: String=uuid) : JsonUtil("""{"id":"$
 
     companion object {
         const val TIMEOUT = 60000L;
-        var defaultPersistence : IPersistence =InMemoryPersistence()
-        val uuid:String
-            get()=UUID.randomUUID().toString()
+        var defaultPersistence: IPersistence = InMemoryPersistence()
+        val uuid: String
+            get() = UUID.randomUUID().toString()
     }
 }
 
@@ -229,5 +230,6 @@ data class Observation(val obj: AsyncPersistentObject, val prop: String = "", va
  * only the [label] field is mandatory
  */
 data class Field(val label: String, val name: String = label, val caption: String = label)
+
 operator fun Array<Field>.contains(field: String) = this.any { it.label == field }
 

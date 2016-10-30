@@ -56,22 +56,20 @@ public class Test_Mysqlpersistence {
     public void test_dummy(TestContext ctx) {
         Async async1 = ctx.async();
         DummyPersistentObject dpo = new DummyPersistentObject("1");
-        Future<Boolean> res1 = dpo.set("p_1", "val_1");
-        res1.setHandler(result1 -> {
+        dpo.set("p_1", "val_1").setHandler(result1 -> {
             ctx.assertTrue(result1.succeeded());
             ctx.assertTrue(result1.result());
-            async1.complete();
             Async async2 = ctx.async();
-            Future<Object> res2 = dpo.get("p_1");
-            res2.setHandler(result2 -> {
+            dpo.get("p_1").setHandler(result2 -> {
                 ctx.assertTrue(result2.succeeded());
                 ctx.assertEquals("val_1", result2.result());
                 async2.complete();
             });
-
+            async1.complete();
         });
     }
 
+    @Ignore
     @Test
     public void test_createSQL(){
         Patient pat=new Patient();
