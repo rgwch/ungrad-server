@@ -48,7 +48,7 @@ abstract class AsyncPersistentObject(val id: String=uuid) : JsonUtil("""{"id":"$
     var persistence = defaultPersistence
     val observers = mutableListOf<IObserver>()
     abstract val collection: String
-    abstract val fieldnames: Array<Field>
+    open val fieldnames = arrayOf(Field("id","ID"),Field("deleted"),Field("lastupdate"))
     abstract fun getLabel(): Future<String>
 
     /**
@@ -209,7 +209,7 @@ abstract class AsyncPersistentObject(val id: String=uuid) : JsonUtil("""{"id":"$
 
     companion object {
         const val TIMEOUT = 60000L;
-        var defaultPersistence=InMemoryPersistence()
+        var defaultPersistence : IPersistence =InMemoryPersistence()
         val uuid:String
             get()=UUID.randomUUID().toString()
     }

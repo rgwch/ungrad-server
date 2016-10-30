@@ -8,7 +8,7 @@ import io.vertx.core.Future
  */
 class DummyPersistentObject(id: String) : AsyncPersistentObject(id){
     override val collection="DUMMY"
-    override val fieldnames=arrayOf(Field("p_1"),Field("p_2"),Field("p_3"))
+    override val fieldnames=super.fieldnames+arrayOf(Field("p_1"),Field("p_2"),Field("p_3"))
 
     override fun getLabel():Future<String>{
         val ret=Future.future<String>()

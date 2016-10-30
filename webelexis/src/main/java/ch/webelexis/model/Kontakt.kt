@@ -14,7 +14,7 @@ import java.util.*
 open class Contact(id: String=uuid) : AsyncPersistentObject(id) {
 
     override val collection = "KONTAKT"
-    override val fieldnames = arrayOf(
+    override val fieldnames = super.fieldnames+arrayOf(
             Field("Bezeichnung1"),
             Field("Bezeichnung2"),
             Field("Bezeichnung3"),
@@ -54,10 +54,10 @@ open class Contact(id: String=uuid) : AsyncPersistentObject(id) {
  */
 open class Person(id: String=uuid) : Contact(id) {
     val pfields = listOf(
-            Field("name", "Bezeichnung1"),
+            Field("lastname", "Bezeichnung1"),
             Field("firstname", "Bezeichnung2"),
             Field("gender", "Geschlecht"),
-            Field("dob", "Geburtsdatum"),
+            Field("birthdate", "Geburtsdatum"),
             Field("title", "Titel"),
             Field("suffix", "Titelsuffix"))
 
@@ -90,4 +90,5 @@ class Patient(id: String=uuid) : Person(id) {
                 Field("famAnamnese")
         )).toTypedArray()
     }
+
 }
