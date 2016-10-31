@@ -21,7 +21,8 @@ import java.util.ArrayList;
  * Created by gerry on 29.10.16.
  */
 @RunWith(VertxUnitRunner.class)
-
+/* remove the Ignore if mysql server runs */
+@Ignore
 public class Test_Mysqlpersistence {
     JsonObject cfg;
     Vertx vertx;

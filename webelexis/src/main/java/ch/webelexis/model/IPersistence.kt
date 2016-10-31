@@ -42,7 +42,7 @@ interface IPersistence {
      * @param template: An object with the criteria
      * @param handler: a method to call with the result
      */
-    fun find(template:JsonObject, handler: (AsyncResult<List<JsonObject>>) -> Unit)
+    fun find(template:AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit)
 
     /**
      * delete an object from the backing store
@@ -66,7 +66,7 @@ class InMemoryPersistence: IPersistence {
         handler(Future.succeededFuture(true))
     }
 
-    override fun find(template: JsonObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
+    override fun find(template: AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
 
         val result=objects.values.filter { obj->
             var matches=true

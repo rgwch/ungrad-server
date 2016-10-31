@@ -13,6 +13,7 @@
  */
 package ch.webelexis.model
 
+import ch.rgw.tools.json.get
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory
 /**
  * Created by gerry on 22.10.2016.
  */
-class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
+class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence {
     val log: Logger = LoggerFactory.getLogger("MysqlPersistence")
 
     val database: AsyncSQLClient by lazy {
@@ -70,6 +71,9 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
         return ret
     }
 
+    /**
+     * Send a [query] to the database.
+     */
     fun sendQuery(query: String, handler: ((AsyncResult<ResultSet>) -> Unit)) {
         log.debug("got query: " + query)
         try {
@@ -100,6 +104,11 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
         throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
+    /**
+     * Fetch a JsonObject, identified by the its [objid], from a named [collection] of the database.
+     * calls the [handler] with the result of the query.
+     * fails if there is more than one row with that objid in the collection.
+     */
     override fun fetch(collection: String, objid: String, handler: (AsyncResult<JsonObject?>) -> Unit) {
         sendQuery("SELECT * FROM $collection WHERE ID='$objid' and deleted='0'") { result ->
             if (result.succeeded()) {
@@ -119,8 +128,19 @@ class MysqlPersistence(val config: JsonObject, vertx: Vertx) : IPersistence {
         }
     }
 
-    override fun find(template: JsonObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
-        throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun find(template: AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
+        val sql=StringBuilder()
+        sql.append("SELECT * FROM ${template.collection} WHERE ")
+        for((key,value) in template.map){
+        val rname=template.fieldnames.find {
+                    it.label == key
+            }
+            sql.append("$rname LIKE ${value.toString().replace('*','%')} AND ")
+        }
+        sql.append("deleted='0';")
+        sendQuery(sql.toString()){
+            handler(Future.succeededFuture(it.result().rows))
+        }
     }
 
 
