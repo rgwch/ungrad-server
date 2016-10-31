@@ -13,14 +13,13 @@
  */
 
 package ch.elexis.ungrad.server
-import ch.rgw.tools.json.JsonUtil
 
-import io.vertx.core.json.JsonObject
+import ch.rgw.tools.json.JsonUtil
 
 /**
  * Created by gerry on 05.09.16.
  */
 interface IPersistor {
-    fun read(id:String): JsonUtil
-    fun write(id:String,value:JsonUtil):Boolean
+    fun read(id: String): JsonUtil
+    fun write(id: String, value: JsonUtil): Boolean
 }

@@ -14,7 +14,6 @@
 package ch.webelexis.model
 
 import io.vertx.core.AsyncResult
-import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Future
 import io.vertx.core.json.JsonObject
 
@@ -35,52 +34,52 @@ interface IPersistence {
      * @param obj: The object to store
      * @param handler: a method to call avter completion of the write
      */
-    fun flush(obj:AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit)
+    fun flush(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit)
 
     /**
      * retrieve a List of zero or more objects matching some criteria
      * @param template: An object with the criteria
      * @param handler: a method to call with the result
      */
-    fun find(template:AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit)
+    fun find(template: AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit)
 
     /**
      * delete an object from the backing store
      */
-    fun delete(id:String, ack: (Boolean) -> Unit)
+    fun delete(id: String, ack: (Boolean) -> Unit)
 }
 
 /**
  * Default volatile  IPersistence which simply stores in memory.
  */
-class InMemoryPersistence: IPersistence {
+class InMemoryPersistence : IPersistence {
 
-    val objects= hashMapOf<String,JsonObject>()
+    val objects = hashMapOf<String, JsonObject>()
 
     override fun fetch(collection: String, objid: String, handler: (AsyncResult<JsonObject?>) -> Unit) {
         handler(Future.succeededFuture(objects[objid]))
     }
 
-    override fun flush(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>)->Unit) {
-        objects.put(obj.id,obj)
+    override fun flush(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit) {
+        objects.put(obj.id, obj)
         handler(Future.succeededFuture(true))
     }
 
     override fun find(template: AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
 
-        val result=objects.values.filter { obj->
-            var matches=true
-            for((key,value) in obj.map.entries){
-                if(key!="id" && template.containsKey(key)){
-                    val tval=template.getValue(key)
-                    val cmpfun = if(tval is String && tval.endsWith("*")){
-                        { x: Any,y: Any -> if((x as String).startsWith((y as String).substringBefore('*'))) true else false}
-                    }else{
-                        { x: Any,y:Any -> if(x==y) true else false}
+        val result = objects.values.filter { obj ->
+            var matches = true
+            for ((key, value) in obj.map.entries) {
+                if (key != "id" && template.containsKey(key)) {
+                    val tval = template.getValue(key)
+                    val cmpfun = if (tval is String && tval.endsWith("*")) {
+                        { x: Any, y: Any -> if ((x as String).startsWith((y as String).substringBefore('*'))) true else false }
+                    } else {
+                        { x: Any, y: Any -> if (x == y) true else false }
 
                     }
-                    matches=cmpfun(value,tval)
-                    if(matches==false){
+                    matches = cmpfun(value, tval)
+                    if (matches == false) {
                         break
                     }
                 }
@@ -90,11 +89,11 @@ class InMemoryPersistence: IPersistence {
         handler(Future.succeededFuture(result))
     }
 
-    override fun delete(id:String, ack:(Boolean) -> Unit){
-        if(objects.containsKey(id)){
+    override fun delete(id: String, ack: (Boolean) -> Unit) {
+        if (objects.containsKey(id)) {
             objects.remove(id)
             ack(true)
-        }else{
+        } else {
             ack(false)
         }
     }

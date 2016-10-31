@@ -1,7 +1,6 @@
 package ch.webelexis.model
 
 import io.vertx.core.Future
-import java.util.*
 
 /**
  * Some Contact-related classes. Since this is Kotlin, we can have these classes together in one file
@@ -11,10 +10,10 @@ import java.util.*
 /**
  * A general contact
  */
-open class Contact(id: String=uuid) : AsyncPersistentObject(id) {
+open class Contact(id: String = uuid) : AsyncPersistentObject(id) {
 
     override val collection = "KONTAKT"
-    override val fieldnames = super.fieldnames+arrayOf(
+    override val fieldnames = super.fieldnames + arrayOf(
             Field("Bezeichnung1"),
             Field("Bezeichnung2"),
             Field("Bezeichnung3"),
@@ -52,7 +51,7 @@ open class Contact(id: String=uuid) : AsyncPersistentObject(id) {
 /**
  *  A Person is a Contact with some personal properties
  */
-open class Person(id: String=uuid) : Contact(id) {
+open class Person(id: String = uuid) : Contact(id) {
     val pfields = listOf(
             Field("lastname", "Bezeichnung1"),
             Field("firstname", "Bezeichnung2"),
@@ -70,7 +69,7 @@ open class Person(id: String=uuid) : Contact(id) {
 /**
  * A User is a Person with the right to use our application
  */
-open class User(id: String=uuid) : Person(id) {
+open class User(id: String = uuid) : Person(id) {
     override val fieldnames by lazy {
         super.fieldnames.union(listOf(
                 Field("username"),
@@ -82,7 +81,7 @@ open class User(id: String=uuid) : Person(id) {
 /**
  * A Patient is a Person with medical data attached
  */
-class Patient(id: String=uuid) : Person(id) {
+class Patient(id: String = uuid) : Person(id) {
 
     override val fieldnames by lazy {
         super.fieldnames.union(listOf(

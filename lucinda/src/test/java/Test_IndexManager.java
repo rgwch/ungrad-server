@@ -25,24 +25,25 @@ import static org.junit.Assert.assertNotNull;
 
 public class Test_IndexManager {
     private static IndexManager indexManager;
-    private static final String id="893f8fbfe7b6483a0fa24c97ee18bca98d431e8e";
+    private static final String id = "893f8fbfe7b6483a0fa24c97ee18bca98d431e8e";
 
 
     @BeforeClass
-    public static void clean(){
+    public static void clean() {
         FileTool.deltree("target/indexMgrTest");
 
     }
 
     @Before
-    public void setUp(){
+    public void setUp() {
         FileTool.deltree("target/indexMgrTest");
 
-        Communicator.indexManager=new IndexManager("target/indexMgrTest","de");
-        indexManager= Communicator.indexManager;
+        Communicator.indexManager = new IndexManager("target/indexMgrTest", "de");
+        indexManager = Communicator.indexManager;
     }
+
     @After
-    public void tearDown(){
+    public void tearDown() {
         indexManager.shutDown();
         FileTool.deltree("target/indexMgrTest");
     }
@@ -51,44 +52,44 @@ public class Test_IndexManager {
     @Test
     public void add() throws IOException {
 
-        FileInputStream fis=new FileInputStream("target/classes/default.cfg");
-        indexManager.addDocument(fis,insert());
+        FileInputStream fis = new FileInputStream("target/classes/default.cfg");
+        indexManager.addDocument(fis, insert());
         fis.close();
-        assertEquals(1,indexManager.queryDocuments("BBB: Test*",100).size());
+        assertEquals(1, indexManager.queryDocuments("BBB: Test*", 100).size());
         assertNotNull(indexManager.getDocument(id));
 
     }
 
     @Test
-    public void update() throws IOException{
+    public void update() throws IOException {
 
-        FileInputStream fis=new FileInputStream("target/classes/default.cfg");
-        indexManager.addDocument(fis,insert());
+        FileInputStream fis = new FileInputStream("target/classes/default.cfg");
+        indexManager.addDocument(fis, insert());
         fis.close();
-        assertEquals(1,indexManager.queryDocuments("BBB: Test*",100).size());
-        Document doc=indexManager.getDocument(id);
+        assertEquals(1, indexManager.queryDocuments("BBB: Test*", 100).size());
+        Document doc = indexManager.getDocument(id);
         assertNotNull(doc);
         doc.add(new StringField("CCC", "test ccc", Field.Store.YES));
         indexManager.updateDocument(doc);
-        assertEquals(1,indexManager.queryDocuments("CCC: Test*",100).size());
+        assertEquals(1, indexManager.queryDocuments("CCC: Test*", 100).size());
     }
 
     @Test
-    public void delete()throws IOException{
-        FileInputStream fis=new FileInputStream("target/classes/default.cfg");
-        indexManager.addDocument(fis,insert());
+    public void delete() throws IOException {
+        FileInputStream fis = new FileInputStream("target/classes/default.cfg");
+        indexManager.addDocument(fis, insert());
         fis.close();
-        assertEquals(1,indexManager.queryDocuments("BBB: Test*",100).size());
-        Document doc=indexManager.getDocument(id);
+        assertEquals(1, indexManager.queryDocuments("BBB: Test*", 100).size());
+        Document doc = indexManager.getDocument(id);
         assertNotNull(doc);
         indexManager.removeDocument(id);
-        assertEquals(0,indexManager.queryDocuments("BBB: Test*",100).size());
+        assertEquals(0, indexManager.queryDocuments("BBB: Test*", 100).size());
     }
 
-    private JsonObject insert(){
+    private JsonObject insert() {
         return new JsonObject()
                 .put("AAA", "Test aaa")
                 .put("BBB", "Test bbb")
-                .put("_id",id);
+                .put("_id", id);
     }
 }

@@ -38,14 +38,12 @@ import org.apache.tika.parser.ParseContext
 import org.apache.tika.sax.BodyContentHandler
 import java.io.InputStream
 import java.nio.file.FileSystems
-import java.util.logging.Level
-import java.util.logging.Logger
 
 /**
  * This class maintains the global index for the lucinda
  * Created by gerry on 20.03.16.
  */
-class IndexManager(directory: String,val language:String) {
+class IndexManager(directory: String, val language: String) {
 
     val analyzer = when (language) {
         "de" -> GermanAnalyzer()

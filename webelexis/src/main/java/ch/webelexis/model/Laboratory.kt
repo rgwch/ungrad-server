@@ -6,41 +6,42 @@ import io.vertx.core.Future
  * Created by gerry on 27.10.16.
  */
 
-class LabItem(id: String) : AsyncPersistentObject(id){
-    override val collection="LABORITEMS"
-    override val fieldnames=arrayOf(
+class LabItem(id: String) : AsyncPersistentObject(id) {
+    override val collection = "LABORITEMS"
+    override val fieldnames = arrayOf(
             Field("Title"),
-            Field("refMale","RefMann"),
-            Field("refFemale","RefFrauOrTx"),
-            Field("priority","prio"),
-            Field("group","Gruppe"),
-            Field("type","Typ"),
-            Field("unit","Einheit"),
-            Field("labID","LaborID"),
-            Field("shortname","Kuerzel"),
+            Field("refMale", "RefMann"),
+            Field("refFemale", "RefFrauOrTx"),
+            Field("priority", "prio"),
+            Field("group", "Gruppe"),
+            Field("type", "Typ"),
+            Field("unit", "Einheit"),
+            Field("labID", "LaborID"),
+            Field("shortname", "Kuerzel"),
             Field("formula"),
             Field("digits"),
             Field("visible"),
             Field("billingcode"),
-            Field("loinc","loinccode")
+            Field("loinc", "loinccode")
 
     )
+
     override fun getLabel(): Future<String> {
         return Future.future()
     }
 
 }
 
-class LabResult(id:String): AsyncPersistentObject(id){
-    override val collection="LABORWERTE"
-    override val fieldnames=arrayOf(
-            Field("date","Datum"),
-            Field("time","Zeit"),
-            Field("flags","Flags"),
-            Field("comment","Kommentar"),
-            Field("result","Resultat"),
-            Field("itemID","ItemID"),
-            Field("patID","PatientID")
+class LabResult(id: String) : AsyncPersistentObject(id) {
+    override val collection = "LABORWERTE"
+    override val fieldnames = arrayOf(
+            Field("date", "Datum"),
+            Field("time", "Zeit"),
+            Field("flags", "Flags"),
+            Field("comment", "Kommentar"),
+            Field("result", "Resultat"),
+            Field("itemID", "ItemID"),
+            Field("patID", "PatientID")
     )
 
     override fun getLabel(): Future<String> {
@@ -49,6 +50,6 @@ class LabResult(id:String): AsyncPersistentObject(id){
 
 }
 
-class Labor(id:String):Contact(id){
+class Labor(id: String) : Contact(id) {
 
 }

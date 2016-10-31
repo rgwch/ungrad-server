@@ -25,7 +25,6 @@ import io.vertx.core.json.JsonObject
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.TextField
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Paths
@@ -125,7 +124,7 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
         val doc: Document? = Communicator.indexManager.getDocument(o.getString("_id"))
         if (doc != null) {
             o.map.forEach {
-                if(it.key!="_id" && it.key!="payload") {
+                if (it.key != "_id" && it.key != "payload") {
                     val f = doc.getField(it.key)
                     if (f != null) {
                         doc.removeField(it.key)

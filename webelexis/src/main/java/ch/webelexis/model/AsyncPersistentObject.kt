@@ -209,7 +209,7 @@ abstract class AsyncPersistentObject(val id: String = uuid) : JsonUtil("""{"id":
     }
 
     companion object {
-        const val TIMEOUT = 60000L;
+        const val TIMEOUT = 60000L
         var defaultPersistence: IPersistence = InMemoryPersistence()
         val uuid: String
             get() = UUID.randomUUID().toString()

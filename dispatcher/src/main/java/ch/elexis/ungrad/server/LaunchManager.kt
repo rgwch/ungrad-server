@@ -15,7 +15,6 @@
 package ch.elexis.ungrad.server
 
 import ch.rgw.io.FileTool
-import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.get
 import ch.rgw.tools.json.json_ok
 import ch.rgw.tools.json.validate
@@ -56,7 +55,7 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
             val fname = FileTool.getFilename(fullname)
             val dirlist = Files.newDirectoryStream(Paths.get(pname), fname)
             // if the filespec contains wildcards, we consider only the first match
-            URL("file:"+dirlist.first().toAbsolutePath().toString())
+            URL("file:" + dirlist.first().toAbsolutePath().toString())
         } else {
             URL(verticle_url)
         }

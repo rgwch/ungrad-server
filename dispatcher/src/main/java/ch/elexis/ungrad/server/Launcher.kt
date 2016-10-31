@@ -15,7 +15,8 @@
 package ch.elexis.ungrad.server
 
 import ch.rgw.tools.CmdLineParser
-import ch.rgw.tools.json.*
+import ch.rgw.tools.json.JsonUtil
+import ch.rgw.tools.json.replace
 import ch.rgw.tools.net.NetTool
 import com.hazelcast.config.Config
 import io.vertx.core.DeploymentOptions
@@ -42,10 +43,10 @@ val config: JsonUtil by lazy {
 }
 var ip: String = ""
 val log = LoggerFactory.getLogger("Ungrad Launcher")
-val executionMode: String by lazy{
-    config.getString("mode","release")
+val executionMode: String by lazy {
+    config.getString("mode", "release")
 }
-val persistor=JsonFilePersistor()
+val persistor = JsonFilePersistor()
 
 fun main(args: Array<String>) {
     var restpointID = ""
@@ -74,7 +75,7 @@ fun main(args: Array<String>) {
     val hazel = Config()
     val vertxOptions = VertxOptions().setClustered(true)
             .setMaxEventLoopExecuteTime(5000000000L)
-            .setBlockedThreadCheckInterval(if(executionMode == "debug")300000L else 3000L)
+            .setBlockedThreadCheckInterval(if (executionMode == "debug") 300000L else 3000L)
 
     if (ip.isNotEmpty()) {
         val network = hazel.networkConfig
@@ -94,7 +95,7 @@ fun main(args: Array<String>) {
                     config.getJsonArray("launch", JsonArray()).forEach {
                         val jo = it as JsonObject
                         vertx.eventBus().send<JsonObject>(Restpoint.ADDR_LAUNCH, jo) { answer ->
-                            if(answer.failed()){
+                            if (answer.failed()) {
                                 log.error("failed launching ${jo.getString("name")}: ${answer.cause()}")
                             }
                         }
@@ -106,20 +107,20 @@ fun main(args: Array<String>) {
             Runtime.getRuntime().addShutdownHook(object : Thread() {
                 override fun run() {
                     println("Shutdown signal received")
-                    vertx.undeploy(restpointID){stopresult ->
-                        if(stopresult.failed()){
-                            log.error("graceful shutdown failed. "+stopresult.cause())
+                    vertx.undeploy(restpointID) { stopresult ->
+                        if (stopresult.failed()) {
+                            log.error("graceful shutdown failed. " + stopresult.cause())
                         }
                         log.warn("Ungrad server is shut down")
-                        vertx.close(){msg ->
-                            if(msg.succeeded()){
+                        vertx.close() { msg ->
+                            if (msg.succeeded()) {
                                 log.info("vertx closed")
-                            }else{
+                            } else {
                                 log.error("vertx not closed cleanly")
                             }
                         }
                     }
-                 }
+                }
             })
         } else {
             log.error("Could not set up vertx cluster: ${result.cause().message}")

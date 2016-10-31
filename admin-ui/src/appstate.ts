@@ -2,9 +2,9 @@
  * Copyright (c) 2016 by G. Weirich
  * Global state for the application
  */
-export class AppState{
-  bLoggedIn:Boolean=false;
-  selectedService={}
+export class AppState {
+  bLoggedIn:Boolean = false;
+  selectedService = {}
 }
 
 
@@ -15,7 +15,7 @@ export interface IService {
   params?:Array<IServiceParameter>
 }
 
-export interface IServiceParameter{
+export interface IServiceParameter {
   name:String
   caption: String
   type: String

@@ -40,8 +40,8 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
 
     init {
         df.timeZone = TimeZone.getTimeZone("UTC")
-        log.info("Origin is "+File(".").absolutePath)
-        log.info("Webroot is "+File(cfg.getString("webroot",".")).absolutePath)
+        log.info("Origin is " + File(".").absolutePath)
+        log.info("Webroot is " + File(cfg.getString("webroot", ".")).absolutePath)
         println("UIHandler launched")
     }
 
@@ -49,9 +49,9 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
         ctx.response().putHeader("Date", df.format(Date()))
         ctx.response().putHeader("Server", "Elexis Ungrad Server")
         val rawPath = ctx.request().path()
-        val reqpath=if(rawPath.startsWith(prefix)){
+        val reqpath = if (rawPath.startsWith(prefix)) {
             rawPath.substring(prefix.length)
-        }else{
+        } else {
             rawPath
         }
 
@@ -74,7 +74,7 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
                 ctx.response().putHeader("Content-Length", java.lang.Long.toString(modified.length.toLong()))
                 ctx.response().write(modified)
             } catch (e: Throwable) {
-                log.error("Could not return index.html",e )
+                log.error("Could not return index.html", e)
                 ctx.response().setStatusCode(501).end("internal Server error")
             } finally {
                 if (scanner != null) {
@@ -103,9 +103,9 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
         try {
             var rsc: RscObject
             val rawPath = req.request().path()
-            val addrPath=if(rawPath.startsWith(prefix)){
+            val addrPath = if (rawPath.startsWith(prefix)) {
                 rawPath.substring(prefix.length)
-            }else{
+            } else {
                 rawPath
             }
             val cOff = addrPath.indexOf("/custom/")
@@ -207,14 +207,14 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
             val attr = manifest.mainAttributes
             val timestamp = attr.getValue("timestamp")
             val dat = dm.parse(timestamp)
-            val jarfile=classPath.substring(4, classPath.lastIndexOf("!"))
+            val jarfile = classPath.substring(4, classPath.lastIndexOf("!"))
             // log.debug("Jarfile is $jarfile")
-            val jarURL=URL(jarfile)
+            val jarURL = URL(jarfile)
             // log.debug("URL of jar file is: ${jarURL.path}")
-            val urlcs=URLClassLoader(Array<URL>(1,{jarURL}))
-            val rsr=urlcs.findResource(root+name)
-            log.debug("Resource loader: trying to load (${root+name}) from $classPath with timestamp ${dat.toString()}")
-            return RscObject(rsr.openStream(),true,dat.time)
+            val urlcs = URLClassLoader(Array<URL>(1, { jarURL }))
+            val rsr = urlcs.findResource(root + name)
+            log.debug("Resource loader: trying to load (${root + name}) from $classPath with timestamp ${dat.toString()}")
+            return RscObject(rsr.openStream(), true, dat.time)
 
         } catch (e: IOException) {
             e.printStackTrace()
@@ -239,7 +239,8 @@ class UIHandler(val cfg: JsonObject) : Handler<RoutingContext> {
         }
 
     }
-    companion object{
-        val prefix="/ui"
+
+    companion object {
+        val prefix = "/ui"
     }
 }

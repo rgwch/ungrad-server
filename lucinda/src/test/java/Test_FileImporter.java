@@ -13,12 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.nio.file.Paths;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Created by gerry on 28.09.16.
@@ -28,23 +23,24 @@ public class Test_FileImporter {
     IndexManager indexManager;
 
     @Before
-    public void setUp(){
+    public void setUp() {
         FileTool.deltree("target/indexMgrTest");
 
-        Communicator.indexManager=new IndexManager("target/indexMgrTest","de");
-        indexManager= Communicator.indexManager;
+        Communicator.indexManager = new IndexManager("target/indexMgrTest", "de");
+        indexManager = Communicator.indexManager;
     }
+
     @After
-    public void tearDown(){
+    public void tearDown() {
         indexManager.shutDown();
         FileTool.deltree("target/indexMgrTest");
     }
 
     @Test
-    public void test_Odt(TestContext ctx){
-        FileImporter fi=new FileImporter(Paths.get("target/test-classes/testodt.odt"),new JsonObject());
-        Future<Integer> future=Future.future();
-        Async async=ctx.async();
+    public void test_Odt(TestContext ctx) {
+        FileImporter fi = new FileImporter(Paths.get("target/test-classes/testodt.odt"), new JsonObject());
+        Future<Integer> future = Future.future();
+        Async async = ctx.async();
         fi.handle(future.setHandler(result -> {
             Assert.assertTrue(result.succeeded());
             async.complete();
@@ -53,10 +49,10 @@ public class Test_FileImporter {
     }
 
     @Test
-    public void testPDF(TestContext ctx){
-        FileImporter fi=new FileImporter(Paths.get("target/test-classes/testpdf.pdf"),new JsonObject());
-        Future<Integer> future=Future.future();
-        Async async=ctx.async();
+    public void testPDF(TestContext ctx) {
+        FileImporter fi = new FileImporter(Paths.get("target/test-classes/testpdf.pdf"), new JsonObject());
+        Future<Integer> future = Future.future();
+        Async async = ctx.async();
         fi.handle(future.setHandler(result -> {
             Assert.assertTrue(result.succeeded());
             async.complete();
@@ -65,10 +61,10 @@ public class Test_FileImporter {
     }
 
     @Test
-    public void testFailure(TestContext ctx){
-        FileImporter fi=new FileImporter(Paths.get("target/test-classes/inexistent.xx"),new JsonObject());
-        Future<Integer> future=Future.future();
-        Async async=ctx.async();
+    public void testFailure(TestContext ctx) {
+        FileImporter fi = new FileImporter(Paths.get("target/test-classes/inexistent.xx"), new JsonObject());
+        Future<Integer> future = Future.future();
+        Async async = ctx.async();
         fi.handle(future.setHandler(result -> {
             Assert.assertTrue(result.failed());
             Assert.assertTrue(result.cause().getMessage().endsWith("not found"));
@@ -78,10 +74,10 @@ public class Test_FileImporter {
     }
 
     @Test
-    public void testOCR(TestContext ctx){
-        FileImporter fi=new FileImporter(Paths.get("target/test-classes/testocr.pdf"),new JsonObject());
-        Future<Integer> future=Future.future();
-        Async async=ctx.async();
+    public void testOCR(TestContext ctx) {
+        FileImporter fi = new FileImporter(Paths.get("target/test-classes/testocr.pdf"), new JsonObject());
+        Future<Integer> future = Future.future();
+        Async async = ctx.async();
         fi.handle(future.setHandler(result -> {
             Assert.assertTrue(result.succeeded());
             async.complete();
