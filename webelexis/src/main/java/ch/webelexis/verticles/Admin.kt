@@ -13,7 +13,6 @@
  */
 package ch.webelexis.verticles
 
-import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.json_error
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.Message

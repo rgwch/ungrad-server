@@ -1,7 +1,8 @@
 <template>
   <form>
     <div>
-    Verticle state: <md-switch md-checked.bind="running" md-label-on="running" md-label-off="stopped"></md-switch>
+      Verticle state:
+      <md-switch md-checked.bind="running" md-label-on="running" md-label-off="stopped"></md-switch>
       <hr/>
     </div>
     <div repeat.for="param of parameters">

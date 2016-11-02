@@ -5,14 +5,14 @@ import {ServiceSelected} from '../messages'
 import {Http} from '../http'
 import {MdToastService} from 'aurelia-materialize-bridge';
 
-@inject(EventAggregator, Http, MdToastService,BindingEngine)
+@inject(EventAggregator, Http, MdToastService, BindingEngine)
 export class ServiceDetail {
   serviceID:String = ""
   serviceCmd:String = ""
   serviceName:String = ""
   parameters:IServiceParameter[] = []
   originalParameters:IServiceParameter[] = []
-  modified:Boolean=false
+  modified:Boolean = false
 
   constructor(private ea, private api, private toast, private binding) {
     ea.subscribe(ServiceSelected, msg => {
@@ -22,8 +22,8 @@ export class ServiceDetail {
       this.serviceCmd = msg.service.address
       this.serviceName = msg.service.name
       this.originalParameters = []
-      for(var i=0;i<this.parameters.length;i++){
-        this.originalParameters[i]=this.clone(this.parameters[i])
+      for (var i = 0; i < this.parameters.length; i++) {
+        this.originalParameters[i] = this.clone(this.parameters[i])
       }
       /** observing arrays doesn't seem to work at this time. So we have to poll instead */
       //let subscription=this.binding.collectionObserver(this.parameters).subscribe(splices => console.log(splices))
@@ -40,7 +40,7 @@ export class ServiceDetail {
   get canWrite() {
     for (var i = 0; i < this.parameters.length; i++) {
       // console.log(this.parameters[i].value + " - " + this.originalParameters[i].value)
-      if ((this.parameters[i].writable==true) && this.parameters[i].value != this.originalParameters[i].value) {
+      if ((this.parameters[i].writable == true) && this.parameters[i].value != this.originalParameters[i].value) {
         return true
       }
     }
@@ -50,14 +50,14 @@ export class ServiceDetail {
   /**
    * Test if the currently displayed service has any writable properties (used to show/hide the "send" button)
    * @returns {boolean} true if at least one of the displayed properties is writable
-     */
-  get hasWritableProperties(){
-    var found=(this.parameters.find(parm =>{
+   */
+  get hasWritableProperties() {
+    var found = (this.parameters.find(parm => {
       return parm.writable
     }))
-    if(found == undefined) {
+    if (found == undefined) {
       return false
-    }else{
+    } else {
       return true
     }
   }
@@ -67,7 +67,7 @@ export class ServiceDetail {
    * @param typ type to check (all lowercase)
    * @param param the parameter in question
    * @returns {boolean} true if types match
-     */
+   */
   isType(typ:String, param:IServiceParameter):Boolean {
     return (param.type.toLowerCase() == typ)
   }
@@ -101,10 +101,10 @@ export class ServiceDetail {
    * @param param name of the parameter
    * @returns {string} the value
    */
-  getValue(param: IServiceParameter) {
+  getValue(param:IServiceParameter) {
     param.value = "..loading.."
     this.api.getParameterValue(this.serviceID, param).then(result => {
-      if(result['status']=="ok") {
+      if (result['status'] == "ok") {
         param.value = result['value']
         this.originalParameters.forEach(parameter => {
           if (parameter.name == param.name) {
@@ -112,7 +112,7 @@ export class ServiceDetail {
             return
           }
         })
-      }else{
+      } else {
         this.showFailToast(result.message)
       }
     })
@@ -134,12 +134,13 @@ export class ServiceDetail {
       //this.ea.publish(new ServiceSelected(JSON.parse(result.response).answer))
     })
   }
-  send(){
-    let self=this
-    for(let i=0;i<this.parameters.length;i++){
-      if(this.parameters[i].value!=this.originalParameters[i].value){
-        this.api.setParameterValue(this.serviceID,this.parameters[i]).then(result =>{
-          if(result.status=="ok"){
+
+  send() {
+    let self = this
+    for (let i = 0; i < this.parameters.length; i++) {
+      if (this.parameters[i].value != this.originalParameters[i].value) {
+        this.api.setParameterValue(this.serviceID, this.parameters[i]).then(result => {
+          if (result.status == "ok") {
             self.showSuccessToast(self.parameters[i].name)
           }
         })
@@ -160,8 +161,8 @@ export class ServiceDetail {
     this.toast.show('Success:' + msg, 4000, 'rounded blue');
   }
 
-  showFailToast(msg){
-    this.toast.show('Failed: '+ msg,4000, 'red');
+  showFailToast(msg) {
+    this.toast.show('Failed: ' + msg, 4000, 'red');
   }
 
   hello() {

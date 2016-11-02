@@ -13,11 +13,12 @@ public class Test_Restpoint {
     static Vertx vertx;
 
     @BeforeClass
-    public static void init(){
-        vertx=Vertx.vertx();
+    public static void init() {
+        vertx = Vertx.vertx();
     }
+
     @Test
-    public void launch(TestContext ctx){
+    public void launch(TestContext ctx) {
 
     }
 }

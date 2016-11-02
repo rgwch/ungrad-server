@@ -13,7 +13,6 @@
  */
 package ch.webelexis.model
 
-import ch.rgw.tools.json.get
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -129,16 +128,16 @@ class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence 
     }
 
     override fun find(template: AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
-        val sql=StringBuilder()
+        val sql = StringBuilder()
         sql.append("SELECT * FROM ${template.collection} WHERE ")
-        for((key,value) in template.map){
-        val rname=template.fieldnames.find {
-                    it.label == key
+        for ((key, value) in template.map) {
+            val rname = template.fieldnames.find {
+                it.label == key
             }
-            sql.append("$rname LIKE ${value.toString().replace('*','%')} AND ")
+            sql.append("$rname LIKE ${value.toString().replace('*', '%')} AND ")
         }
         sql.append("deleted='0';")
-        sendQuery(sql.toString()){
+        sendQuery(sql.toString()) {
             handler(Future.succeededFuture(it.result().rows))
         }
     }
@@ -216,7 +215,7 @@ class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence 
         val ret = "INSERT INTO ${obj.collection} (" + fields.toString() + "deleted,lastupdate) VALUES (" +
                 values.toString() + "'0',$now) ON DUPLICATE KEY UPDATE " + upd.toString() +
                 "deleted='0', lastupdate=$now;"
-        return ret;
+        return ret
     }
 
 }

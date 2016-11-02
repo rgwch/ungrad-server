@@ -13,7 +13,6 @@
  */
 package ch.rgw.lucinda
 
-import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.json_error
 import ch.rgw.tools.json.json_ok
 import io.vertx.core.Future
@@ -28,20 +27,20 @@ import io.vertx.core.json.JsonObject
 object Admin : Handler<Message<JsonObject>> {
     override fun handle(message: Message<JsonObject>) {
         val msg = message.body()
-        val result:Future<Any> = when(msg.getString("command")) {
+        val result: Future<Any> = when (msg.getString("command")) {
             "getParam" -> getParam(msg)
             "setParam" -> setParam(msg)
             "exec" -> exec(msg)
             else -> Future.failedFuture("Not implemented ${msg.getString("command")}")
         }
-        if(result.failed()){
+        if (result.failed()) {
             message.reply(json_error("illegal function call"))
-        }else {
-            message.reply(json_ok().put("value",result.result()))
+        } else {
+            message.reply(json_ok().put("value", result.result()))
         }
     }
 
-    fun exec(msg: JsonObject) : Future<Any>{
+    fun exec(msg: JsonObject): Future<Any> {
         return Future.failedFuture("Not implemented")
     }
 
@@ -54,24 +53,24 @@ object Admin : Handler<Message<JsonObject>> {
             else -> ""
 
         }
-        if(value==""){
+        if (value == "") {
             ret.fail("unknown parameter")
-        }else{
+        } else {
             ret.complete(value)
         }
         return ret
     }
 
     fun setParam(msg: JsonObject): Future<Any> {
-        val ret=Future.future<Any>()
-        val param=msg.getString("param")
-        val value=msg.getValue("value")
+        val ret = Future.future<Any>()
+        val param = msg.getString("param")
+        val value = msg.getValue("value")
 
-        lucindaConfig.put(when(param){
+        lucindaConfig.put(when (param) {
             "indexdir" -> "fs_indexdir"
             "datadir" -> "fs_basedir"
             else -> "error"
-        },value)
+        }, value)
         saveConfig()
         ret.complete(true)
         return ret

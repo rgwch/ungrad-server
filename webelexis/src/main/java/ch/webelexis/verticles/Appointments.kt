@@ -14,7 +14,9 @@
 package ch.webelexis.verticles
 
 import ch.rgw.tools.TimeTool
-import ch.rgw.tools.json.*
+import ch.rgw.tools.json.json_create
+import ch.rgw.tools.json.json_error
+import ch.rgw.tools.json.json_ok
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonArray
@@ -69,7 +71,7 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
                             val r = rs.get(0)
                             ret.complete(json_ok().put("value", r.getLong(0)))
                         } else {
-                            ret.complete(json_ok().put("value",0))
+                            ret.complete(json_ok().put("value", 0))
                         }
                     } else {
                         ret.fail(result.cause())
@@ -85,7 +87,7 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
                             ret.complete(json_ok().put("value", r.getLong(0)))
 
                         } else {
-                            ret.complete(json_ok().put("value",0))
+                            ret.complete(json_ok().put("value", 0))
                         }
                     } else {
                         ret.fail(result.cause())
@@ -104,13 +106,13 @@ class Appointments : WebelexisVerticle(ID, CONTROL_ADDR) {
                         "caption:Number of appointments",
                         "type:number",
                         "value:${0}")
-                        .put("writable",false)
+                        .put("writable", false)
                 )
                 .add(json_create("name:deletedEntries",
                         "caption:Number of deleted entries",
                         "type:number",
                         "value:${0}")
-                        .put("writable",false)
+                        .put("writable", false)
                 )
         return ret
 

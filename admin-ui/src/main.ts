@@ -1,7 +1,7 @@
 import {Aurelia} from 'aurelia-framework';
 import 'materialize-css'
 
-export function configure(aurelia: Aurelia) {
+export function configure(aurelia:Aurelia) {
   aurelia.use
     .standardConfiguration()
     .developmentLogging()

@@ -14,7 +14,10 @@
 
 package ch.elexis.ungrad.server
 
-import ch.rgw.tools.json.*
+import ch.rgw.tools.json.get
+import ch.rgw.tools.json.json_create
+import ch.rgw.tools.json.json_error
+import ch.rgw.tools.json.validate
 import io.vertx.core.Handler
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
@@ -24,7 +27,7 @@ import java.util.*
 /**
  * Created by gerry on 05.09.16.
  */
-class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
+class Registrar(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
     val handlers = HashMap<String, String>()
     val servers = HashMap<String, JsonObject>()
     val params = "\\/:[a-z]+".toRegex()
@@ -83,6 +86,7 @@ class Registrar(val restPoint:Restpoint): Handler<Message<JsonObject>> {
             }
         }
     }
+
     /**
      * Check if the current context's user has the given role. If so, call action(), if not, send an error message.
      */

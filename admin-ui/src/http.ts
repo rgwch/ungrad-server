@@ -4,7 +4,6 @@ import {IService} from './appstate'
 import {IServiceParameter} from "./appstate";
 
 
-
 export class Http {
   private client:HttpClient
 
@@ -38,18 +37,18 @@ export class Http {
     })
   }
 
-  getParameterValue(serviceID:String, param:IServiceParameter){
-    return new Promise(resolve =>{
-      this.get(`/api/services/${serviceID}/getParam/${param.name}`, function(response){
+  getParameterValue(serviceID:String, param:IServiceParameter) {
+    return new Promise(resolve => {
+      this.get(`/api/services/${serviceID}/getParam/${param.name}`, function (response) {
         resolve(JSON.parse(response.response))
       })
     })
   }
 
-  setParameterValue(serviceID:String,param:IServiceParameter){
-    return new Promise(resolve =>{
-      param['service']=serviceID
-      this.client.post("/api/services/setParam",param).then(response =>{
+  setParameterValue(serviceID:String, param:IServiceParameter) {
+    return new Promise(resolve => {
+      param['service'] = serviceID
+      this.client.post("/api/services/setParam", param).then(response => {
         resolve(JSON.parse(response.response))
       }).catch(error => {
         alert(error.response)

@@ -14,7 +14,10 @@
 
 package ch.elexis.ungrad.server
 
-import ch.rgw.tools.json.*
+import ch.rgw.tools.json.JsonUtil
+import ch.rgw.tools.json.get
+import ch.rgw.tools.json.json_create
+import ch.rgw.tools.json.json_ok
 import io.vertx.core.*
 import io.vertx.core.eventbus.Message
 import io.vertx.core.http.HttpServer
@@ -42,35 +45,35 @@ import java.util.*
  * Created by gerry on 06.07.16.
  */
 
-class Restpoint(val persist:IPersistor) : AbstractVerticle() {
+class Restpoint(val persist: IPersistor) : AbstractVerticle() {
     val API = "1.0"
     val log = LoggerFactory.getLogger("Restpoint")
     val verticles = HashMap<String, String>()
     val router: Router by lazy {
         Router.router(vertx)
     }
-    val registrar=Registrar(this)
-    val launchManager=LaunchManager(this)
-    lateinit var httpServer:HttpServer
+    val registrar = Registrar(this)
+    val launchManager = LaunchManager(this)
+    lateinit var httpServer: HttpServer
 
     override fun start(future: Future<Void>) {
         super.start()
         vertx.eventBus().consumer<JsonObject>(ADDR_REGISTER, registrar)
         vertx.eventBus().consumer<JsonObject>(ADDR_LAUNCH, launchManager)
-        vertx.eventBus().consumer<JsonObject>(ADDR_LOG){msg->
-            when(msg.body().getString("level")){
+        vertx.eventBus().consumer<JsonObject>(ADDR_LOG) { msg ->
+            when (msg.body().getString("level")) {
                 "debug" -> log.debug(msg.body().getString("message"))
-                "info" ->log.info(msg.body().getString("message"))
-                "warn" ->log.warn(msg.body().getString("message"))
-                "error"->log.error(msg.body().getString("message"))
+                "info" -> log.info(msg.body().getString("message"))
+                "warn" -> log.warn(msg.body().getString("message"))
+                "error" -> log.error(msg.body().getString("message"))
                 else -> log.error("bad option for logging ")
             }
         }
-        vertx.eventBus().consumer<JsonObject>(ADDR_CONFIG_GET){msg ->
+        vertx.eventBus().consumer<JsonObject>(ADDR_CONFIG_GET) { msg ->
             msg.reply(persist.read(msg.body().getString("id")))
         }
-        vertx.eventBus().consumer<JsonObject>(ADDR_CONFIG_SET){
-            persist.write(it.body().getString("id"),JsonUtil(it.body().getJsonObject("value")))
+        vertx.eventBus().consumer<JsonObject>(ADDR_CONFIG_SET) {
+            persist.write(it.body().getString("id"), JsonUtil(it.body().getJsonObject("value")))
         }
         /*
          * Create the Router and HTTP Server and add some handlers for session management and authentication/authorizastion
@@ -158,7 +161,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
                         val serviceDesc = registrar.servers[serverID]
                         if (serviceDesc != null) {
                             val serviceAddr = serviceDesc.getString("address")
-                            cmd.put("command","setParam")
+                            cmd.put("command", "setParam")
                             vertx.eventBus().send<JsonObject>(serviceAddr, cmd, ResultHandler(ctx))
                         } else {
                             ctx.response().setStatusCode(404).end("${serverID} not found")
@@ -166,8 +169,8 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
                     }
                 }
             }
-            router.get("/api/services/:service/exec/:action").handler{ ctx ->
-                registrar.checkAuth(ctx, "admin"){
+            router.get("/api/services/:service/exec/:action").handler { ctx ->
+                registrar.checkAuth(ctx, "admin") {
                     val serverID = ctx.request().getParam("service")
                     val serviceDesc = registrar.servers[serverID]
                     if (serviceDesc != null) {
@@ -182,7 +185,7 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
             // calls to other resources go to the web interface
             router.route("/ui/*").handler(UIHandler(config()))
             val hso = HttpServerOptions().setCompressionSupported(true).setIdleTimeout(0).setTcpKeepAlive(true)
-            httpServer=vertx.createHttpServer(hso)
+            httpServer = vertx.createHttpServer(hso)
                     .requestHandler { request -> router.accept(request) }
                     .listen(config().getInteger("rest_port", 2016)) {
                         result ->
@@ -203,19 +206,19 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
     /**
      * Stop all Verticles previously launched by this RestPoint.
      */
-    override fun stop(stopResult:Future<Void>) {
-        val futures=ArrayList<Future<Void>>()
+    override fun stop(stopResult: Future<Void>) {
+        val futures = ArrayList<Future<Void>>()
         httpServer.close()
-        for((name, deploymentID) in verticles){
-            val undeployResult= Future.future<Void>()
+        for ((name, deploymentID) in verticles) {
+            val undeployResult = Future.future<Void>()
             log.info("stopping ${name} - ${deploymentID}")
             futures.add(undeployResult)
-            vertx.undeploy(deploymentID,undeployResult.completer())
+            vertx.undeploy(deploymentID, undeployResult.completer())
 
         }
-        if(futures.isEmpty()){
+        if (futures.isEmpty()) {
             stopResult.complete()
-        }else {
+        } else {
             CompositeFuture.all(futures as List<Future<*>>?).setHandler { result ->
                 if (result.succeeded()) {
                     stopResult.complete()
@@ -232,13 +235,12 @@ class Restpoint(val persist:IPersistor) : AbstractVerticle() {
     }
 
 
-
     companion object {
         val ADDR_REGISTER = "ch.elexis.ungrad.server.register"
         val ADDR_LAUNCH = "ch.elexis.ungrad.server.launch"
-        val ADDR_CONFIG_GET="ch.elexis.ungrad.server.getconfig"
-        val ADDR_CONFIG_SET="ch.elexis.ungrad.server.setconfig"
-        val ADDR_LOG="ch.elexis.ungrad.server.log"
+        val ADDR_CONFIG_GET = "ch.elexis.ungrad.server.getconfig"
+        val ADDR_CONFIG_SET = "ch.elexis.ungrad.server.setconfig"
+        val ADDR_LOG = "ch.elexis.ungrad.server.log"
         val AUTH_ERR = "bad username or password"
         val authProvider: AccessController by lazy {
             val users = config.getJsonObject("users") ?: JsonObject()
