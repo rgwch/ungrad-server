@@ -9,5 +9,6 @@ mkdir -p ${dispatcher}/src/main/resources/web/dist
 gulp export
 cp -r export/* ${dispatcher}/src/main/resources/web/
 cd ${rootdir}
-mvn clean package
+mvn clean package -Dmaven.test.skip=true
+
 
