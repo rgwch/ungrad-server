@@ -33,6 +33,11 @@ class Registrar(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
     val params = "\\/:[a-z]+".toRegex()
 
 
+    fun stop(){
+        handlers.clear()
+        servers.clear()
+    }
+
     override fun handle(msg: Message<JsonObject>) {
 
         val j = msg.body()

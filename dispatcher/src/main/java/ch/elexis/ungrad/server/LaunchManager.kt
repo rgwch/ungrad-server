@@ -18,9 +18,7 @@ import ch.rgw.io.FileTool
 import ch.rgw.tools.json.get
 import ch.rgw.tools.json.json_ok
 import ch.rgw.tools.json.validate
-import io.vertx.core.DeploymentOptions
-import io.vertx.core.Handler
-import io.vertx.core.Verticle
+import io.vertx.core.*
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
 import java.io.File
@@ -28,6 +26,7 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.*
 
 /**
  * Created by gerry on 05.09.16.
@@ -38,6 +37,8 @@ import java.nio.file.Paths
  * * config: JsonObject containing configuration for the Verticle
  */
 class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
+    val verticles = HashMap<String, String>()
+
     override fun handle(msg: Message<JsonObject>) {
         val jo = msg.body()
         if (!jo.validate("name:string", "url:string")) {
@@ -69,7 +70,7 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
                 if (verticle_class == null) {
                     restPoint.vertx.deployVerticle(file.absolutePath, options) { handler ->
                         if (handler.succeeded()) {
-                            restPoint.verticles.put(verticle_name, handler.result())
+                            verticles.put(verticle_name, handler.result())
                             log.info("launched uncompiled Verticle ${verticle_name}")
                             msg.reply(json_ok())
                         } else {
@@ -84,7 +85,7 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
                     val verticle = clazz.newInstance() as? Verticle
                     restPoint.vertx.deployVerticle(verticle, options) { handler ->
                         if (handler.succeeded()) {
-                            restPoint.verticles.put(verticle_name, handler.result())
+                            verticles.put(verticle_name, handler.result())
                             log.info("launched $verticle_name")
                             msg.reply(json_ok())
                         } else {
@@ -97,6 +98,32 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
             } catch(ex: Exception) {
                 log.error(" *** Could not launch Verticle $verticle_url", ex)
                 msg.fail(2, ex.message)
+            }
+        }
+    }
+
+    fun undeployAll(vertx:Vertx,stopResult:Future<Void>){
+        val futures = ArrayList<Future<Void>>()
+
+        for ((name, deploymentID) in verticles) {
+            if(!deploymentID.isNullOrBlank()) {
+                val undeployResult = Future.future<Void>()
+                log.info("stopping ${name} - ${deploymentID}")
+                futures.add(undeployResult)
+                vertx.undeploy(deploymentID, undeployResult.completer())
+            }
+
+        }
+        if (futures.isEmpty()) {
+            stopResult.complete()
+        } else {
+            CompositeFuture.all(futures as List<Future<*>>?).setHandler { result ->
+                //if (result.succeeded()) {
+                    stopResult.complete()
+                /*} else {
+                    log.error("fail: ${result.toString()}; ${result.result()};", result.cause())
+                    stopResult.fail(result.cause())
+                }*/
             }
         }
     }

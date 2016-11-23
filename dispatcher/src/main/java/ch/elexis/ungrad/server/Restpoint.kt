@@ -48,7 +48,6 @@ import java.util.*
 class Restpoint(val persist: IPersistor) : AbstractVerticle() {
     val API = "1.0"
     val log = LoggerFactory.getLogger("Restpoint")
-    val verticles = HashMap<String, String>()
     val router: Router by lazy {
         Router.router(vertx)
     }
@@ -207,27 +206,9 @@ class Restpoint(val persist: IPersistor) : AbstractVerticle() {
      * Stop all Verticles previously launched by this RestPoint.
      */
     override fun stop(stopResult: Future<Void>) {
-        val futures = ArrayList<Future<Void>>()
         httpServer.close()
-        for ((name, deploymentID) in verticles) {
-            val undeployResult = Future.future<Void>()
-            log.info("stopping ${name} - ${deploymentID}")
-            futures.add(undeployResult)
-            vertx.undeploy(deploymentID, undeployResult.completer())
-
-        }
-        if (futures.isEmpty()) {
-            stopResult.complete()
-        } else {
-            CompositeFuture.all(futures as List<Future<*>>?).setHandler { result ->
-                if (result.succeeded()) {
-                    stopResult.complete()
-                } else {
-                    log.error("fail: ${result.toString()}; ${result.result()}; ${result.cause().message}")
-                    stopResult.fail(result.cause())
-                }
-            }
-        }
+        registrar.stop()
+        launchManager.undeployAll(vertx,stopResult)
     }
 
     fun sayError(ctx: RoutingContext, errno: Int, errmsg: String) {
