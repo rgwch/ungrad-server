@@ -250,7 +250,7 @@ class Restpoint(val persist: IPersistor) : AbstractVerticle() {
                 }
             } else {
                 // message was not handled or returned correctly -> internal server error
-                log.error(result.result().body()?.encodePrettily() ?: "error", result.cause())
+                log.error(result.result()?.body()?.encodePrettily() ?: "error", result.cause())
                 ctx.response().setStatusCode(500).end(result.cause().message)
             }
         }
