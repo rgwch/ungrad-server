@@ -4,16 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>lucinda</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <artifactId>backup</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
     <parent>
         <groupId>ch.rgw</groupId>
         <artifactId>ungrad-server</artifactId>
         <version>0.2.0-SNAPSHOT</version>
     </parent>
     <properties>
-        <lucene-version>6.0.0</lucene-version>
-        <tika-version>1.12</tika-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <build>
@@ -68,35 +66,9 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>${lucene-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>${lucene-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queryparser</artifactId>
-            <version>${lucene-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-parsers</artifactId>
-            <version>${tika-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.4</version>
-        </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-unit</artifactId>
-            <version>${vertx-version}</version>
-            <scope>test</scope>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-glacier</artifactId>
+            <version>1.11.61</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>

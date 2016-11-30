@@ -150,5 +150,6 @@
         <module>lucinda</module>
         <module>webelexis</module>
         <module>dispatcher</module>
+        <module>backup</module>
     </modules>
 </project>

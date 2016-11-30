@@ -52,8 +52,16 @@
         <processorPath useClasspath="true" />
         <module name="webelexis" />
       </profile>
+      <profile default="false" name="Annotation profile for backup" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="backup" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
+      <module name="backup" target="1.8" />
       <module name="dispatcher" target="1.8" />
       <module name="lucinda" target="1.8" />
       <module name="tester" target="1.8" />
