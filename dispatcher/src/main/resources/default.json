@@ -28,6 +28,13 @@ The format is strict json, but comments are allowed like this one here.
             "name":"Server info",
             "url": "file:./tester/target/ungrad-server-tester-*.jar",
             "verticle": "ch.elexis.ungrad.server_test.SelfTest"
+        },{
+            "name": "Backup",
+            "url": "file:./backup/target/backup-*-SNAPSHOT.jar",
+            "verticle":"ch.rgw.ungrad_backup.Glacier",
+            "config":{
+
+            }
         },
         {
             "name":"Lucinda",

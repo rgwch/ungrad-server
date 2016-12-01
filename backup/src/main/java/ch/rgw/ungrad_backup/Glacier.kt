@@ -5,8 +5,13 @@ package ch.rgw.ungrad_backup
  */
 import com.amazonaws.ClientConfiguration
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
 
-class Glacier{
+class Glacier : AbstractVerticle(){
     val profileCredentialsProvider=ProfileCredentialsProvider()
 
+    override fun start(startResult: Future<Void>){
+
+    }
 }
