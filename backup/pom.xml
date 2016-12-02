@@ -86,6 +86,11 @@
             <artifactId>jsch</artifactId>
             <version>0.1.54</version>
         </dependency>
+        <dependency>
+            <groupId>org.tukaani</groupId>
+            <artifactId>xz</artifactId>
+            <version>1.6</version>
+        </dependency>
     </dependencies>
 
 </project>

@@ -12,7 +12,7 @@ import java.io.*
 /**
  * Created by gerry on 02.12.16.
  */
-class Scp(val cfg: JsonObject, val subdir: String = "") {
+class Scp(val cfg: JsonObject) {
     val js = JSch()
 
     val log = LoggerFactory.getLogger("Ungrad SCP")
@@ -21,8 +21,8 @@ class Scp(val cfg: JsonObject, val subdir: String = "") {
     lateinit var session: Session
 
     private fun open(command: String): ChannelExec {
-        session = js.getSession(cfg["user"], cfg["host"], cfg.getInteger("port", 22))
-        session.userInfo = SCPUser(cfg["password"]!!)
+        session = js.getSession(cfg["scp-user"], cfg["scp-host"], cfg.getInteger("scp-port", 22))
+        session.userInfo = SCPUser(cfg["scp-pwd"]!!)
         session.connect()
         val channel = session.openChannel("exec") as ChannelExec
         channel.setCommand(command)
@@ -48,7 +48,8 @@ class Scp(val cfg: JsonObject, val subdir: String = "") {
     }
 
     fun transmit(file: File): Boolean {
-        val cmd = if (subdir.isEmpty()){
+        val subdir=cfg["scp-directory"]
+        val cmd = if (subdir==null){
             "scp "
         }else{
             "mkdir $subdir && cd $subdir && scp "
@@ -81,7 +82,12 @@ class Scp(val cfg: JsonObject, val subdir: String = "") {
     }
 
     fun fetch(filename: String, destDir: File): File? {
-        val channel = open("scp -f ${subdir}/$filename")
+        val cmd=if(cfg["scp-directory"]==null){
+            "scp -f $filename"
+        }else{
+            "scp -f ${cfg["scp-directory"]}/$filename"
+        }
+        val channel = open(cmd)
         out.write(0)
         out.flush()
         var c = 0

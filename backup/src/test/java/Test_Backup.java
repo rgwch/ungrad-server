@@ -5,6 +5,7 @@ import ch.rgw.ungrad_backup.Scp;
 import io.vertx.core.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -68,8 +69,8 @@ public class Test_Backup {
         File test=new File(testDir,"test");
         FileTool.writeRandomFile(test,2000L);
         JsonObject cfg=new JsonObject();
-        cfg.put("user","dummy").put("password","dummy").put("host","192.168.0.1");
-        Scp scp=new Scp(cfg,"other");
+        cfg.put("scp-user","dummy").put("scp-pwd","dummy").put("scp-host","192.168.0.1").put("scp-directory","scpbackup");
+        Scp scp=new Scp(cfg);
         Assert.assertTrue(scp.transmit(test));
         test.renameTo(new File(testDir,"orig"));
         File fetched=scp.fetch("test",new File(testDir));
