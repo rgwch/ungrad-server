@@ -15,7 +15,7 @@ class Reducer {
         }.sortedArrayWith(sorter)
         if(files.size>0){
            val toKeep=files.get(0)
-            val archived=toKeep.copyTo(archive,true)
+            val archived=toKeep.copyTo(File(archive,toKeep.name),true)
             files.forEach { file -> file.delete() }
             return archived;
         }
