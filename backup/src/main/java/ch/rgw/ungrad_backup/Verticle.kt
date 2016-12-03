@@ -14,8 +14,15 @@ class Verticle :AbstractVerticle() {
     val CONTROL_ADDRESS=BASE_ADDRESS+".admin"
     val ID="ch.rgw.ungrad.backup"
     val API="1.0"
+    val FUNC_REDUCE=RegSpec(BASE_ADDRESS+".reduce","/reduce/:sourcedir/:destfile","admin","GET")
+    val FUNC_CHOP=RegSpec(BASE_ADDRESS+".chop","/chop/:sourcefile/:destdir","admin","GET")
+    val FUNC_SCP=RegSpec(BASE_ADDRESS+"scp","/scp/:sourcedir","admin","GET")
+
 
     override fun start() {
+        register(FUNC_REDUCE)
+        register(FUNC_CHOP)
+        register(FUNC_SCP)
 
     }
 
