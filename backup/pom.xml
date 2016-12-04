@@ -91,6 +91,10 @@
             <artifactId>xz</artifactId>
             <version>1.6</version>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-unit</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

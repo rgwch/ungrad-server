@@ -4,88 +4,109 @@ Default configuration file for ungrad server. Please don't edit this file, but c
 The format is strict json, but comments are allowed like this one here.
 */
 {
-    "webroot": "web", // where to serve static files from - .jar mode. Try "admin-ui" for IDE mode.
-    "rest_port": 2016,
-    "users":{
-        "admin":{
-            "password": "secret",
-            "roles": ["admin","user"]
-        },
-        "leya":{
-            "password": "han",
-            "roles":["princess","guest"]
-        },
-        "default":{
-            "roles":["guest"]
-        }
+  "webroot": "web",
+  // where to serve static files from - .jar mode. Try "admin-ui" for IDE mode.
+  "rest_port": 2016,
+  "users": {
+    "admin": {
+      "password": "secret",
+      "roles": [
+        "admin",
+        "user"
+      ]
     },
-    /*
-    Configure all verticles to launch at startup. 'URL' can be a location on the local harddisk, or a location in the internet.
-    'config' is a verticle-specific configuration object which is transmitted to the verticle without modifications.
-    */
-    "launch":[
-        {
-            "name":"Server info",
-            "url": "file:./tester/target/ungrad-server-tester-*.jar",
-            "verticle": "ch.elexis.ungrad.server_test.SelfTest"
-        },{
-            "name": "Backup",
-            "url": "file:./backup/target/backup-*-SNAPSHOT.jar",
-            "verticle":"ch.rgw.ungrad_backup.Verticle",
-            "config":{
-                "collected":"target/test/files",
-                "scp-user":"dumpledore",
-                "scp-pwd":"albus",
-                "scp-host":"remote.backup.invalid",
-                "scp-directory":"praxisbackups",
-                "scp-port":22
-            }
+    "leya": {
+      "password": "han",
+      "roles": [
+        "princess",
+        "guest"
+      ]
+    },
+    "default": {
+      "roles": [
+        "guest"
+      ]
+    }
+  },
+  /*
+  Configure all verticles to launch at startup. 'URL' can be a location on the local harddisk, or a location in the internet.
+  'config' is a verticle-specific configuration object which is transmitted to the verticle without modifications.
+  */
+  "launch": [
+    {
+      "name": "Server info",
+      "url": "file:./tester/target/ungrad-server-tester-*.jar",
+      "verticle": "ch.elexis.ungrad.server_test.SelfTest"
+    },
+    {
+      "name": "Backup",
+      "url": "file:./backup/target/backup-*-SNAPSHOT.jar",
+      "verticle": "ch.rgw.ungrad_backup.Verticle",
+      "config": {
+        "scp-default": {
+          "collected": "target/test/files",
+          "user": "dumpledore",
+          "password": "albus",
+          "host": "remote.backup.invalid",
+          "directory": "praxisbackups",
+          "port": 22
         },
-        {
-            "name":"Lucinda",
-            "url": "file:./lucinda/target/lucinda-*.jar",
-            "verticle": "ch.rgw.lucinda.Communicator",
-            "config": {
-                "default_language":"de",
-                "msg_prefix":"ch.rgw.lucinda",
-                "fs_basedir":"target/store",
-                "fs_indexdir":"target/store/index",
-                "fs_watch":"target/store/inbox",
-                "fs_import":"target/store/inbox",
-                "ocr":"tesseract"
-            }
-        },
-        {
-            "name":"Patients",
-            "url":"file:./webelexis/target/webelexis-*.jar",
-            "verticle":"ch.webelexis.verticles.Patients",
-            "config":{
-                "host":"localhost",
-                "database":"elexis",
-                "charset":"utf-8",
-                "username":"elexisuser",
-                "password":"elexispassword"
-            }
-        },{
-            "name":"Agenda",
-            "url":"file:./webelexis/target/webelexis-*.jar",
-            "verticle":"ch.webelexis.verticles.Appointments",
-            "config":{
-                "host":"localhost",
-                "database":"elexis",
-                "charset":"utf-8",
-                "username":"elexisuser",
-                "password":"elexispassword"
-            }
-        },
-        {
-            "name":"Articles",
-            "url":"file:./article/src/medical_articles.js",
-            "config":{
-                "epha":"/some/where/cli-robot"
-            }
+        "glacier-default": {
+          "collected": "target/test/files",
+          "user": "dumbledore",
+          "vault": "hogwarts",
+          "description": "some secret files ",
+          "region": "glacier.eu-west-1.amazonaws.com",
+          "accountID": "1234567",
+          "secretKey": "007007007",
+          "accesskey": "111111111"
         }
-    ]
-
-
+      }
+    },
+    {
+      "name": "Lucinda",
+      "url": "file:./lucinda/target/lucinda-*.jar",
+      "verticle": "ch.rgw.lucinda.Communicator",
+      "config": {
+        "default_language": "de",
+        "msg_prefix": "ch.rgw.lucinda",
+        "fs_basedir": "target/store",
+        "fs_indexdir": "target/store/index",
+        "fs_watch": "target/store/inbox",
+        "fs_import": "target/store/inbox",
+        "ocr": "tesseract"
+      }
+    },
+    {
+      "name": "Patients",
+      "url": "file:./webelexis/target/webelexis-*.jar",
+      "verticle": "ch.webelexis.verticles.Patients",
+      "config": {
+        "host": "localhost",
+        "database": "elexis",
+        "charset": "utf-8",
+        "username": "elexisuser",
+        "password": "elexispassword"
+      }
+    },
+    {
+      "name": "Agenda",
+      "url": "file:./webelexis/target/webelexis-*.jar",
+      "verticle": "ch.webelexis.verticles.Appointments",
+      "config": {
+        "host": "localhost",
+        "database": "elexis",
+        "charset": "utf-8",
+        "username": "elexisuser",
+        "password": "elexispassword"
+      }
+    },
+    {
+      "name": "Articles",
+      "url": "file:./article/src/medical_articles.js",
+      "config": {
+        "epha": "/some/where/cli-robot"
+      }
+    }
+  ]
 }

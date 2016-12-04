@@ -12,8 +12,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="Maven: com.jcraft:jsch:0.1.54" level="project" />
-    <orderEntry type="library" name="Maven: org.tukaani:xz:1.6" level="project" />
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-glacier:1.11.61" level="project" />
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-sqs:1.11.61" level="project" />
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-sns:1.11.61" level="project" />
@@ -33,6 +31,7 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.jetbrains.kotlin:kotlin-test:1.0.4" level="project" />
     <orderEntry type="library" name="Maven: com.jcraft:jsch:0.1.54" level="project" />
     <orderEntry type="library" name="Maven: org.tukaani:xz:1.6" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: io.vertx:vertx-unit:3.3.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jetbrains.kotlin:kotlin-test-junit:1.0.4" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-core:3.3.3" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-common:4.1.5.Final" level="project" />

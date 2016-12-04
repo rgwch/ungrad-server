@@ -21,8 +21,8 @@ class Scp(val cfg: JsonObject) {
     lateinit var session: Session
 
     private fun open(command: String): ChannelExec {
-        session = js.getSession(cfg["scp-user"], cfg["scp-host"], cfg.getInteger("scp-port", 22))
-        session.userInfo = SCPUser(cfg["scp-pwd"]!!)
+        session = js.getSession(cfg["user"], cfg["host"], cfg.getInteger("port", 22))
+        session.userInfo = SCPUser(cfg["password"]!!)
         session.connect()
         val channel = session.openChannel("exec") as ChannelExec
         channel.setCommand(command)
@@ -48,7 +48,7 @@ class Scp(val cfg: JsonObject) {
     }
 
     fun transmit(file: File): Boolean {
-        val subdir=cfg["scp-directory"]
+        val subdir=cfg["directory"]
         val cmd = if (subdir==null){
             "scp "
         }else{
@@ -82,10 +82,10 @@ class Scp(val cfg: JsonObject) {
     }
 
     fun fetch(filename: String, destDir: File): File? {
-        val cmd=if(cfg["scp-directory"]==null){
+        val cmd=if(cfg["directory"]==null){
             "scp -f $filename"
         }else{
-            "scp -f ${cfg["scp-directory"]}/$filename"
+            "scp -f ${cfg["directory"]}/$filename"
         }
         val channel = open(cmd)
         out.write(0)
