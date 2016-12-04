@@ -21,6 +21,15 @@ import java.io.InputStream
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
 
+/**
+ * Store arbitrary data on cheap "slow" storage provided by Amazon Glacier
+ * The constructor takes a JsonObject which must contain at least the following fields:
+ * * * user - the AmazonAWS user
+ * * accountID - the accountID of the holder of the Amazon account
+ * * accessKey - the public accessKey of the AmazonAWS user (does not need to be the same as the holder of the accountID)
+ * * secretKey - the private secret key of the AmazonAWS user
+ * * vault - the vault this instance should operate on
+ */
 class Glacier(val cfg: JsonObject) : ProgressListener {
 
     val log = LoggerFactory.getLogger("Glacier Backup")
@@ -34,6 +43,13 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
         client.setEndpoint(cred.getRegion())
     }
 
+    /**
+     * Send a File [file] to the [vault].
+     * This method blocks until the transfer is complete, which might be a very long time.
+     * The file may be arbitrarly large an will be sent in chunks. If a network error happens, the
+     * failed chunk is sent again.
+     * @return The archiveID of the stored object
+     */
     @Throws(Exception::class)
     fun transmit(vault: String, file: File): String {
         if (busy) {
@@ -47,13 +63,16 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
             val atm = ArchiveTransferManager(client, cred)
             val result = atm.upload(cred.getAccountID(), vault, desc, file, this)
             meta.put(file.name,result.archiveId)
-            s3.put(vault,meta)
+            s3.putJson(vault,meta)
             busy = false;
             return result.archiveId;
         }
 
     }
 
+    /**
+     * List all vaults of the current AmazonAWS user
+     */
     fun listVaults() = client.listVaults(ListVaultsRequest().withAccountId(cred.getAccountID())).vaultList
 
     fun listVaultContents(vault:String) : List<VaultEntry>{
@@ -65,12 +84,23 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
         return ret
     }
 
+    /**
+     * Start an inventory of a [vault].
+     * Note: This method will return immediately, but the result must be retrieved later with getJobResult(). Typically, it
+     * will be available after several hours.
+     * @return A Job ID to retrueve the result later
+     */
     fun initGetInventory(vault: String) :String {
         val initJobRequest = InitiateJobRequest()
                 .withVaultName(vault)
                 .withJobParameters(JobParameters().withType("inventory-retrieval"))
         return client.initiateJob(initJobRequest).jobId
     }
+
+    /**
+     * Initiate a fetch of an object with the given [archiveID] from the goven [vault].
+     * @return a JobID which can be used to retrieve the File later (after several hours)
+     */
     fun initFetch(vault:String, archiveID:String):String {
         val initJobRequest=InitiateJobRequest()
         .withVaultName(vault)
@@ -78,10 +108,26 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
         return client.initiateJob(initJobRequest).jobId
     }
 
+    /**
+     * Ask for the state of a given [jobID] in the given [vault]
+     * @return true if the Job is completed and the data is available.
+     */
     fun requestJobState(vault:String,jobID: String)=client.describeJob(DescribeJobRequest().withJobId(jobID).withVaultName(vault)).completed
+
+    /**
+     * Get the data associated with a previous initFetch or initGetInventory. This will succeed only after requestJobState returned true.
+     */
     fun getJobResult(vault:String, jobID: String)=client.getJobOutput(GetJobOutputRequest().withJobId(jobID).withVaultName(vault)).body
 
 
+    /**
+     * Fetch an object with the given [archiveID] from the given [vault] asynchronously.
+     * Note: It wil take several hours before the [handler] is called.
+     * On termination, the handler is called with an AsyncResult which can be succeeded or failed.
+     * if it is succeeded, its result-field will be an InputStream to fetch the requested data.
+     * It is mandatory to close and free this InputStream after reading.
+     *
+     */
     fun asyncFetch(vault:String,archiveID:String,handler:AsyncResultHandler<InputStream>){
         log.debug("trying to retrieve: ${archiveID}")
         val jobID=initFetch(vault,archiveID)
@@ -97,7 +143,10 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
         })
     }
 
-
+    /**
+     * Create a [vault]. If a vault with this name exists already in this instance's Region, the existing
+     * vault is used.
+     */
     fun createOrGetVault(name: String): Boolean {
         try {
             listVaults().forEach { vault ->
@@ -115,6 +164,10 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
         }
     }
 
+    /**
+     * Delete an Archivewith a given [id] from a [vault].
+     * Note: It can take several hours before the archive disappeares effectively from the inventory.
+     */
     fun deleteArchive(vault: String, id: String) {
         val meta = s3.getJson(vault)
         client.deleteArchive(DeleteArchiveRequest().withArchiveId(id).withVaultName(vault))
@@ -123,9 +176,12 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
                 meta.remove(key)
             }
         }
-        s3.put(vault,meta)
+        s3.putJson(vault,meta)
     }
 
+    /**
+     * Delete a [vault]. This will succeed only, if the vault is empty.
+     */
     fun deleteVault(name: String) {
         client.deleteVault(DeleteVaultRequest().withVaultName(name))
         s3.delete(name)

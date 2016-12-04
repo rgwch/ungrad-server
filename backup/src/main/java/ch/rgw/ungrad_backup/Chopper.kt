@@ -9,8 +9,6 @@ import ch.rgw.tools.json.decrypt
 import ch.rgw.tools.json.encrypt
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import org.apache.commons.compress.bzip2.CBZip2InputStream
-import org.apache.commons.compress.bzip2.CBZip2OutputStream
 import org.tukaani.xz.LZMA2Options
 import org.tukaani.xz.XZInputStream
 import org.tukaani.xz.XZOutputStream
@@ -30,14 +28,14 @@ class Chopper {
         val skey = Twofish_Algorithm.makeKey(key)
         val list = JsonArray()
         val input = BufferedInputStream(FileInputStream(source))
-        if(!destDir.exists()) {
+        if (!destDir.exists()) {
             destDir.mkdirs()
         }
         while (true) {
             val name = UUID.randomUUID().toString()
             val output = File(destDir, name)
-            val crypt=TwofishOutputStream(output.outputStream(),skey)
-            val out = XZOutputStream(crypt,LZMA2Options())
+            val crypt = TwofishOutputStream(output.outputStream(), skey)
+            val out = XZOutputStream(crypt, LZMA2Options())
             var i: Long = 0
             var c: Int = 0
             while (i++ < size) {
@@ -61,21 +59,21 @@ class Chopper {
         return ret;
     }
 
-    fun unchop(source: File, destDir: File, key: ByteArray):String {
+    fun unchop(source: File, destDir: File, key: ByteArray): String {
         md.reset()
         val skey = Twofish_Algorithm.makeKey(key)
         val directory = decrypt(FileTool.readFile(File(source, "directory")), ByteArrayUtil.toHexString(key))
-        val destName=directory.getString("filename")
+        val destName = directory.getString("filename")
         val output = BufferedOutputStream(FileOutputStream(File(destDir, destName)))
 
         for (filename in directory.getJsonArray("files")) {
-            val file=File(source,filename as String)
-            if(!file.exists() || !file.canRead()){
+            val file = File(source, filename as String)
+            if (!file.exists() || !file.canRead()) {
                 throw FileNotFoundException(filename)
             }
-            val fis=FileInputStream(file)
-            val crypt=TwofishInputStream(fis,skey)
-            val input= XZInputStream(crypt)
+            val fis = FileInputStream(file)
+            val crypt = TwofishInputStream(fis, skey)
+            val input = XZInputStream(crypt)
             var c: Int = 0
             while (true) {
                 c = input.read()
@@ -88,8 +86,8 @@ class Chopper {
             output.flush();
         }
         output.close()
-        val compare=ByteArrayUtil.toHexString(md.digest())
-        if(compare!=directory.getString("hash")){
+        val compare = ByteArrayUtil.toHexString(md.digest())
+        if (compare != directory.getString("hash")) {
             throw(IOException("Checksum Error"))
         }
         return destName
