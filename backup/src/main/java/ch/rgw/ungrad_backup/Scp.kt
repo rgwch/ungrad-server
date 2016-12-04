@@ -10,7 +10,16 @@ import org.slf4j.LoggerFactory
 import java.io.*
 
 /**
+ * Transfer files with SCP to remote hosts
  * Created by gerry on 02.12.16.
+ *
+ * The Consutructor takes a JsonObject which must contain at least the following fields:
+ * * user - the username for the remote host
+ * * password - the password needed for ssh/scp
+ * * host - the IP or name of the remote host
+ * * port - the Port to use (defaults to 22)
+ * * directory - the subdirectory to use on the remote host (relative to the user's home dir). If the directory
+ * does not exist, it will be created.
  */
 class Scp(val cfg: JsonObject) {
     val js = JSch()
@@ -34,7 +43,7 @@ class Scp(val cfg: JsonObject) {
 
     private fun checkAck(): Boolean {
         val b = inp.read()
-        if (b < 1) return true;
+        if (b < 1) return true
 
         val sb = StringBuffer()
         var c: Int
@@ -47,6 +56,10 @@ class Scp(val cfg: JsonObject) {
         return false
     }
 
+    /**
+     * Send a [file] to the remote host
+     * @return true on success
+     */
     fun transmit(file: File): Boolean {
         val subdir=cfg["directory"]
         val cmd = if (subdir==null){
@@ -59,8 +72,8 @@ class Scp(val cfg: JsonObject) {
         if (checkAck()) {
 
             val filesize = file.length()
-            var command = "C0644 ${filesize.toString()} ${file.name}\n"
-            val ba = command.toByteArray(Charsets.UTF_8)
+            val command = "C0644 ${filesize.toString()} ${file.name}\n"
+            //val ba = command.toByteArray(Charsets.UTF_8)
             out.write(command.toByteArray(Charsets.UTF_8))
             out.flush()
             if (checkAck()) {
@@ -81,6 +94,10 @@ class Scp(val cfg: JsonObject) {
         return false
     }
 
+    /**
+     * fetch a file with the given [filename] from the remote computer and store it in [destDir]
+     * @return the File on success, or null.
+     */
     fun fetch(filename: String, destDir: File): File? {
         val cmd=if(cfg["directory"]==null){
             "scp -f $filename"
@@ -109,7 +126,7 @@ class Scp(val cfg: JsonObject) {
         out.flush()
         val fout = File(destDir, filename)
         val fouts = FileOutputStream(fout)
-        var count=0;
+        var count=0
         while (count++<fileSize) {
             c = inp.read()
             if (c < 0) {
@@ -122,7 +139,7 @@ class Scp(val cfg: JsonObject) {
         channel.disconnect()
         session.disconnect()
         fouts.close()
-        return fout;
+        return fout
     }
 
 }
