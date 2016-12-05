@@ -6,6 +6,7 @@ import ch.rgw.ungrad_backup.SimpleStore;
 import io.vertx.core.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -30,6 +31,7 @@ public class Test_S3 {
     }
 
     @Test
+    @Ignore
     public void test_s3_raw() throws Exception{
         File test=new File(testDir,"test");
         FileTool.writeRandomFile(test,2000L);
@@ -40,7 +42,7 @@ public class Test_S3 {
     }
 
     @Test
-    public void test_s3_json() throws Exception{
+    @Ignore public void test_s3_json() throws Exception{
         JsonObject jp= JsonUtilKt.json_create("a:b","c:d","e:f");
         s3.putJson("test",jp,"blabla");
         Assert.assertTrue(s3.exists("test"));
@@ -53,7 +55,7 @@ public class Test_S3 {
     }
 
     @Test
-    public void test_s3_encrypted()throws Exception{
+    @Ignore public void test_s3_encrypted()throws Exception{
         byte[] check=UtilKt.randomArray(829);
         s3.putEncrypted("test",check,"ThisIsAVerySecretPassword or a phrase");
         Assert.assertTrue(s3.exists("test"));

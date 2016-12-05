@@ -105,6 +105,7 @@ public class Test_Backup {
     latency of 4 hours.We'll wait 5 hours maximum before failure
      */
     @Test(timeout = 5 * 3600000L)
+    @Ignore
     public void testGlacier(TestContext ctx) throws Exception {
         Glacier glacier = new Glacier(conf.getJsonObject("glacier-default"));
         glacier.createOrGetVault("UngradTest");
