@@ -58,8 +58,8 @@ The format is strict json, but comments are allowed like this one here.
           "description": "some secret files ",
           "region": "glacier.eu-west-1.amazonaws.com",
           "accountID": "1234567",
-          "secretKey": "007007007",
-          "accesskey": "111111111"
+          "secretKey": "fgfsdgiupwp9U-WWeedd",
+          "accesskey": "qweeefegwfg"
         }
       }
     },

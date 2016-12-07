@@ -30,7 +30,6 @@ import com.amazonaws.services.glacier.model.*
 import com.amazonaws.services.glacier.transfer.ArchiveTransferManager
 import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Future
-import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import org.slf4j.LoggerFactory
 import java.io.File
