@@ -4,6 +4,8 @@ package ch.rgw.ungrad_backup
  * Created by gerry on 30.11.16.
  */
 import ch.rgw.tools.json.get
+import ch.rgw.tools.json.json_error
+import ch.rgw.tools.json.json_ok
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.event.ProgressEvent
 import com.amazonaws.event.ProgressEventType
@@ -50,24 +52,28 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
      * failed chunk is sent again.
      * @return The archiveID of the stored object
      */
-    @Throws(Exception::class)
-    fun transmit(vault: String, file: File): String {
-        if (busy) {
-            return ""
-        } else {
-            busy = true
-            val meta=s3.getJson(vault)
-            totalBytesTransferred = 0L
-            log.info("Transmitting file ${file.absolutePath} to Glacier")
-            val desc = file.name
-            val atm = ArchiveTransferManager(client, cred)
-            val result = atm.upload(cred.getAccountID(), vault, desc, file, this)
-            meta.put(file.name,result.archiveId)
-            s3.putJson(vault,meta)
-            busy = false;
-            return result.archiveId;
+    fun transmit(vault: String, file: File): JsonObject {
+        try {
+            if (busy) {
+                return json_error("busy")
+            } else {
+                busy = true
+                val meta = s3.getJson(vault)
+                totalBytesTransferred = 0L
+                log.info("Transmitting file ${file.absolutePath} to Glacier")
+                val desc = file.name
+                val atm = ArchiveTransferManager(client, cred)
+                val result = atm.upload(cred.getAccountID(), vault, desc, file, this)
+                meta.put(file.name, result.archiveId)
+                s3.putJson(vault, meta)
+                busy = false;
+                return json_ok().put("archiveID",result.archiveId);
+            }
+        }catch(ex: Exception){
+            log.error(ex.message)
+            ex.printStackTrace()
+            return json_error(ex.message)
         }
-
     }
 
     /**
