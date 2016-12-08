@@ -25,7 +25,6 @@ import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import java.io.File
 import java.io.InputStream
-import java.nio.charset.Charset
 import java.util.*
 
 /**
@@ -39,50 +38,52 @@ class Verticle : AbstractVerticle() {
     val API = "1.0"
     val FUNC_REDUCE = RegSpec(BASE_ADDRESS + ".reduce", "/reduce/:sourcedir/:destfile", "admin", "GET")
     val FUNC_CHOP = RegSpec(BASE_ADDRESS + ".chop", "/chop/:sourcefile/:destdir/:size/:pwd", "admin", "GET")
-    val FUNC_UNCHOP=RegSpec(BASE_ADDRESS+".unchop","/unchop/:sourcefile/:destdir/:pwd","admin","GET")
+    val FUNC_UNCHOP = RegSpec(BASE_ADDRESS + ".unchop", "/unchop/:sourcefile/:destdir/:pwd", "admin", "GET")
     val FUNC_SCP_SEND = RegSpec(BASE_ADDRESS + "scp-send", "/scp/:file", "admin", "GET")
-    val FUNC_SCP_FETCH=RegSpec(BASE_ADDRESS+"scp-fetch","/scp-get/:file","admin","GET")
-    val FUNC_GLACIER_SEND=RegSpec(BASE_ADDRESS+"glacier-send","/glacier-send/:file","admin","GET")
-    val FUNC_GLACIER_FETCH=RegSpec(BASE_ADDRESS+"gacier-fetch","/glacier-fetch/:file","admin","GET")
+    val FUNC_SCP_FETCH = RegSpec(BASE_ADDRESS + "scp-fetch", "/scp-get/:file", "admin", "GET")
+    val FUNC_GLACIER_SEND = RegSpec(BASE_ADDRESS + "glacier-send", "/glacier-send/:file", "admin", "GET")
+    val FUNC_GLACIER_FETCH = RegSpec(BASE_ADDRESS + "gacier-fetch", "/glacier-fetch/:file", "admin", "GET")
 
 
     override fun start() {
         regexec(FUNC_SCP_SEND, { msg ->
             execute({ Scp(config()).transmit(File(msg.body()["file"])) }, msg)
         })
-        regexec(FUNC_SCP_FETCH,{msg ->
-            execute({Scp(config()).fetch(msg.body()["filename"]!!,File(msg.body()["destDir"]))},msg)
+        regexec(FUNC_SCP_FETCH, { msg ->
+            execute({ Scp(config()).fetch(msg.body()["filename"]!!, File(msg.body()["destDir"])) }, msg)
         })
-        regexec(FUNC_CHOP,{ msg ->
-            val parm=msg.body()
-            execute({Chopper().chop(File(parm["sourcefile"]),File(parm["destdir"]),parm.getLong("size"),parm["pwd"]!!.toByteArray())},msg)
+        regexec(FUNC_CHOP, { msg ->
+            val parm = msg.body()
+            execute({ Chopper().chop(File(parm["sourcefile"]), File(parm["destdir"]), parm.getLong("size"), parm["pwd"]!!.toByteArray()) }, msg)
         })
-        regexec(FUNC_UNCHOP,{msg ->
-            val parm=msg.body()
-            execute({Chopper().unchop(File(parm["sourcefile"]),File(parm["destdir"]),parm["pwd"]!!.toByteArray())},msg)
+        regexec(FUNC_UNCHOP, { msg ->
+            val parm = msg.body()
+            execute({ Chopper().unchop(File(parm["sourcefile"]), File(parm["destdir"]), parm["pwd"]!!.toByteArray()) }, msg)
         })
-        regexec(FUNC_REDUCE,{ msg ->
-            val parm=msg.body()
-            execute({Reducer().reduce(File(parm["directory"]),File(parm["archive"]),object: Comparator<File>{
-                override fun compare(f1: File, f2: File): Int {
-                    return f1.lastModified().compareTo(f2.lastModified())
-                }
+        regexec(FUNC_REDUCE, { msg ->
+            val parm = msg.body()
+            execute({
+                Reducer().reduce(File(parm["directory"]), File(parm["archive"]), object : Comparator<File> {
+                    override fun compare(f1: File, f2: File): Int {
+                        return f1.lastModified().compareTo(f2.lastModified())
+                    }
 
-            })},msg)
+                })
+            }, msg)
         })
-        regexec(FUNC_GLACIER_SEND){msg ->
-            val parm=msg.body()
-            execute({Glacier(config()).transmit(parm["vault"]!!,File(parm["file"]))},msg)
+        regexec(FUNC_GLACIER_SEND) { msg ->
+            val parm = msg.body()
+            execute({ Glacier(config()).transmit(parm["vault"]!!, File(parm["file"])) }, msg)
         }
 
         register(FUNC_GLACIER_FETCH)
-        vertx.eventBus().consumer<JsonObject>(FUNC_GLACIER_FETCH.addr){msg ->
-            val parm=msg.body()
-            Glacier(config()).asyncFetch(parm["vault"]!!,parm["archiveID"]!!,object: AsyncResultHandler<InputStream>{
+        vertx.eventBus().consumer<JsonObject>(FUNC_GLACIER_FETCH.addr) { msg ->
+            val parm = msg.body()
+            Glacier(config()).asyncFetch(parm["vault"]!!, parm["archiveID"]!!, object : AsyncResultHandler<InputStream> {
                 override fun handle(result: AsyncResult<InputStream>) {
-                    if(result.succeeded()){
-                        val out=File(parm["destFile"])
-                        FileTool.copyStreams(result.result().buffered(),out.outputStream())
+                    if (result.succeeded()) {
+                        val out = File(parm["destFile"])
+                        FileTool.copyStreams(result.result().buffered(), out.outputStream())
                         result.result().close()
                     }
                 }
@@ -116,7 +117,7 @@ class Verticle : AbstractVerticle() {
 
     fun regexec(func: RegSpec, handler: (Message<JsonObject>) -> Unit) {
         register(func)
-        vertx.eventBus().consumer<JsonObject>(func.addr,handler)
+        vertx.eventBus().consumer<JsonObject>(func.addr, handler)
 
     }
 

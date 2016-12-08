@@ -21,6 +21,7 @@ package ch.rgw.ungrad_backup
 import ch.rgw.tools.json.get
 import ch.rgw.tools.json.json_error
 import ch.rgw.tools.json.json_ok
+import ch.rgw.tools.json.validate
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.event.ProgressEvent
 import com.amazonaws.event.ProgressEventType
@@ -51,11 +52,14 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
     val log = LoggerFactory.getLogger("Glacier Backup")
     val cred = Credentials()
     val client = AmazonGlacierClient(cred)
-    val s3=SimpleStore(cfg)
+    val s3 = SimpleStore(cfg)
     var busy = false;
     var totalBytesTransferred = 0L
 
     init {
+        if (!cfg.validate("user:string", "accountID:string", "assessKey:string", "secretKey:string", "vault:string")) {
+            throw IllegalArgumentException("invalid config file for Glacier ${cfg.encodePrettily()}")
+        }
         client.setEndpoint(cred.getRegion())
     }
 
@@ -81,9 +85,9 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
                 meta.put(file.name, result.archiveId)
                 s3.putJson(vault, meta)
                 busy = false;
-                return json_ok().put("archiveID",result.archiveId);
+                return json_ok().put("archiveID", result.archiveId);
             }
-        }catch(ex: Exception){
+        } catch(ex: Exception) {
             log.error(ex.message)
             ex.printStackTrace()
             return json_error(ex.message)
@@ -95,11 +99,11 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
      */
     fun listVaults() = client.listVaults(ListVaultsRequest().withAccountId(cred.getAccountID())).vaultList
 
-    fun listVaultContents(vault:String) : List<VaultEntry>{
-        val meta=s3.getJson(vault)
-        val ret= ArrayList<VaultEntry>()
-        for((key,id) in meta){
-            ret.add(VaultEntry(key,id as String))
+    fun listVaultContents(vault: String): List<VaultEntry> {
+        val meta = s3.getJson(vault)
+        val ret = ArrayList<VaultEntry>()
+        for ((key, id) in meta) {
+            ret.add(VaultEntry(key, id as String))
         }
         return ret
     }
@@ -110,7 +114,7 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
      * will be available after several hours.
      * @return A Job ID to retrueve the result later
      */
-    fun initGetInventory(vault: String) :String {
+    fun initGetInventory(vault: String): String {
         val initJobRequest = InitiateJobRequest()
                 .withVaultName(vault)
                 .withJobParameters(JobParameters().withType("inventory-retrieval"))
@@ -121,10 +125,10 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
      * Initiate a fetch of an object with the given [archiveID] from the goven [vault].
      * @return a JobID which can be used to retrieve the File later (after several hours)
      */
-    fun initFetch(vault:String, archiveID:String):String {
-        val initJobRequest=InitiateJobRequest()
-        .withVaultName(vault)
-        .withJobParameters(JobParameters().withType("archive-retrieval").withArchiveId(archiveID))
+    fun initFetch(vault: String, archiveID: String): String {
+        val initJobRequest = InitiateJobRequest()
+                .withVaultName(vault)
+                .withJobParameters(JobParameters().withType("archive-retrieval").withArchiveId(archiveID))
         return client.initiateJob(initJobRequest).jobId
     }
 
@@ -132,12 +136,12 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
      * Ask for the state of a given [jobID] in the given [vault]
      * @return true if the Job is completed and the data is available.
      */
-    fun requestJobState(vault:String,jobID: String)=client.describeJob(DescribeJobRequest().withJobId(jobID).withVaultName(vault)).completed
+    fun requestJobState(vault: String, jobID: String) = client.describeJob(DescribeJobRequest().withJobId(jobID).withVaultName(vault)).completed
 
     /**
      * Get the data associated with a previous initFetch or initGetInventory. This will succeed only after requestJobState returned true.
      */
-    fun getJobResult(vault:String, jobID: String)=client.getJobOutput(GetJobOutputRequest().withJobId(jobID).withVaultName(vault)).body
+    fun getJobResult(vault: String, jobID: String) = client.getJobOutput(GetJobOutputRequest().withJobId(jobID).withVaultName(vault)).body
 
 
     /**
@@ -148,16 +152,16 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
      * It is mandatory to close and free this InputStream after reading.
      *
      */
-    fun asyncFetch(vault:String,archiveID:String,handler:AsyncResultHandler<InputStream>){
+    fun asyncFetch(vault: String, archiveID: String, handler: AsyncResultHandler<InputStream>) {
         log.debug("trying to retrieve: ${archiveID}")
-        val jobID=initFetch(vault,archiveID)
-        val test=requestJobState(vault,jobID)
-        val timer=fixedRateTimer("checkArchive",true,60000L,30*60000L, {
+        val jobID = initFetch(vault, archiveID)
+        val test = requestJobState(vault, jobID)
+        val timer = fixedRateTimer("checkArchive", true, 60000L, 30 * 60000L, {
             log.debug("checking archive at ${Date()}")
-            if(requestJobState(vault,jobID)){
+            if (requestJobState(vault, jobID)) {
                 log.info("Result ready")
-                val result=client.getJobOutput(GetJobOutputRequest().withJobId(jobID).withVaultName(vault))
-                val ins=result.body.buffered()
+                val result = client.getJobOutput(GetJobOutputRequest().withJobId(jobID).withVaultName(vault))
+                val ins = result.body.buffered()
                 handler.handle(Future.succeededFuture(ins))
             }
         })
@@ -191,12 +195,12 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
     fun deleteArchive(vault: String, id: String) {
         val meta = s3.getJson(vault)
         client.deleteArchive(DeleteArchiveRequest().withArchiveId(id).withVaultName(vault))
-        for((key,value) in meta){
-            if(value as String == id){
+        for ((key, value) in meta) {
+            if (value as String == id) {
                 meta.remove(key)
             }
         }
-        s3.putJson(vault,meta)
+        s3.putJson(vault, meta)
     }
 
     /**
@@ -233,4 +237,4 @@ class Glacier(val cfg: JsonObject) : ProgressListener {
 
 }
 
-data class VaultEntry(val name:String, val id:String)
+data class VaultEntry(val name: String, val id: String)

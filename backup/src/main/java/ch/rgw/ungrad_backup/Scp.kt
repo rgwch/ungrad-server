@@ -18,6 +18,7 @@ package ch.rgw.ungrad_backup
 import ch.rgw.tools.json.get
 import ch.rgw.tools.json.json_error
 import ch.rgw.tools.json.json_ok
+import ch.rgw.tools.json.validate
 import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.Session
@@ -45,6 +46,12 @@ class Scp(val cfg: JsonObject) {
     lateinit var inp: InputStream
     lateinit var out: OutputStream
     lateinit var session: Session
+
+    init {
+        if (!cfg.validate("user:string", "password:string", "host:string")) {
+            throw IllegalArgumentException("invalid config file for Scp: \n${cfg.encodePrettily()}")
+        }
+    }
 
 
     /**
@@ -84,7 +91,7 @@ class Scp(val cfg: JsonObject) {
                 }
             }
             return json_error("contact error with server")
-        }catch(ex:Exception){
+        } catch(ex: Exception) {
             log.error(ex.message)
             ex.printStackTrace()
             return json_error("Exception ${ex.message}")
@@ -137,8 +144,8 @@ class Scp(val cfg: JsonObject) {
             channel.disconnect()
             session.disconnect()
             fouts.close()
-            return json_ok().put("file",fout.absolutePath);
-        }catch(ex:Exception){
+            return json_ok().put("file", fout.absolutePath);
+        } catch(ex: Exception) {
             log.error(ex.message)
             ex.printStackTrace()
             return json_error("Exception: ${ex.message}")

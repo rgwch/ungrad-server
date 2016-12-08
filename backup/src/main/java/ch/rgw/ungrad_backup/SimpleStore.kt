@@ -22,6 +22,7 @@ import ch.rgw.tools.crypt.Twofish_Algorithm
 import ch.rgw.tools.json.decrypt
 import ch.rgw.tools.json.encrypt
 import ch.rgw.tools.json.get
+import ch.rgw.tools.json.validate
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.SdkClientException
 import com.amazonaws.auth.AWSCredentials
@@ -46,6 +47,12 @@ class SimpleStore(val cfg: JsonObject) {
     val cred = Credentials()
     val s3 = AmazonS3Client(cred)
     val bucket = cfg["s3bucket"]
+
+    init {
+        if (!cfg.validate("user:string", "accountID:string", "accessKey:string", "secretKey:string", "s3bucket:string")) {
+            throw IllegalArgumentException("invalid config file for S3-SimpleStore ${cfg.encodePrettily()}")
+        }
+    }
 
     /**
      * Check if an object with a given [key] exists

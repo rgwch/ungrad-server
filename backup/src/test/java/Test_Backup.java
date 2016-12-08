@@ -92,9 +92,9 @@ public class Test_Backup {
         File test = new File(testDir, "test");
         FileTool.writeRandomFile(test, 2000L);
         Scp scp = new Scp(conf.getJsonObject("scp-default"));
-        Assert.assertTrue(scp.transmit(test));
+        Assert.assertEquals("ok",scp.transmit(test).getString("status"));
         test.renameTo(new File(testDir, "orig"));
-        File fetched = scp.fetch("test", new File(testDir));
+        String fetched = scp.fetch("test", new File(testDir)).getString("file");
         byte[] b1 = FileTool.readFile(new File(testDir, "orig"));
         byte[] b2 = FileTool.readFile(new File(testDir, "test"));
         Assert.assertArrayEquals(b1, b2);
@@ -111,7 +111,7 @@ public class Test_Backup {
         glacier.createOrGetVault("UngradTest");
         File test = new File(testDir, "test");
         FileTool.writeRandomFile(test, 5000L);
-        String archiveID = glacier.transmit("UngradTest", test);
+        String archiveID = glacier.transmit("UngradTest", test).getString("archiveID");
         Assert.assertNotNull(archiveID);
         Async async = ctx.async();
 
