@@ -53,12 +53,12 @@ open class Contact(id: String = uuid) : AsyncPersistentObject(id) {
  */
 open class Person(id: String = uuid) : Contact(id) {
     val pfields = listOf(
-            Field("lastname", "Bezeichnung1"),
-            Field("firstname", "Bezeichnung2"),
-            Field("gender", "Geschlecht"),
-            Field("birthdate", "Geburtsdatum"),
-            Field("title", "Titel"),
-            Field("suffix", "Titelsuffix"))
+            Field("lastname", String::class, false, "Bezeichnung1"),
+            Field("firstname", String::class, false, "Bezeichnung2"),
+            Field("gender", fieldname="Geschlecht"),
+            Field("birthdate", fieldname="Geburtsdatum"),
+            Field("title", fieldname="Titel"),
+            Field("suffix", fieldname="Titelsuffix"))
 
     override val fieldnames by lazy {
         super.fieldnames.union(pfields.asIterable()).toTypedArray()

@@ -10,19 +10,19 @@ class LabItem(id: String) : AsyncPersistentObject(id) {
     override val collection = "LABORITEMS"
     override val fieldnames = arrayOf(
             Field("Title"),
-            Field("refMale", "RefMann"),
-            Field("refFemale", "RefFrauOrTx"),
-            Field("priority", "prio"),
-            Field("group", "Gruppe"),
-            Field("type", "Typ"),
-            Field("unit", "Einheit"),
-            Field("labID", "LaborID"),
-            Field("shortname", "Kuerzel"),
+            Field("refMale", fieldname="RefMann"),
+            Field("refFemale", fieldname="RefFrauOrTx"),
+            Field("priority", fieldname="prio"),
+            Field("group", fieldname="Gruppe"),
+            Field("type", fieldname="Typ"),
+            Field("unit", fieldname="Einheit"),
+            Field("labID", fieldname="LaborID"),
+            Field("shortname", fieldname="Kuerzel"),
             Field("formula"),
             Field("digits"),
             Field("visible"),
             Field("billingcode"),
-            Field("loinc", "loinccode")
+            Field("loinc", fieldname="loinccode")
 
     )
 
@@ -35,13 +35,13 @@ class LabItem(id: String) : AsyncPersistentObject(id) {
 class LabResult(id: String) : AsyncPersistentObject(id) {
     override val collection = "LABORWERTE"
     override val fieldnames = arrayOf(
-            Field("date", "Datum"),
-            Field("time", "Zeit"),
-            Field("flags", "Flags"),
-            Field("comment", "Kommentar"),
-            Field("result", "Resultat"),
-            Field("itemID", "ItemID"),
-            Field("patID", "PatientID")
+            Field("date", fieldname="Datum"),
+            Field("time", fieldname="Zeit"),
+            Field("flags", fieldname="Flags"),
+            Field("comment", fieldname="Kommentar"),
+            Field("result", fieldname="Resultat"),
+            Field("itemID", fieldname="ItemID"),
+            Field("patID", fieldname="PatientID")
     )
 
     override fun getLabel(): Future<String> {

@@ -34,7 +34,7 @@ import java.util.*
  *
  * Implementations can chose to replace the companion's [defaultPersistence] object with any other IPersistence. This must be done before
  * the first access to any of the AsyncPersistentObjects in the application. Newly created AsyncPersisterntObjecs will send and
- * receive contents via this DegfaultPersistence by default. But an application can chose to set an individual IPersistence on some or
+ * receive contents via this DefaultPersistence by default. But an application can chose to set an individual IPersistence on some or
  * all AsyncPersistentObjects to allow for different storage concepts by data type.
  *
  * The default constructor takes a String which should be a GUID. If no parameter is given, a UUID is generated.
@@ -49,7 +49,7 @@ abstract class AsyncPersistentObject(val id: String = uuid) : JsonUtil("""{"id":
     var persistence = defaultPersistence
     val observers = mutableListOf<IObserver>()
     abstract val collection: String
-    open val fieldnames = arrayOf(Field("id", "ID"), Field("deleted"), Field("lastupdate"))
+    open val fieldnames = arrayOf(Field("id", String::class, false, "ID", "ID"), Field("deleted"), Field("lastupdate"))
     abstract fun getLabel(): Future<String>
 
     /**
@@ -221,15 +221,6 @@ interface IObserver {
 }
 
 data class Observation(val obj: AsyncPersistentObject, val prop: String = "", val oldVal: Any? = null, val newVal: Any? = null)
-
-/**
- * Definition of a Field of an AsyncPersistentObject
- * [label]: The label to use with set and get-methods
- * [name]: The name of the field in the backing storage
- * [caption]: a (possibly translatable) caption to use in UI
- * only the [label] field is mandatory
- */
-data class Field(val label: String, val name: String = label, val caption: String = label)
 
 operator fun Array<Field>.contains(field: String) = this.any { it.label == field }
 
