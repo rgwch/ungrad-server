@@ -11,27 +11,52 @@ import kotlin.reflect.KClass
 open class SimpleObject(val fields: Array<Field>) : JsonObject() {
     constructor(vararg fieldnames:String):this(fieldnames.map { name -> Field(name,String::class) }.toTypedArray())
 
+    val observers = mutableListOf<IObserver>()
+    var dirty:Boolean=false;
+
     @Throws(IllegalArgumentException::class)
-    fun set(field: String, value: Any) {
-        if (field in fields) {
-            put(field, value)
-        } else {
-            throw IllegalArgumentException("$field is not in field list")
-        }
+    fun set(field: String, value: Any) :JsonObject{
+        checkField(field,value)
+        val oldValue=getValue(field)
+        put(field, value)
+        dirty=true
+        observers.forEach { it.changed(this,field,oldValue,value) }
+        return this
     }
 
     @Throws(IllegalArgumentException::class)
-    fun get(field: String): Any {
-        if (field in fields) {
-            return get(field)
-        } else {
-            throw IllegalArgumentException("$field is not in field list")
-        }
+    open fun get(field: String): Any {
+        checkField(field,null)
+        return get(field)
     }
 
+    override fun put(name: String, value:Any):JsonObject{
+        return set(name,value)
+    }
 
-    operator fun Array<Field>.contains(name: String): Boolean {
-        return this.find { it.label == name } != null
+    fun addObserver(ob: IObserver){
+        observers.add(ob)
+    }
+
+    fun removeObserver(ob: IObserver){
+        observers.remove(ob)
+    }
+    private fun checkField(fieldname: String, value: Any?){
+        val field=fields.find { it.label==fieldname }
+        if(field==null){
+            throw IllegalArgumentException("$fieldname is not in field list")
+        }
+        if(value != null){
+            if(value.javaClass!=field.type.java){
+                throw IllegalArgumentException("incorrect data type for $fieldname")
+            }
+            if(field.group!=0) {
+                if (fields.find { it.group == field.group } != null) {
+                    throw IllegalArgumentException("mutually exclusive field $fieldname set")
+                }
+            }
+        }
+
     }
 }
 
@@ -54,3 +79,10 @@ data class Field(val label: String,
                  val caption:String=label,
                  val required:Boolean=false,
                  val group:Int=0)
+
+interface IObserver {
+    fun changed(obj: SimpleObject, property: String, oldValue: Any?, newValue: Any?)
+    fun stored(obj: SimpleObject)
+}
+
+data class Observation(val so: SimpleObject, val property: String, val oldValue: Any, val newValue: Any )

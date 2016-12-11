@@ -13,9 +13,13 @@
  */
 package ch.webelexis.model
 
+import ch.rgw.tools.json.json_ok
 import io.vertx.core.AsyncResult
+import io.vertx.core.AsyncResultHandler
 import io.vertx.core.Future
+import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import sun.java2d.pipe.SpanShapeRenderer
 
 /**
  * Created by gerry on 22.10.2016.
@@ -34,14 +38,14 @@ interface IPersistence {
      * @param obj: The object to store
      * @param handler: a method to call avter completion of the write
      */
-    fun flush(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit)
+    fun flush(obj:SimpleObject, handler: (AsyncResult<Boolean>)->Unit)
 
     /**
      * retrieve a List of zero or more objects matching some criteria
      * @param template: An object with the criteria
      * @param handler: a method to call with the result
      */
-    fun find(template: AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit)
+    fun find(template: SimpleObject, handler: (AsyncResult<List<JsonObject>>) -> Unit)
 
     /**
      * delete an object from the backing store
@@ -60,12 +64,12 @@ class InMemoryPersistence : IPersistence {
         handler(Future.succeededFuture(objects[objid]))
     }
 
-    override fun flush(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit) {
-        objects.put(obj.id, obj)
+    override fun flush(obj: SimpleObject, handler: (AsyncResult<Boolean>) -> Unit) {
+        objects.put(obj.get("id") as String, obj)
         handler(Future.succeededFuture(true))
     }
 
-    override fun find(template: AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
+    override fun find(template: SimpleObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
 
         val result = objects.values.filter { obj ->
             var matches = true

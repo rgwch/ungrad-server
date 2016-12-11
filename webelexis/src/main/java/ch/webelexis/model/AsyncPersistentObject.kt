@@ -44,10 +44,9 @@ import java.util.*
  * Created by gerry on 22.10.2016.
  */
 
-abstract class AsyncPersistentObject(val id: String = uuid) : JsonUtil("""{"id":"$id"}""") {
+abstract class AsyncPersistentObject(val id: String = uuid) : SimpleObject("""{"id":"$id"}""") {
     var lastUpdate: Long = 0
     var persistence = defaultPersistence
-    val observers = mutableListOf<IObserver>()
     abstract val collection: String
     open val fieldnames = arrayOf(Field("id", String::class, false, "ID", "ID"), Field("deleted"), Field("lastupdate"))
     abstract fun getLabel(): Future<String>
@@ -58,7 +57,7 @@ abstract class AsyncPersistentObject(val id: String = uuid) : JsonUtil("""{"id":
      * in [fieldnames] or if the value could not b retrieved.
      *
      */
-    fun get(field: String): Future<Any> {
+    override fun get(field: String): Future<Any> {
         val ret = Future.future<Any>()
         if (field in fieldnames) {
             if (lastUpdate == 0L || (System.currentTimeMillis() - lastUpdate) > TIMEOUT) {
@@ -144,19 +143,6 @@ abstract class AsyncPersistentObject(val id: String = uuid) : JsonUtil("""{"id":
         return ret
     }
 
-    /**
-     * Add an [observer]. The Observer is called, whenever a field changes its value
-     */
-    fun addObserver(observer: IObserver) {
-        observers.add(observer)
-    }
-
-    /**
-     * remove an [observer]. If the Observer was not added before, nothing happens.
-     */
-    fun removeObserver(observer: IObserver) {
-        observers.remove(observer)
-    }
 
 
     protected fun notifyObservers(observation: Observation) {
@@ -214,13 +200,9 @@ abstract class AsyncPersistentObject(val id: String = uuid) : JsonUtil("""{"id":
         val uuid: String
             get() = UUID.randomUUID().toString()
     }
+
+
+    data class Observation(val obj: AsyncPersistentObject, val prop: String = "", val oldVal: Any? = null, val newVal: Any? = null)
+
+    operator fun Array<Field>.contains(field: String) = this.any { it.label == field }
 }
-
-interface IObserver {
-    fun changed(obj: AsyncPersistentObject, property: String, oldValue: Any?, newValue: Any?)
-}
-
-data class Observation(val obj: AsyncPersistentObject, val prop: String = "", val oldVal: Any? = null, val newVal: Any? = null)
-
-operator fun Array<Field>.contains(field: String) = this.any { it.label == field }
-

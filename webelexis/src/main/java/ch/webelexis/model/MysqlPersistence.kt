@@ -13,6 +13,7 @@
  */
 package ch.webelexis.model
 
+import ch.rgw.tools.json.get
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -127,11 +128,11 @@ class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence 
         }
     }
 
-    override fun find(template: AsyncPersistentObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
+    override fun find(template: SimpleObject, handler: (AsyncResult<List<JsonObject>>) -> Unit) {
         val sql = StringBuilder()
-        sql.append("SELECT * FROM ${template.collection} WHERE ")
+        sql.append("SELECT * FROM ${template.get("collection")} WHERE ")
         for ((key, value) in template.map) {
-            val rname = template.fieldnames.find {
+            val rname = template.fields.find {
                 it.label == key
             }
             sql.append("$rname LIKE ${value.toString().replace('*', '%')} AND ")
@@ -148,7 +149,7 @@ class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence 
      * is newer and fail if so.
      * Success or failure is reported to the [handler]
      */
-    override fun flush(obj: AsyncPersistentObject, handler: (AsyncResult<Boolean>) -> Unit) {
+    override fun flush(obj: SimpleObject, handler: (AsyncResult<Boolean>) -> Unit) {
         database.getConnection() { con ->
             if (con.succeeded()) {
                 val conn = con.result()
@@ -162,7 +163,7 @@ class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence 
                         }
                     }
                 }
-                conn.query("SELECT lastupdate FROM ${obj.collection} where ID='${obj.id}'") { remoteObj ->
+                conn.query("SELECT lastupdate FROM ${obj.get("collection")} where ID='${obj.get("id")}'") { remoteObj ->
                     if (remoteObj.succeeded()) {
                         val rs = remoteObj.result()
                         if (rs.numRows == 0) {
@@ -176,7 +177,7 @@ class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence 
                                 insert()
                             }
                         } else {
-                            handler(Future.failedFuture("ID is not unique " + obj.id))
+                            handler(Future.failedFuture("ID is not unique " + obj["id"]))
                         }
 
                     } else {
@@ -194,11 +195,11 @@ class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence 
 
     }
 
-    fun apo2sql(obj: AsyncPersistentObject): String {
+    fun apo2sql(obj: SimpleObject): String {
         fun findField(label: String): String? {
-            return obj.fieldnames.find {
+            return obj.fields.find {
                 it.label == label
-            }?.name
+            }?.label
         }
 
         val fields = StringBuilder()
@@ -212,7 +213,7 @@ class MysqlPersistence(val config: JsonObject, val vertx: Vertx) : IPersistence 
             }
         }
         val now = System.currentTimeMillis()
-        val ret = "INSERT INTO ${obj.collection} (" + fields.toString() + "deleted,lastupdate) VALUES (" +
+        val ret = "INSERT INTO ${obj["collection"]} (" + fields.toString() + "deleted,lastupdate) VALUES (" +
                 values.toString() + "'0',$now) ON DUPLICATE KEY UPDATE " + upd.toString() +
                 "deleted='0', lastupdate=$now;"
         return ret
