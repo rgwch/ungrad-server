@@ -1,0 +1,5 @@
+import {inject} from 'aurelia-framework'
+import {Http} from '../http'
+import {AppState,IService} from '../appstate'
+import {ServiceSelected} from '../messages'
+import {EventAggregator} from 'aurelia-event-aggregator'

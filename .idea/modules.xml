@@ -10,6 +10,7 @@
       <module fileurl="file://$PROJECT_DIR$/tester/tester.iml" filepath="$PROJECT_DIR$/tester/tester.iml" />
       <module fileurl="file://$PROJECT_DIR$/ungrad-server.iml" filepath="$PROJECT_DIR$/ungrad-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/webelexis/webelexis.iml" filepath="$PROJECT_DIR$/webelexis/webelexis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/webelexis-client/webelexis-client.iml" filepath="$PROJECT_DIR$/webelexis-client/webelexis-client.iml" />
     </modules>
   </component>
 </project>
