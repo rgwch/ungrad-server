@@ -1,7 +1,7 @@
 import ch.rgw.io.FileTool;
 import ch.rgw.lucinda.Autoscanner;
-import ch.rgw.lucinda.Communicator;
-import ch.rgw.lucinda.CommunicatorKt;
+import ch.rgw.lucinda.Dispatcher;
+import ch.rgw.lucinda.HubKt;
 import ch.rgw.lucinda.IndexManager;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -25,6 +25,8 @@ public class Test_Autoscanner {
     static final String indexdir = basedir + "index";
     static final String watchdir = basedir + "watch";
     static Vertx vertx;
+    static IndexManager indexManager;
+    static Dispatcher dispatcher;
 
     @BeforeClass
     public static void setUp() {
@@ -32,16 +34,16 @@ public class Test_Autoscanner {
         FileTool.deltree(watchdir);
         new File(indexdir).mkdirs();
         new File(watchdir).mkdirs();
-        CommunicatorKt.getLucindaConfig().put("fs_basedir", basedir);
-        Communicator.Companion.setIndexManager(new IndexManager(indexdir, "de"));
+        HubKt.getLucindaConfig().put("fs_basedir", basedir);
         vertx = Vertx.vertx();
-
+        indexManager=new IndexManager(basedir,"de");
+        dispatcher=new Dispatcher(indexManager);
     }
 
     @Test
     public void test_scanner(TestContext ctx) throws IOException {
         Async async = ctx.async();
-        Autoscanner testee = new Autoscanner();
+        Autoscanner testee = new Autoscanner(dispatcher);
         testee.setRunning(true);
         vertx.deployVerticle(testee);
         File watchd = new File(watchdir);
@@ -60,7 +62,7 @@ public class Test_Autoscanner {
          * for existence of the newly indexed file.
          */
         vertx.setTimer(1500L, timeriD -> {
-            JsonArray res = Communicator.Companion.getIndexManager().queryDocuments("Reihe", 1);
+            JsonArray res = indexManager.queryDocuments("Reihe", 1);
             ctx.assertTrue(res.size() > 0);
             JsonObject doc = res.getJsonObject(0);
             async.complete();

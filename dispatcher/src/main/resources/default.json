@@ -66,7 +66,7 @@ The format is strict json, but comments are allowed like this one here.
     {
       "name": "Lucinda",
       "url": "file:./lucinda/target/lucinda-*.jar",
-      "verticle": "ch.rgw.lucinda.Communicator",
+      "verticle": "ch.rgw.lucinda.Hub",
       "config": {
         "default_language": "de",
         "msg_prefix": "ch.rgw.lucinda",

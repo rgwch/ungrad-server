@@ -38,8 +38,7 @@ public class Test_IndexManager {
     public void setUp() {
         FileTool.deltree("target/indexMgrTest");
 
-        Communicator.indexManager = new IndexManager("target/indexMgrTest", "de");
-        indexManager = Communicator.indexManager;
+        indexManager = new IndexManager("target/indexMgrTest", "de");
     }
 
     @After

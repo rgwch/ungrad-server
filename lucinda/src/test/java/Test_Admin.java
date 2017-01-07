@@ -1,6 +1,6 @@
 import ch.rgw.lucinda.Admin;
 import ch.rgw.lucinda.Communicator;
-import ch.rgw.lucinda.CommunicatorKt;
+import ch.rgw.lucinda.HubKt;
 import ch.rgw.tools.json.JsonUtilKt;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -25,9 +25,8 @@ public class Test_Admin {
     @BeforeClass
     public static void setUp() {
         vertx = Vertx.vertx();
-        Communicator.Companion.setEb(vertx.eventBus());
-        CommunicatorKt.getLucindaConfig().clear();
-        vertx.eventBus().consumer(CommunicatorKt.EB_SETCONFIG, msg -> {
+        HubKt.getLucindaConfig().clear();
+        vertx.eventBus().consumer(CommonKt.EB_SETCONFIG, msg -> {
             msg.reply(JsonUtilKt.json_ok());
         });
     }

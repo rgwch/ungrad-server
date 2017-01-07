@@ -1,4 +1,6 @@
 import ch.rgw.lucinda.Communicator;
+import ch.rgw.lucinda.Dispatcher;
+import ch.rgw.lucinda.IndexManager;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -22,8 +24,10 @@ public class Test_LucindaInterface {
     public static void createClient(TestContext ctx) {
         vertx = Vertx.vertx();
         JsonObject cfg = new JsonObject();
+        IndexManager indexManager=new IndexManager("target/lucindatest","de");
+        Dispatcher dispatcher=new Dispatcher(indexManager);
         Async async = ctx.async();
-        vertx.deployVerticle(new Communicator(), new DeploymentOptions().setConfig(cfg), test -> {
+        vertx.deployVerticle(new Communicator(dispatcher), new DeploymentOptions().setConfig(cfg), test -> {
             Assert.assertTrue(test.succeeded());
             async.complete();
         });

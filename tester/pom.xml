@@ -14,7 +14,7 @@
     </parent>
 
     <properties>
-        <kotlin.version>1.0.4</kotlin.version>
+        <kotlin.version>1.0.6</kotlin.version>
     </properties>
 
     <dependencies>

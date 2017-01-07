@@ -1,8 +1,8 @@
 package ch.rgw.lucinda
 
+import API
 import EB_SETCONFIG
 import RegSpec
-import API
 import ch.rgw.tools.json.JsonUtil
 import io.vertx.core.*
 import io.vertx.core.eventbus.Message
@@ -13,32 +13,36 @@ import org.slf4j.LoggerFactory
  * Created by gerry on 07.01.17.
  */
 
-var vx:Vertx?=null
+var vx: Vertx? = null
+
 fun saveConfig() {
-    vx?.eventBus().send(EB_SETCONFIG, JsonObject().put("id", "ch.rgw.lucinda.lucindaConfig").put("value", lucindaConfig))
+    vx?.eventBus()?.send(EB_SETCONFIG, JsonObject().put("id", "ch.rgw.lucinda.lucindaConfig").put("value", lucindaConfig))
 }
+
 const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
 
 val lucindaConfig = JsonUtil()
 val log = LoggerFactory.getLogger("Lucinda")
 
 
-fun register(func: RegSpec, serverDesc:JsonObject) {
-        vx?.eventBus().send<JsonObject>(REGISTER_ADDRESS, JsonObject()
-            .put("ebaddress", func.addr)
-            .put("rest", "$API/${func.rest}").put("method", func.method).put("role", func.role)
-            .put("server", serverDesc), RegHandler(func))
+fun register(serverDesc: JsonObject, vararg funcs:RegSpec) {
+    funcs.forEach { func ->
+        vx?.eventBus()?.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
+                .put("ebaddress", func.addr)
+                .put("rest", "$API/${func.rest}").put("method", func.method).put("role", func.role)
+                .put("server", serverDesc), RegHandler(func))
+    }
+
 }
 
-var autoscannerID:String=""
-var commincatorID:String=""
 
 class Hub : AbstractVerticle() {
-
-
+    var indexManager: IndexManager?=null
+    var autoscannerID: String? = null
+    var communicatorID: String? = null
 
     override fun start(startResult: Future<Void>) {
-        vx=vertx
+        vx = vertx
         val autoScannerResult = Future.future<Void>()
         val communicatorResult = Future.future<Void>()
         val launchResult = Future.future<Void>()
@@ -53,29 +57,30 @@ class Hub : AbstractVerticle() {
             }
         }
 
-        super.start()
-        val eb = vertx.eventBus()
         lucindaConfig.mergeIn(config())
-        val indexManager = IndexManager(lucindaConfig.getString("fs_indexdir", "target/store"), lucindaConfig.getString("default_language", "de"))
-        val dispatcher = Dispatcher(lucindaConfig.getString("fs_import", "target/store"), lucindaConfig.getString("default_language", "de"))
-        vertx.deployVerticle(Autoscanner(), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)) { result ->
+        indexManager = IndexManager(lucindaConfig.getString("fs_indexdir", "target/store"), lucindaConfig.getString("default_language", "de"))
+        val dispatcher = Dispatcher(indexManager)
+        vertx.deployVerticle(Autoscanner(dispatcher), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)) { result ->
             if (result.succeeded()) {
                 autoscannerID = result.result()
                 autoScannerResult.complete()
             }
         }
-        vertx.deployVerticle(Communicator(), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)){
-            if(it.succeeded()){
-                commincatorID = it.result()
+        vertx.deployVerticle(Communicator(dispatcher), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)) {
+            if (it.succeeded()) {
+                communicatorID = it.result()
                 communicatorResult.complete()
             }
         }
+        super.start()
         launchResult.complete()
 
     }
+
     override fun stop(stopResult: Future<Void>) {
-        indexManager.shutDown()
-        vertx.undeploy(autoScanner)
+        indexManager?.shutDown()
+        autoscannerID?.let { vertx.undeploy(it) }
+        communicatorID?.let { vertx.undeploy(it) }
         stopResult.complete()
         log.info("Lucinda stopped")
     }

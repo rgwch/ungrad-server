@@ -1,5 +1,5 @@
 import ch.rgw.io.FileTool;
-import ch.rgw.lucinda.Communicator;
+import ch.rgw.lucinda.Dispatcher;
 import ch.rgw.lucinda.FileImporter;
 import ch.rgw.lucinda.IndexManager;
 import io.vertx.core.Future;
@@ -21,13 +21,13 @@ import java.nio.file.Paths;
 @RunWith(VertxUnitRunner.class)
 public class Test_FileImporter {
     IndexManager indexManager;
+    Dispatcher dispatcher;
 
     @Before
     public void setUp() {
         FileTool.deltree("target/indexMgrTest");
-
-        Communicator.indexManager = new IndexManager("target/indexMgrTest", "de");
-        indexManager = Communicator.indexManager;
+        indexManager = new IndexManager("target/indexMgrTest", "de");
+        dispatcher = new Dispatcher(indexManager);
     }
 
     @After
@@ -38,50 +38,31 @@ public class Test_FileImporter {
 
     @Test
     public void test_Odt(TestContext ctx) {
-        FileImporter fi = new FileImporter(Paths.get("target/test-classes/testodt.odt"), new JsonObject());
-        Future<Integer> future = Future.future();
-        Async async = ctx.async();
-        fi.handle(future.setHandler(result -> {
-            Assert.assertTrue(result.succeeded());
-            async.complete();
-        }));
-
+        FileImporter fi = new FileImporter(indexManager);
+        String result = fi.process(Paths.get("target/test-classes/testodt.odt"), new JsonObject());
+        Assert.assertTrue(result.equals(""));
     }
 
     @Test
     public void testPDF(TestContext ctx) {
-        FileImporter fi = new FileImporter(Paths.get("target/test-classes/testpdf.pdf"), new JsonObject());
-        Future<Integer> future = Future.future();
-        Async async = ctx.async();
-        fi.handle(future.setHandler(result -> {
-            Assert.assertTrue(result.succeeded());
-            async.complete();
-        }));
+        FileImporter fi = new FileImporter(indexManager);
+        String result = fi.process(Paths.get("target/test-classes/testpdf.pdf"), new JsonObject());
+        Assert.assertTrue(result.equals(""));
 
     }
 
     @Test
     public void testFailure(TestContext ctx) {
-        FileImporter fi = new FileImporter(Paths.get("target/test-classes/inexistent.xx"), new JsonObject());
-        Future<Integer> future = Future.future();
-        Async async = ctx.async();
-        fi.handle(future.setHandler(result -> {
-            Assert.assertTrue(result.failed());
-            Assert.assertTrue(result.cause().getMessage().endsWith("not found"));
-            async.complete();
-        }));
+        FileImporter fi = new FileImporter(indexManager);
+        String result = fi.process(Paths.get("target/test-classes/inexistent.xx"), new JsonObject());
+        Assert.assertTrue(result.endsWith("not found"));
 
     }
 
     @Test
     public void testOCR(TestContext ctx) {
-        FileImporter fi = new FileImporter(Paths.get("target/test-classes/testocr.pdf"), new JsonObject());
-        Future<Integer> future = Future.future();
-        Async async = ctx.async();
-        fi.handle(future.setHandler(result -> {
-            Assert.assertTrue(result.succeeded());
-            async.complete();
-        }));
-
+        FileImporter fi = new FileImporter(indexManager);
+        String result=fi.process(Paths.get("target/test-classes/testocr.pdf"), new JsonObject());
+        Assert.assertTrue(result.equals(""));
     }
 }

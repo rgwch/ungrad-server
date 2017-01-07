@@ -35,7 +35,8 @@ import java.util.concurrent.TimeUnit
  * Created by gerry on 05.05.16.
  */
 
-class FileImporter {
+class FileImporter(im: IndexManager?) {
+    val indexManager=im!!
     val temppath: String by lazy {
         val checkDir = File(lucindaConfig.getString("fs_basedir", "target/store"), "tempfiles")
         if (checkDir.exists()) {
@@ -91,7 +92,7 @@ class FileImporter {
             if (fileMetadata["_id"].isNullOrBlank()) {
                 fileMetadata["_id"] = makeID(file)
             }
-            val doc = Communicator.indexManager.addDocument(ByteArrayInputStream(payload), fileMetadata)
+            val doc = indexManager.addDocument(ByteArrayInputStream(payload), fileMetadata)
             val text = doc.getField("text").stringValue()
             if ((text.length < 15) and (doc.get("content-type") == ("application/pdf"))) {
                 if (text == "unparseable") {
@@ -134,7 +135,7 @@ class FileImporter {
                 if (plaintext.exists() and plaintext.canRead() and (plaintext.length() > 10L)) {
                     val newtext = FileTool.readTextFile(plaintext)
                     doc.add(TextField("text", newtext, Field.Store.NO))
-                    Communicator.indexManager.updateDocument(doc)
+                    indexManager.updateDocument(doc)
                     plaintext.delete()
                 } else {
                     log.warn("no text content found in $filename")

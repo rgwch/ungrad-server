@@ -32,12 +32,13 @@ Verticle for handling Lucinda requests from the EventBus
 
 
 
-class Communicator : AbstractVerticle() {
+class Communicator(val dispatcher:Dispatcher) : AbstractVerticle() {
 
-
+    val eb by lazy{
+        vertx.eventBus()
+    }
 
     override fun start(startResult: Future<Void>) {
-        val eb=vertx.eventBus()
 
         eb.send<JsonObject>("ch.elexis.ungrad.server.getconfig", json_create("id:ch.rgw.lucinda.lucindaConfig")) { reply ->
             if (reply.succeeded()) {
@@ -46,13 +47,7 @@ class Communicator : AbstractVerticle() {
                 log.error("could not retrieve configuration")
             }
         }
-        register(FUNC_IMPORT)
-        register(FUNC_FINDFILES)
-        register(FUNC_GETFILE)
-        register(FUNC_INDEX)
-        register(FUNC_UPDATE)
-        register(FUNC_PING)
-
+        register(serverDesc, FUNC_IMPORT,FUNC_FINDFILES, FUNC_GETFILE, FUNC_INDEX, FUNC_UPDATE, FUNC_PING)
         eb.consumer<JsonObject>(CONTROL_ADDR, Admin)
 
         eb.consumer<JsonObject>(BASEADDR + FUNC_PING.addr) { reply ->
@@ -162,7 +157,7 @@ class Communicator : AbstractVerticle() {
             }
         }
 
-        launchResult.complete()
+        startResult.complete()
 
     }
 

@@ -46,7 +46,7 @@ import java.nio.file.FileSystems
  * This class maintains the global index for the lucinda
  * Created by gerry on 20.03.16.
  */
-class IndexManager(directory: String, val language: String) {
+class IndexManager(val directory: String, val language: String) {
 
     val analyzer = when (language) {
         "de" -> GermanAnalyzer()

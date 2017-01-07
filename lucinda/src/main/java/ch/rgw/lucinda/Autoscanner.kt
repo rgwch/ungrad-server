@@ -17,7 +17,6 @@ package ch.rgw.lucinda
 import ch.rgw.tools.crypt.makeHash
 import ch.rgw.tools.json.validate
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.Handler
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.Json
@@ -45,15 +44,16 @@ fun makeID(file: Path): String = makeHash(file.toFile().absolutePath)
  * Usage: Send an ADDR_START message with a JsonObject cotaining a JsonArray 'dirs'.
  * Created by gerry on 25.04.16.
  */
-class Autoscanner : AbstractVerticle() {
+class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
 
     val eb: EventBus by lazy {
         vertx.eventBus()
     }
-    val watcher : WatchService = FileSystems.getDefault().newWatchService()
+    val watcher: WatchService = FileSystems.getDefault().newWatchService()
     val keys = HashMap<WatchKey, Path>()
     val BASEADDR = Communicator.BASEADDR
-    var running=false
+    var running = false
+    val fileImporter = dispatcher.importer
 
     override fun start() {
         super.start()
@@ -63,8 +63,8 @@ class Autoscanner : AbstractVerticle() {
             if (j.validate("dirs:object", "interval:number")) {
                 log.debug("got start message ${Json.encodePrettily(j)}")
                 register(j.getJsonArray("dirs"))
-                vertx.setTimer(100L){
-                    running=true
+                vertx.setTimer(100L) {
+                    running = true
                     loop()
                 }
                 msg.reply(JsonObject().put("status", "ok"))
@@ -74,7 +74,7 @@ class Autoscanner : AbstractVerticle() {
         }
         eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_STOP) {
             log.info("got stop message")
-            running=false
+            running = false
         }
         eb.consumer<Message<String>>(BASEADDR + ADDR_RESCAN) {
             log.info("got rescan message")
@@ -88,10 +88,10 @@ class Autoscanner : AbstractVerticle() {
      * Main loop: Runs until running==false or all WatchKeys are removed
      */
     fun loop() {
-        while(running) {
+        while (running) {
             // Wait up to a minute for events, then check if we should still be watching
-            watcher.poll(60,TimeUnit.SECONDS)?.let { key ->
-                keys[key]?.let{ dir ->
+            watcher.poll(60, TimeUnit.SECONDS)?.let { key ->
+                keys[key]?.let { dir ->
                     for (event in key.pollEvents()) {
                         val kind = event.kind()
                         val ev = event as WatchEvent<Path>
@@ -99,17 +99,17 @@ class Autoscanner : AbstractVerticle() {
                         val child = dir.resolve(name)
                         log.debug("Event: ${event.kind().name()}, file: $child")
                         when (kind) {
-                            ENTRY_CREATE -> delay({ addFile(child,key)})
-                            ENTRY_DELETE -> delay({removeFile(child,key)})
-                            ENTRY_MODIFY -> delay({checkFile(child,key)})
+                            ENTRY_CREATE -> delay({ addFile(child, key) })
+                            ENTRY_DELETE -> delay({ removeFile(child, key) })
+                            ENTRY_MODIFY -> delay({ checkFile(child, key) })
                             OVERFLOW -> rescan(dir)
                             else -> log.warn("unknown event kind ${kind.name()}")
                         }
                     }
                 }
             }
-            if(keys.isEmpty()){
-                running=false;
+            if (keys.isEmpty()) {
+                running = false;
                 return
             }
         }
@@ -119,11 +119,12 @@ class Autoscanner : AbstractVerticle() {
      * The WatchKey ist triggered immediately if a file is touched. Give the system some time to complete the file operation
      * before running the autoscanner job.
      */
-    fun delay(exe : ()->Unit){
+    fun delay(exe: () -> Unit) {
         vertx.setTimer(1000L) {
             exe()
         }
     }
+
     /**
      * Register the given directories with the WatchService
      * @param dirs: JsonArray of Strings denoting Paths
@@ -146,7 +147,7 @@ class Autoscanner : AbstractVerticle() {
             Files.walkFileTree(dir, object : SimpleFileVisitor<Path>() {
                 override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
                     try {
-                        checkFile(file,null)
+                        checkFile(file, null)
                     } catch(e: Exception) {
                         log.error("Exception while checking ${file.toAbsolutePath()}, ${e.message}")
                     }
@@ -188,18 +189,18 @@ class Autoscanner : AbstractVerticle() {
                 val absolute = file.toFile().absolutePath
                 log.info("checking $absolute")
                 val id = makeID(file)
-                Dispatcher.indexManager.getDocument(id) ?: addFile(file,watchKey)
+                dispatcher.indexManager?.getDocument(id) ?: addFile(file, watchKey)
             }
         }
         checkKey(watchKey)
     }
 
     private fun exclude(file: Path) =
-        (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L))
+            (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L))
 
-    private fun checkKey(key: WatchKey?){
-        if(key!=null){
-            if(!key.reset()){
+    private fun checkKey(key: WatchKey?) {
+        if (key != null) {
+            if (!key.reset()) {
                 keys.remove(key)
             }
         }
@@ -208,7 +209,7 @@ class Autoscanner : AbstractVerticle() {
     /**
      * Add an Item. If it is a directory, add it to the watch list. If it is a file, add it to the index
      */
-    fun addFile(file: Path, watchKey:WatchKey?) {
+    fun addFile(file: Path, watchKey: WatchKey?) {
         if (!exclude(file)) {
             val filename = file.toFile().absolutePath
             log.info("adding $filename")
@@ -218,14 +219,13 @@ class Autoscanner : AbstractVerticle() {
                 checkKey(watchKey)
             } else {
                 val fileMetadata = refiner.preProcess(filename, JsonObject()).put("_id", makeID(file))
-                vertx.executeBlocking<Int>(FileImporter(file, fileMetadata), Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
-                    if (result.failed()) {
-                        val errmsg = "import ${file.toAbsolutePath()} failed." + result.cause().message
-                        log.error(errmsg)
-                        vertx.eventBus().publish(Communicator.FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
-                    }
-                    checkKey(watchKey)
-                })
+                val result = fileImporter.process(file, fileMetadata)
+                if (!result.isNullOrEmpty()) {
+                    val errmsg = "import ${file.toAbsolutePath()} failed." + result
+                    log.error(errmsg)
+                    vertx.eventBus().publish(Communicator.FUNC_ERROR.addr, JsonObject().put("status", "error").put("message", errmsg))
+                }
+                checkKey(watchKey)
             }
         }
     }
@@ -233,12 +233,12 @@ class Autoscanner : AbstractVerticle() {
     /**
      * Remove a deleted file from the index
      */
-    fun removeFile(file: Path, watchKey:WatchKey) {
+    fun removeFile(file: Path, watchKey: WatchKey) {
         if (!exclude(file)) {
             val absolute = file.toFile().absolutePath
             log.info("removing $absolute")
             val id = makeID(file)
-            Communicator.indexManager.removeDocument(id)
+            dispatcher.indexManager?.removeDocument(id)
             checkKey(watchKey)
         }
     }
