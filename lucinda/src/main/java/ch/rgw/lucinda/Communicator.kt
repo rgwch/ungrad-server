@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 by G. Weirich
+ * Copyright (c) 2016-2017 by G. Weirich
  *
  *
  * All rights reserved. This program and the accompanying materials
@@ -14,6 +14,7 @@
 
 package ch.rgw.lucinda
 
+import RegSpec
 import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.json_create
 import ch.rgw.tools.json.json_error
@@ -29,62 +30,14 @@ import org.slf4j.LoggerFactory
 Verticle for handling Lucinda requests from the EventBus
  */
 
-const val API = "1.0"
-const val EB_SETCONFIG = "ch.elexis.ungrad.server.setconfig"
-
-data class RegSpec(val addr: String, val rest: String, val role: String, val method: String)
-
-fun saveConfig() {
-    Communicator.eb.send(EB_SETCONFIG, JsonObject().put("id", "ch.rgw.lucinda.lucindaConfig").put("value", lucindaConfig))
-}
-
-val lucindaConfig = JsonUtil()
-val log = LoggerFactory.getLogger("Lucinda")
 
 
 class Communicator : AbstractVerticle() {
-    lateinit var autoScanner: String
 
-    override fun stop(stopResult: Future<Void>) {
-        indexManager.shutDown()
-        vertx.undeploy(autoScanner)
-        stopResult.complete()
-        log.info("Lucinda Communicator stopped")
-    }
+
 
     override fun start(startResult: Future<Void>) {
-        val autoScannerResult = Future.future<Void>()
-        val launchResult = Future.future<Void>()
-        val consolidatedResult = listOf(
-                autoScannerResult, launchResult
-        )
-        CompositeFuture.all(consolidatedResult).setHandler { result ->
-            if (result.succeeded()) {
-                startResult.complete()
-            } else {
-                startResult.fail(result.cause())
-            }
-        }
-
-        super.start()
-        eb = vertx.eventBus()
-        lucindaConfig.mergeIn(config())
-        indexManager = IndexManager(lucindaConfig.getString("fs_indexdir", "target/store"), lucindaConfig.getString("default_language", "de"))
-        val dispatcher = Dispatcher(vertx, lucindaConfig.getString("fs_import", "target/store"))
-
-        vertx.deployVerticle(Autoscanner(), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)) { result ->
-            if (result.succeeded()) {
-                autoScanner = result.result()
-                autoScannerResult.complete()
-            }
-        }
-        fun register(func: RegSpec) {
-            eb.send<JsonObject>(REGISTER_ADDRESS, JsonObject()
-                    .put("ebaddress", BASEADDR + func.addr)
-                    .put("rest", "$API/${func.rest}").put("method", func.method).put("role", func.role)
-                    .put("server", serverDesc), RegHandler(func))
-        }
-
+        val eb=vertx.eventBus()
 
         eb.send<JsonObject>("ch.elexis.ungrad.server.getconfig", json_create("id:ch.rgw.lucinda.lucindaConfig")) { reply ->
             if (reply.succeeded()) {
@@ -112,7 +65,7 @@ class Communicator : AbstractVerticle() {
         eb.consumer<JsonObject>(BASEADDR + FUNC_IMPORT.addr) { message ->
             val j = message.body()
             log.info("got message ${FUNC_IMPORT.addr} ${j.getString("title")}")
-            if (!checkRequired(j, "_id", "payload", "filename")) {
+            if (!checkRequired(j, "payload")) {
                 message.reply(makeJson("status:error", "message:bad parameters for ${FUNC_IMPORT.addr}"))
             } else {
                 if (j.getBoolean("dry-run")) {
@@ -120,15 +73,14 @@ class Communicator : AbstractVerticle() {
                     message.reply(j)
                 } else {
                     try {
-                        dispatcher.indexAndStore(j, Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
-                            if (result.succeeded()) {
-                                log.info("imported ${j.getString("url")}")
-                                message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                            } else {
-                                log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
-                                message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
-                            }
-                        })
+                        if (dispatcher.addToIndex(j)) {
+                            log.info("imported ${j.getString("url")}")
+                            message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
+                        } else {
+                            log.warn("failed to import ${j.getString("url")}")
+                            message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", "import failed"))
+                        }
+
                     } catch(e: Exception) {
                         e.printStackTrace()
                         log.error("import failed " + e.message)
@@ -138,33 +90,6 @@ class Communicator : AbstractVerticle() {
             }
         }
 
-        eb.consumer<JsonObject>(BASEADDR + FUNC_INDEX.addr) { msg ->
-            val j = msg.body()
-            log.info("got message ADDR_INDEX " + Json.encodePrettily(j))
-            if (checkRequired(j, "payload")) {
-                if (j.getBoolean("dry-run")) {
-                    j.put("status", "ok").put("method", "index")
-                    msg.reply(j)
-                } else {
-                    try {
-                        dispatcher.addToIndex(j, Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
-                            if (result.succeeded()) {
-                                log.info("indexed ${j.getString("title")}")
-                                msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                            } else {
-                                log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
-                                msg.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
-                            }
-                        })
-                        msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                    } catch(e: Exception) {
-                        fail("can't index", e)
-                    }
-                }
-            } else {
-                msg.reply(makeJson("status:error", "message:bad parameters for addToIndex"))
-            }
-        }
 
         eb.consumer<JsonObject>(BASEADDR + FUNC_GETFILE.addr) { message ->
             val j = message.body()
@@ -266,24 +191,10 @@ class Communicator : AbstractVerticle() {
         eb.send(FUNC_ERROR.addr, j)
     }
 
-    class RegHandler(val func: RegSpec) : AsyncResultHandler<Message<JsonObject>> {
-        override fun handle(result: AsyncResult<Message<JsonObject>>) {
-            if (result.failed()) {
-                log.error("could not register ${func.addr} for ${func.rest}: ${result.cause()}")
-            } else {
-                if ("ok" == result.result().body().getString("status")) {
-                    log.debug("registered ${func.addr}")
-                } else {
-                    log.error("registering of ${func.addr} failed: ${result.result().body().getString("message")}")
-                }
-            }
-        }
 
-    }
 
 
     companion object {
-        const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
         const val BASEADDR = "ch.rgw.lucinda"
         const val CONTROL_ADDR = BASEADDR + ".admin"
 
@@ -302,8 +213,6 @@ class Communicator : AbstractVerticle() {
         /** Connection check */
         val FUNC_PING = RegSpec(".ping", "lucinda/ping/:var", "guest", "get")
 
-        lateinit var indexManager: IndexManager
-        lateinit var eb: EventBus
         val params = """
         [
            {

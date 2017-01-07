@@ -18,8 +18,6 @@ import ch.rgw.io.FileTool
 import ch.rgw.tools.crypt.makeHash
 import ch.rgw.tools.json.get
 import ch.rgw.tools.json.set
-import io.vertx.core.Future
-import io.vertx.core.Handler
 import io.vertx.core.json.JsonObject
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
@@ -37,7 +35,7 @@ import java.util.concurrent.TimeUnit
  * Created by gerry on 05.05.16.
  */
 
-class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Future<Int>> {
+class FileImporter {
     val temppath: String by lazy {
         val checkDir = File(lucindaConfig.getString("fs_basedir", "target/store"), "tempfiles")
         if (checkDir.exists()) {
@@ -66,21 +64,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
     }
 
 
-    /*
-     * Handle a file to import.
-     */
-    override fun handle(future: Future<Int>) {
-        log.debug("handle: ${file.fileName}")
-        val errmsg = process()
-        if (errmsg.isNullOrEmpty()) {
-            future.complete()
-        } else {
-            log.warn("${file.toAbsolutePath()} failed.")
-            future.fail("Failed: ${file.toFile().absolutePath}; $errmsg")
-        }
-    }
-
-    fun process(): String {
+    fun process(file: Path, fileMetadata: JsonObject): String {
         val filename = fileMetadata["url"] ?: file.toFile().absolutePath
         with(File(filename)) {
             if (!exists()) {
@@ -139,7 +123,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         val basename = temppath + "/" + makeHash(filename)
         log.info("Seems to be a PDF with only image(s). Trying OCR as $basename")
         var numImages = 0
-        fun writeImage(img: PDXObjectImage) {
+        fun writeImage(img: PDXObjectImage): Boolean {
             val imgName = basename + "_" + (++numImages).toString()
             img.write2file(imgName)
             val sourcename = imgName + "." + img.suffix
@@ -155,8 +139,9 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                 } else {
                     log.warn("no text content found in $filename")
                 }
+                return true
             } else {
-                failed = true
+                return false
             }
         }
         try {
@@ -183,12 +168,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
                 }
             }
             document.close()
-            if (failed) {
-                FileTool.copyFile(file.toFile(), File(failures, file.fileName.toString()), FileTool.BACKUP_IF_EXISTS)
-                return ("import failed.")
-            } else {
-                return ""
-            }
+            return ""
 
         } catch(ex: Exception) {
             ex.printStackTrace()
@@ -228,7 +208,7 @@ class FileImporter(val file: Path, val fileMetadata: JsonObject) : Handler<Futur
         }
     }
 
-    class Catcher(val inp: InputStream, val outp: OutputStream) : Thread() {
+    internal class Catcher(val inp: InputStream, val outp: OutputStream) : Thread() {
         override fun run() {
             inp.copyTo(outp, 4096)
         }

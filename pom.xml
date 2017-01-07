@@ -152,5 +152,6 @@
         <module>webelexis</module>
         <module>dispatcher</module>
         <module>backup</module>
+        <module>helper</module>
     </modules>
 </project>

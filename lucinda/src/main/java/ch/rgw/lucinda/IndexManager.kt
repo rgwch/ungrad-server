@@ -26,7 +26,10 @@ import org.apache.lucene.analysis.fr.FrenchAnalyzer
 import org.apache.lucene.analysis.it.ItalianAnalyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.*
-import org.apache.lucene.index.*
+import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.index.IndexWriter
+import org.apache.lucene.index.IndexWriterConfig
+import org.apache.lucene.index.Term
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.TermQuery
@@ -64,47 +67,20 @@ class IndexManager(directory: String, val language: String) {
 
     }
 
-    fun createReader(): IndexReader {
-        return DirectoryReader.open(indexDir)
+    fun createReader() = DirectoryReader.open(indexDir)
 
-    }
-
-/*
-    val writer: IndexWriter by lazy {
-        log.info("opening index in create or append mode")
-        val conf = IndexWriterConfig(analyzer).setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND)
-        conf.maxBufferedDeleteTerms = 1
-        val index = FSDirectory.open(FileSystems.getDefault().getPath(directory))
-        IndexWriter(index, conf)
-    }
-
-    val searcherManager : SearcherManager by lazy{
-        SearcherManager(writer, true, true, null)
-    }
-*/
 
     fun shutDown() {
-        /*
-        try {
-            if (writer.isOpen) {
-                writer.commit()
-                writer.deleteUnusedFiles()
-                writer.close()
-            }
-        }catch(ex: Exception){
-            ex.printStackTrace()
-            log.severe("could not shut down index writer properly "+ex.message)
-        }
-        */
     }
 
     /**
-     * Index a document. The Document itself is not stored. The analyzer recognizes and understands many formats such as odt, pdf, doc, html
+     * Index a Stream and create a Lucinda Document thereof.
+     * Such a  Document is not the contents of the stream, but keywords and attributes created from that
+     * contents. The analyzer recognizes and understands many formats such as odt, pdf, doc, html.
      * @param is InputStream with the data
-     * @param attributes concern of the document; will be added to the index
-     * @param guid GUID of the document. When searching, this GUID will be the result
-     * @param language language for the analyzer. "de", "fr", "it" and "en" are supported.
-     * @return The plain text content as found by the parser
+     * @param attributes arbitrary, application defined attributes; will be added to the index. One attrbute
+     * is expected to be _id and contain the GUID of the document. If a document with the same GUID
+     * exists already in the index, that document will be updated from the current Stream.
      * @throws IOException
      * @throws SAXException
      * @throws TikaException
@@ -158,17 +134,20 @@ class IndexManager(directory: String, val language: String) {
         return doc
     }
 
+    /**
+     * Update a Document with new metadata.
+     */
     fun updateDocument(doc: Document) {
         require(doc.get("_id") != null)
         val term = Term("_id", doc.get("_id"))
         val writer = createWriter()
         writer.updateDocument(term, doc)
         writer.close()
-        //searcherManager.maybeRefreshBlocking()
     }
 
     /**
-     * Query the index for a document. The QueryParser understands a variety of formats and returns at most 'numHits' documents matching that query.
+     * Query the index for a document. The QueryParser understands a variety of formats and returns at most
+     * 'numHits' documents matching that query.
 
      * @param queryExpression the term(s) to find. can be plaintext ("Meier"), Wildcard ("M??er"), Regexp ("/M[ae][iy]er/"), similarity ("Meier~")
      * *                        and combinations thereof
@@ -180,8 +159,6 @@ class IndexManager(directory: String, val language: String) {
     fun queryDocuments(queryExpression: String, numHits: Int = 1000): JsonArray {
         require(queryExpression.isNotBlank())
         val query = parser.parse(queryExpression)
-        //searcherManager.maybeRefreshBlocking()
-        //val searcher=searcherManager.acquire()
         val reader = createReader()
         val searcher = IndexSearcher(reader)
         val collector = TopScoreDocCollector.create(numHits)
@@ -197,20 +174,22 @@ class IndexManager(directory: String, val language: String) {
             }
             ret.add(jo)
         }
-        //searcherManager.release(searcher)
         reader.close()
         return ret
     }
 
+    /**
+     * Get a document with a given _id attribute.
+     * @param id the id to query
+     * @return The Document with that id or null if no such Document exists.
+     *
+     */
     fun getDocument(id: String): Document? {
         require(id.isNotBlank())
         try {
-            //val query=idParser.parse("_id: ${id}")
+            val reader = createReader()
             val term = Term("_id", id)
             val query = TermQuery(term)
-            //searcherManager.maybeRefreshBlocking()
-            //val searcher = searcherManager.acquire()
-            val reader = createReader()
             val searcher = IndexSearcher(reader)
             val result = searcher.search(query, 10)
             if (result.totalHits > 1) {
@@ -220,7 +199,6 @@ class IndexManager(directory: String, val language: String) {
                 return null
             }
             val ret = searcher.doc(result.scoreDocs[0].doc)
-            //searcherManager.release(searcher)
             reader.close()
             return ret
         } catch(ex: Exception) {
@@ -242,7 +220,9 @@ class IndexManager(directory: String, val language: String) {
         return ret
     }
 
-
+    /**
+     * Remove a Document from the index
+     */
     fun removeDocument(id: String) {
         require(id.isNotBlank())
         val term = Term("_id", id)
@@ -256,9 +236,5 @@ class IndexManager(directory: String, val language: String) {
     fun escape(orig: String) = QueryParser.escape(orig)
 }
 
-class ID(val source: String) {
-    val asString: String by lazy {
-        val chopped = source.replace("[:\\\\\\/\\.0-9_]".toRegex(), "")
-        makeHash(chopped)
-    }
-}
+
+

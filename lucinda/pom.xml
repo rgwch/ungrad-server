@@ -109,6 +109,12 @@
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>ch.rgw</groupId>
+            <artifactId>ungrad-helper</artifactId>
+            <version>0.2.0-SNAPSHOT</version>
+
+        </dependency>
     </dependencies>
 
 </project>

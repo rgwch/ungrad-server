@@ -6,10 +6,12 @@
       <module fileurl="file://$PROJECT_DIR$/article/article.iml" filepath="$PROJECT_DIR$/article/article.iml" />
       <module fileurl="file://$PROJECT_DIR$/backup/backup.iml" filepath="$PROJECT_DIR$/backup/backup.iml" />
       <module fileurl="file://$PROJECT_DIR$/dispatcher/dispatcher.iml" filepath="$PROJECT_DIR$/dispatcher/dispatcher.iml" />
+      <module fileurl="file://$PROJECT_DIR$/helper/helper.iml" filepath="$PROJECT_DIR$/helper/helper.iml" />
       <module fileurl="file://$PROJECT_DIR$/lucinda/lucinda.iml" filepath="$PROJECT_DIR$/lucinda/lucinda.iml" />
       <module fileurl="file://$PROJECT_DIR$/tester/tester.iml" filepath="$PROJECT_DIR$/tester/tester.iml" />
       <module fileurl="file://$PROJECT_DIR$/ungrad-server.iml" filepath="$PROJECT_DIR$/ungrad-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/webelexis/webelexis.iml" filepath="$PROJECT_DIR$/webelexis/webelexis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/webelexis-client/webelexis-client.iml" filepath="$PROJECT_DIR$/webelexis-client/webelexis-client.iml" />
     </modules>
   </component>
 </project>

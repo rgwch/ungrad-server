@@ -59,10 +59,18 @@
         <processorPath useClasspath="true" />
         <module name="backup" />
       </profile>
+      <profile default="false" name="Annotation profile for helper" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="helper" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
       <module name="backup" target="1.8" />
       <module name="dispatcher" target="1.8" />
+      <module name="helper" target="1.8" />
       <module name="lucinda" target="1.8" />
       <module name="tester" target="1.8" />
       <module name="ungrad-server" target="1.8" />

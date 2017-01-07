@@ -8,7 +8,6 @@ export class Login {
   username = ""
   password = ""
 
-
   constructor(private client, private state, private router) {
     this.username = this.state.hans
   }

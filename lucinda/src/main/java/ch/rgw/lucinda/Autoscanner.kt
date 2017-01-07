@@ -188,7 +188,7 @@ class Autoscanner : AbstractVerticle() {
                 val absolute = file.toFile().absolutePath
                 log.info("checking $absolute")
                 val id = makeID(file)
-                Communicator.indexManager.getDocument(id) ?: addFile(file,watchKey)
+                Dispatcher.indexManager.getDocument(id) ?: addFile(file,watchKey)
             }
         }
         checkKey(watchKey)
