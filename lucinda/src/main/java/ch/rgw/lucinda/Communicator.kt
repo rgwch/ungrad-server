@@ -71,7 +71,8 @@ class Communicator : AbstractVerticle() {
         lucindaConfig.mergeIn(config())
         indexManager = IndexManager(lucindaConfig.getString("fs_indexdir", "target/store"), lucindaConfig.getString("default_language", "de"))
         val dispatcher = Dispatcher(vertx, lucindaConfig.getString("fs_import", "target/store"))
-        vertx.deployVerticle(Autoscanner(), DeploymentOptions().setConfig(lucindaConfig)) { result ->
+
+        vertx.deployVerticle(Autoscanner(), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)) { result ->
             if (result.succeeded()) {
                 autoScanner = result.result()
                 autoScannerResult.complete()
