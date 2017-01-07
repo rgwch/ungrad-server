@@ -16,6 +16,8 @@ package ch.rgw.lucinda
 
 import ch.rgw.io.FileTool
 import ch.rgw.tools.StringTool
+import ch.rgw.tools.crypt.makeHash
+import ch.rgw.tools.json.get
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 import io.vertx.core.Vertx
@@ -32,8 +34,9 @@ import java.nio.file.Paths
 /**
  * Created by gerry on 22.03.16.
  */
-class Dispatcher(val vertx: Vertx, val basedir: String) {
-    val fs: FileSystem = vertx.fileSystem()
+class Dispatcher(val basedir: String, val language:String) {
+    val importer=FileImporter()
+    val indexManager=IndexManager(basedir,language)
 
     fun makeDirPath(parms: JsonObject): File {
         val fname = parms.getString("filename")
@@ -60,55 +63,48 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
      *
      */
 
-    fun addToIndex(parm: JsonObject, handler: Handler<AsyncResult<Int>>) {
-        val payload = parm.getBinary("payload")
-        requireNotNull(payload)
-        val uuid = StringTool.byteArraytoHex(ch.rgw.tools.crypt.makeHash(payload))
-        parm.put("uuid", uuid)
-        val temp = File.createTempFile("__lucinda__", "_addToIndex_")
-        temp.deleteOnExit()
-        FileTool.writeFile(temp, payload)
-        vertx.executeBlocking<Int>(FileImporter(Paths.get(temp.absolutePath), parm), Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
-            temp.delete()
-            handler.handle(result)
-        })
-    }
-
-
-    /**
-     * Store a ByteArray as a file in the file system and index it
-     * @param parms: A JsonObject with following properties: <ul>
-     *     <li>concern - a grouping parameter for the storage of the file. Is used as directory name</li>
-     *     <li>filename - a name for the file</li>
-     *     <li>payload - The byte[] to write in the file</li>
-     *     <li>key - if a key is supplied, the file is encrypted with that key</li>
-     *      </ul>
-
-     */
-    fun indexAndStore(parms: JsonObject, handler: Handler<AsyncResult<Int>>) {
+    fun addToIndex(parms: JsonObject): Boolean {
         requireNotNull(parms.getBinary("payload"))
-        requireNotNull(parms.getString("filename"))
-        val output = makeDirPath(parms)
-        val dir = output.parentFile
-        if (!dir.exists()) {
-            dir.mkdirs()
+        val payload = parms.getBinary("payload")
+        requireNotNull(payload)
+        val uuid = StringTool.byteArraytoHex(makeHash(payload))
+        parms.put("uuid", uuid)
+        val outfile=if(parms.containsKey("filename")){
+            val output = makeDirPath(parms)
+            val dir = output.parentFile
+            if (!dir.exists()) {
+                dir.mkdirs()
+            }
+            parms.put("url", output.absolutePath)
+            output
+        }else{
+            File.createTempFile("__lucinda__", "_addToIndex_")
         }
-        parms.put("url", output.absolutePath)
-        FileTool.writeFile(output, parms.getBinary("payload"))
-        vertx.executeBlocking<Int>(FileImporter(Paths.get(parms.getString("url")), parms), handler)
+        FileTool.writeFile(outfile, payload)
+        val retValue=importer.process(Paths.get(outfile.absolutePath),parms)
+        if(!parms.containsKey("filename")){
+            outfile.delete()
+        }
+        if(retValue.isNullOrEmpty()){
+            return true;
+        }else{
+            log.error("add to index failed: $retValue")
+            return false
+        }
     }
+
+
 
     /**
      * Retrieve Documents according to a query expression
      */
-    fun find(parm: JsonObject): JsonArray {
-        val ret =
-                Communicator.indexManager.queryDocuments(parm.getString("query"), parm.getInteger("numhits") ?: 100)
-        return ret
-    }
+    fun find(parm: JsonObject) =
+                indexManager.queryDocuments(parm.getString("query"), parm.getInteger("numhits") ?: 200)
+
+
 
     fun get(id: String): ByteArray? {
-        val doc: Document? = Communicator.indexManager.getDocument(id)
+        val doc: Document? = indexManager.getDocument(id)
         if (doc != null) {
             val file = File(doc.get("url"))
             if (file.exists() && file.canRead()) {
@@ -121,7 +117,7 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
     }
 
     fun update(o: JsonObject) {
-        val doc: Document? = Communicator.indexManager.getDocument(o.getString("_id"))
+        val doc: Document? = indexManager.getDocument(o.getString("_id"))
         if (doc != null) {
             o.map.forEach {
                 if (it.key != "_id" && it.key != "payload") {
@@ -132,7 +128,7 @@ class Dispatcher(val vertx: Vertx, val basedir: String) {
                     doc.add(TextField(it.key, it.value.toString(), Field.Store.YES))
                 }
             }
-            Communicator.indexManager.updateDocument(doc)
+            indexManager.updateDocument(doc)
         }
     }
 }

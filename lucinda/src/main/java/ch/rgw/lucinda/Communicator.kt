@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 by G. Weirich
+ * Copyright (c) 2016-2017 by G. Weirich
  *
  *
  * All rights reserved. This program and the accompanying materials
@@ -70,8 +70,8 @@ class Communicator : AbstractVerticle() {
         eb = vertx.eventBus()
         lucindaConfig.mergeIn(config())
         indexManager = IndexManager(lucindaConfig.getString("fs_indexdir", "target/store"), lucindaConfig.getString("default_language", "de"))
-        val dispatcher = Dispatcher(vertx, lucindaConfig.getString("fs_import", "target/store"))
-        vertx.deployVerticle(Autoscanner(), DeploymentOptions().setConfig(lucindaConfig)) { result ->
+        val dispatcher = Dispatcher(lucindaConfig.getString("fs_import", "target/store"))
+        vertx.deployVerticle(Autoscanner(), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)) { result ->
             if (result.succeeded()) {
                 autoScanner = result.result()
                 autoScannerResult.complete()
@@ -111,7 +111,7 @@ class Communicator : AbstractVerticle() {
         eb.consumer<JsonObject>(BASEADDR + FUNC_IMPORT.addr) { message ->
             val j = message.body()
             log.info("got message ${FUNC_IMPORT.addr} ${j.getString("title")}")
-            if (!checkRequired(j, "_id", "payload", "filename")) {
+            if (!checkRequired(j, "payload")) {
                 message.reply(makeJson("status:error", "message:bad parameters for ${FUNC_IMPORT.addr}"))
             } else {
                 if (j.getBoolean("dry-run")) {
@@ -119,15 +119,14 @@ class Communicator : AbstractVerticle() {
                     message.reply(j)
                 } else {
                     try {
-                        dispatcher.indexAndStore(j, Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
-                            if (result.succeeded()) {
-                                log.info("imported ${j.getString("url")}")
-                                message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                            } else {
-                                log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
-                                message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
-                            }
-                        })
+                        if (dispatcher.addToIndex(j)) {
+                            log.info("imported ${j.getString("url")}")
+                            message.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
+                        } else {
+                            log.warn("failed to import ${j.getString("url")}")
+                            message.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", "import failed"))
+                        }
+
                     } catch(e: Exception) {
                         e.printStackTrace()
                         log.error("import failed " + e.message)
@@ -137,33 +136,6 @@ class Communicator : AbstractVerticle() {
             }
         }
 
-        eb.consumer<JsonObject>(BASEADDR + FUNC_INDEX.addr) { msg ->
-            val j = msg.body()
-            log.info("got message ADDR_INDEX " + Json.encodePrettily(j))
-            if (checkRequired(j, "payload")) {
-                if (j.getBoolean("dry-run")) {
-                    j.put("status", "ok").put("method", "index")
-                    msg.reply(j)
-                } else {
-                    try {
-                        dispatcher.addToIndex(j, Handler<io.vertx.core.AsyncResult<kotlin.Int>> { result ->
-                            if (result.succeeded()) {
-                                log.info("indexed ${j.getString("title")}")
-                                msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                            } else {
-                                log.warn("failed to import ${j.getString("url")}; ${result.cause().message}")
-                                msg.reply(JsonObject().put("status", "fail").put("_id", j.getString("_id")).put("message", result.cause().message))
-                            }
-                        })
-                        msg.reply(JsonObject().put("status", "ok").put("_id", j.getString("_id")))
-                    } catch(e: Exception) {
-                        fail("can't index", e)
-                    }
-                }
-            } else {
-                msg.reply(makeJson("status:error", "message:bad parameters for addToIndex"))
-            }
-        }
 
         eb.consumer<JsonObject>(BASEADDR + FUNC_GETFILE.addr) { message ->
             val j = message.body()
