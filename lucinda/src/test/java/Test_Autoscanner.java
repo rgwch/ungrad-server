@@ -41,7 +41,7 @@ public class Test_Autoscanner {
     @Test
     public void test_scanner(TestContext ctx) throws IOException {
         Async deploy = ctx.async();
-        Async copy=ctx.async();
+        Async copy = ctx.async();
         Autoscanner testee = new Autoscanner(dispatcher);
         testee.setRunning(true);
         vertx.deployVerticle(testee, result -> {
@@ -49,10 +49,10 @@ public class Test_Autoscanner {
             deploy.complete();
             File watchd = new File(watchdir);
             watchd.mkdirs();
-            vertx.eventBus().send(AutoscannerKt.ADDR_START, new JsonObject().put("interval",1000).put("dirs",new JsonArray().add(watchd.getAbsolutePath())), reply -> {
+            vertx.eventBus().send(AutoscannerKt.ADDR_START, new JsonObject().put("interval", 1000).put("dirs", new JsonArray().add(watchd.getAbsolutePath())), reply -> {
                 Assert.assertTrue(reply.succeeded());
-                JsonObject answer= (JsonObject) reply.result().body();
-                Assert.assertEquals("ok",answer.getString("status"));
+                JsonObject answer = (JsonObject) reply.result().body();
+                Assert.assertEquals("ok", answer.getString("status"));
                 FileTool.copyFile(new File("target/test-classes/testodt.odt"), new File(watchdir, "testodt.odt"), FileTool.REPLACE_IF_EXISTS);
                         /*
          * unfortunately, this is time critical. We don't know exactly, how long importing of the file copied above will take.
