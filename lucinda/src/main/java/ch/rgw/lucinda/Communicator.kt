@@ -15,26 +15,23 @@
 package ch.rgw.lucinda
 
 import RegSpec
-import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.json_create
 import ch.rgw.tools.json.json_error
-import io.vertx.core.*
-import io.vertx.core.eventbus.EventBus
+import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
-import org.slf4j.LoggerFactory
 
 /**
 Verticle for handling Lucinda requests from the EventBus
  */
 
 
+class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
 
-class Communicator(val dispatcher:Dispatcher) : AbstractVerticle() {
-
-    val eb by lazy{
+    val eb by lazy {
         vertx.eventBus()
     }
 
@@ -47,17 +44,17 @@ class Communicator(val dispatcher:Dispatcher) : AbstractVerticle() {
                 log.error("could not retrieve configuration")
             }
         }
-        register(serverDesc, FUNC_IMPORT,FUNC_FINDFILES, FUNC_GETFILE, FUNC_INDEX, FUNC_UPDATE, FUNC_PING)
+        register(serverDesc, FUNC_IMPORT, FUNC_FINDFILES, FUNC_GETFILE, FUNC_UPDATE, FUNC_PING)
         eb.consumer<JsonObject>(CONTROL_ADDR, Admin)
 
-        eb.consumer<JsonObject>(BASEADDR + FUNC_PING.addr) { reply ->
+        eb.consumer<JsonObject>(FUNC_PING.addr) { reply ->
             log.info("we got a Ping!")
             val msg = reply.body()
             val parm = msg.getString("var")
             reply.reply(JsonObject().put("status", "ok").put("pong", parm))
         }
 
-        eb.consumer<JsonObject>(BASEADDR + FUNC_IMPORT.addr) { message ->
+        eb.consumer<JsonObject>(FUNC_IMPORT.addr) { message ->
             val j = message.body()
             log.info("got message ${FUNC_IMPORT.addr} ${j.getString("title")}")
             if (!checkRequired(j, "payload")) {
@@ -86,7 +83,7 @@ class Communicator(val dispatcher:Dispatcher) : AbstractVerticle() {
         }
 
 
-        eb.consumer<JsonObject>(BASEADDR + FUNC_GETFILE.addr) { message ->
+        eb.consumer<JsonObject>(FUNC_GETFILE.addr) { message ->
             val j = message.body()
             log.info("got message ADDR_GETFILE " + Json.encodePrettily(j))
             if (checkRequired(j, "_id")) {
@@ -114,7 +111,7 @@ class Communicator(val dispatcher:Dispatcher) : AbstractVerticle() {
             }
 
         }
-        eb.consumer<JsonObject>(BASEADDR + FUNC_FINDFILES.addr) { msg ->
+        eb.consumer<JsonObject>(FUNC_FINDFILES.addr) { msg ->
             val j = msg.body()
             log.info("got message ADDR_FINDFILES " + Json.encodePrettily(j))
             if (checkRequired(j, "query")) {
@@ -134,7 +131,7 @@ class Communicator(val dispatcher:Dispatcher) : AbstractVerticle() {
                 msg.reply(makeJson("status:error", "message:bad parameters for find"))
             }
         }
-        eb.consumer<Message<JsonObject>>(BASEADDR + FUNC_UPDATE.addr) { msg ->
+        eb.consumer<Message<JsonObject>>(FUNC_UPDATE.addr) { msg ->
             val j = msg.body() as JsonObject
             log.info("got message ADDR_UPDATE " + Json.encodePrettily(j))
             if (checkRequired(j, "_id", "payload")) {
@@ -187,26 +184,22 @@ class Communicator(val dispatcher:Dispatcher) : AbstractVerticle() {
     }
 
 
-
-
     companion object {
         const val BASEADDR = "ch.rgw.lucinda"
         const val CONTROL_ADDR = BASEADDR + ".admin"
 
         /** reply address for error messages */
-        val FUNC_ERROR = RegSpec(".error", "lucinda/error", "user", "get")
-        /** Add a file to the storage */
-        val FUNC_IMPORT = RegSpec(".import", "lucinda/import", "docmgr", "post")
-        /** Index a file in-place (don't add it to the storage) */
-        val FUNC_INDEX = RegSpec(".index", "lucinda/index/:url", "docmgr", "get")
+        val FUNC_ERROR = RegSpec(BASEADDR+".error", "lucinda/error", "user", "get")
+        /** Index a file and possibly add a it to the storage */
+        val FUNC_IMPORT = RegSpec(BASEADDR+".import", "lucinda/import", "docmgr", "post")
         /** Retrieve a file by _id*/
-        val FUNC_GETFILE = RegSpec(".get", "lucinda/get/:id", "user", "get")
+        val FUNC_GETFILE = RegSpec(BASEADDR+".get", "lucinda/get/:id", "user", "get")
         /** Get Metadata of files matching a search query */
-        val FUNC_FINDFILES = RegSpec(".find", "lucinda/find/:spec", "user", "get")
+        val FUNC_FINDFILES = RegSpec(BASEADDR+".find", "lucinda/find/:spec", "user", "get")
         /** Update Metadata of a file by _id*/
-        val FUNC_UPDATE = RegSpec(".update", "lucinda/update", "docmgr", "post")
+        val FUNC_UPDATE = RegSpec(BASEADDR+".update", "lucinda/update", "docmgr", "post")
         /** Connection check */
-        val FUNC_PING = RegSpec(".ping", "lucinda/ping/:var", "guest", "get")
+        val FUNC_PING = RegSpec(BASEADDR+".ping", "lucinda/ping/:var", "guest", "get")
 
         val params = """
         [

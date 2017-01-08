@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -19,7 +20,7 @@ import java.util.List;
 
 public class Test_AsyncPO {
 
-    @Test
+    @Test @Ignore
     public void test_dummy(TestContext ctx) {
         Async async1 = ctx.async();
         DummyPersistentObject dpo = new DummyPersistentObject("1");
@@ -39,7 +40,7 @@ public class Test_AsyncPO {
         });
     }
 
-    @Test
+    @Test @Ignore
     public void test_badParameter(TestContext ctx) {
         Async async = ctx.async();
         DummyPersistentObject dpo = new DummyPersistentObject("2");
@@ -50,7 +51,7 @@ public class Test_AsyncPO {
         });
     }
 
-    @Test
+    @Test @Ignore
     public void test_emptyField(TestContext ctx) {
         Async async = ctx.async();
         DummyPersistentObject dpo = new DummyPersistentObject("3");
@@ -63,7 +64,7 @@ public class Test_AsyncPO {
 
     }
 
-    @Test
+    @Test @Ignore
     public void test_contact(TestContext ctx) {
         Contact contact = new Contact();
         Async async = ctx.async();
@@ -84,7 +85,7 @@ public class Test_AsyncPO {
 
     }
 
-    @Test
+    @Test @Ignore
     public void test_patient(TestContext ctx) {
         Patient pat = new Patient();
         Async async = ctx.async();
@@ -105,7 +106,7 @@ public class Test_AsyncPO {
 
     }
 
-    @Test
+    @Test @Ignore
     public void test_badfield(TestContext ctx) {
         Async async = ctx.async();
         Person pers = new Person();

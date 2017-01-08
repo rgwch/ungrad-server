@@ -1,4 +1,5 @@
 import ch.webelexis.model.fhir.Patient
+import org.junit.Ignore
 import org.junit.Test
 
 
@@ -7,7 +8,7 @@ import org.junit.Test
  */
 class Test_Fhir {
 
-    @Test(expected = IllegalArgumentException::class)
+    @Ignore @Test(expected = IllegalArgumentException::class)
     fun test_badField(){
         val el= Patient()
         el.set("a","b")
@@ -15,7 +16,7 @@ class Test_Fhir {
         el.set("wrong","should throw")
     }
 
-    @Test
+    @Test @Ignore
     fun test_correctFields(){
         val el=Patient()
         el.set("a","ok")

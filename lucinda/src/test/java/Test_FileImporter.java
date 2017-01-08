@@ -25,17 +25,21 @@ public class Test_FileImporter {
 
     @Before
     public void setUp() {
-        FileTool.deltree("target/indexMgrTest");
-        indexManager = new IndexManager("target/indexMgrTest", "de");
+        FileTool.deltree("target/fileImporterTest");
+        indexManager = new IndexManager("target/fileImporterTest", "de");
         dispatcher = new Dispatcher(indexManager);
     }
 
     @After
     public void tearDown() {
         indexManager.shutDown();
-        FileTool.deltree("target/indexMgrTest");
+        FileTool.deltree("target/fileImporterTest");
     }
 
+    /**
+     * Import a OpenOffice Text file
+     * @param ctx
+     */
     @Test
     public void test_Odt(TestContext ctx) {
         FileImporter fi = new FileImporter(indexManager);
@@ -43,6 +47,10 @@ public class Test_FileImporter {
         Assert.assertTrue(result.equals(""));
     }
 
+    /**
+     * Import a PDF with text content
+     * @param ctx
+     */
     @Test
     public void testPDF(TestContext ctx) {
         FileImporter fi = new FileImporter(indexManager);
@@ -51,6 +59,10 @@ public class Test_FileImporter {
 
     }
 
+    /**
+     * Try to import an inexistent file
+     * @param ctx
+     */
     @Test
     public void testFailure(TestContext ctx) {
         FileImporter fi = new FileImporter(indexManager);
@@ -59,6 +71,14 @@ public class Test_FileImporter {
 
     }
 
+    /**
+     * Import a PDF with image content which must be OCRed
+     * Note: While testoct.pdf and testpdf.pdf look very similar to a human, they are structurally fundamentally different:
+     * testpdf.pdf containts text content, which is easy to extract. Testocr.pdf contains image content, such as a pdf from a
+     * scanner import. There is no text to extract, and the importer must check with OCR, if there is any text in the image.
+     *
+     * @param ctx
+     */
     @Test
     public void testOCR(TestContext ctx) {
         FileImporter fi = new FileImporter(indexManager);

@@ -19,13 +19,14 @@ import org.junit.runner.RunWith;
 @RunWith(VertxUnitRunner.class)
 public class Test_LucindaInterface {
     private static Vertx vertx;
+    private static String verticleID = "";
 
     @BeforeClass
     public static void createClient(TestContext ctx) {
         vertx = Vertx.vertx();
         JsonObject cfg = new JsonObject();
-        IndexManager indexManager=new IndexManager("target/lucindatest","de");
-        Dispatcher dispatcher=new Dispatcher(indexManager);
+        IndexManager indexManager = new IndexManager("target/lucindatest", "de");
+        Dispatcher dispatcher = new Dispatcher(indexManager);
         Async async = ctx.async();
         vertx.deployVerticle(new Communicator(dispatcher), new DeploymentOptions().setConfig(cfg), test -> {
             Assert.assertTrue(test.succeeded());
@@ -33,10 +34,18 @@ public class Test_LucindaInterface {
         });
     }
 
+    /*
     @AfterClass
-    public static void shutDown() {
-        vertx.close();
+    public static void shutDown(TestContext ctx) {
+        Async async=ctx.async();
+        vertx.undeploy(verticleID, result -> {
+            Assert.assertTrue(result.succeeded());
+            vertx.close();
+            async.complete();
+        });
+
     }
+    */
 
     @Test
     public void testPing(TestContext ctx) {
@@ -64,18 +73,6 @@ public class Test_LucindaInterface {
         });
     }
 
-    @Test
-    public void testIndex(TestContext ctx) {
-        JsonObject parm = new JsonObject();
-        parm.put("dry-run", true);
-
-        Async async = ctx.async();
-        vertx.eventBus().send("ch.rgw.lucinda.index", parm, response -> {
-            ctx.assertTrue(response.succeeded());
-            JsonObject msg = (JsonObject) response.result().body();
-            async.complete();
-        });
-    }
 
     @Test
     public void testGet(TestContext ctx) {
