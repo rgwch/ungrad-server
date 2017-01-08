@@ -16,6 +16,7 @@ package ch.rgw.lucinda
 
 import ch.rgw.io.FileTool
 import ch.rgw.tools.crypt.makeHash
+import ch.rgw.tools.json.JsonUtil
 import ch.rgw.tools.json.get
 import ch.rgw.tools.json.set
 import io.vertx.core.json.JsonObject
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit
  */
 
 class FileImporter(im: IndexManager?) {
-    val indexManager=im!!
+    val indexManager = im!!
     val temppath: String by lazy {
         val checkDir = File(lucindaConfig.getString("fs_basedir", "target/store"), "tempfiles")
         if (checkDir.exists()) {
@@ -67,6 +68,10 @@ class FileImporter(im: IndexManager?) {
 
     fun process(file: Path, fileMetadata: JsonObject): String {
         val filename = fileMetadata["url"] ?: file.toFile().absolutePath
+        if(filename.endsWith(".meta")){
+            log.warn("tried to import metafile $filename")
+            return "refuse to import Metafile"
+        }
         with(File(filename)) {
             if (!exists()) {
                 return "file not found"
@@ -77,7 +82,7 @@ class FileImporter(im: IndexManager?) {
             if (length() < 10) {
                 return "too short"
             }
-            log.info("FileImporer: importing $absolutePath")
+            log.info("FileImporter: importing $absolutePath")
         }
 
         try {
@@ -92,19 +97,27 @@ class FileImporter(im: IndexManager?) {
             if (fileMetadata["_id"].isNullOrBlank()) {
                 fileMetadata["_id"] = makeID(file)
             }
-            val doc = indexManager.addDocument(ByteArrayInputStream(payload), fileMetadata)
-            val text = doc.getField("text").stringValue()
-            if ((text.length < 15) and (doc.get("content-type") == ("application/pdf"))) {
-                if (text == "unparseable") {
-                    log.info("unparseable text")
-                    return ""
-                } else {
-                    // if we don't get much text out of a pdf, it's probably a scan containing only one or more images.
-                    return tryOCR(doc, filename)
-                }
-            } else {
-                // no pdf or text too short
+            if (checkMeta(filename, fileMetadata)) {
+                indexManager.createDocument(fileMetadata)
                 return ""
+            } else {
+                val doc = indexManager.addDocument(ByteArrayInputStream(payload), fileMetadata)
+                val text = doc.getField("text").stringValue()
+                var retValue=""
+                if ((text.length < 15) and (doc.get("content-type") == ("application/pdf"))) {
+                    if (text == "unparseable") {
+                        log.info("unparseable text")
+                    } else {
+                        // if we don't get much text out of a pdf, it's probably a scan containing only one or more images.
+                        retValue= tryOCR(doc, filename)
+                    }
+                } else {
+                    // no pdf or text too short
+                }
+                indexManager.getMetadata(fileMetadata["_id"]!!)?.let{
+                    FileTool.writeTextFile(File(filename+".meta"),it.encode())
+                }
+                return retValue
             }
 
 
@@ -112,6 +125,23 @@ class FileImporter(im: IndexManager?) {
             ex.printStackTrace()
             log.error("fatal error reading $filename")
             return ("read error ${ex.message}")
+        }
+    }
+
+    fun checkMeta(fn: String, newMetaData: JsonObject): Boolean {
+        val metafile = File(fn + ".meta")
+        if (metafile.exists() && metafile.canRead()) {
+            try {
+                val metadata = JsonUtil.createFromFile(metafile, false)
+                metadata.mergeIn(newMetaData)
+                metadata.flush()
+                return true
+            } catch(ex: Exception) {
+                log.error("bad metafile $fn")
+                return false
+            }
+        } else {
+            return false
         }
     }
 

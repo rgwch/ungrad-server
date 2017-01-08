@@ -49,7 +49,7 @@ public class Test_Autoscanner {
             deploy.complete();
             File watchd = new File(watchdir);
             watchd.mkdirs();
-            vertx.eventBus().send(AutoscannerKt.ADDR_START, new JsonObject().put("interval", 1000).put("dirs", new JsonArray().add(watchd.getAbsolutePath())), reply -> {
+            vertx.eventBus().send(AutoscannerKt.ADDR_WATCHER_START, new JsonObject().put("interval", 1000).put("dirs", new JsonArray().add(watchd.getAbsolutePath())), reply -> {
                 Assert.assertTrue(reply.succeeded());
                 JsonObject answer = (JsonObject) reply.result().body();
                 Assert.assertEquals("ok", answer.getString("status"));

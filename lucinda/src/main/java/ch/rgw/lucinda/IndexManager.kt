@@ -102,7 +102,7 @@ class IndexManager(val directory: String, val language: String) {
         }
 
         val text = handler.toString()
-        val doc = Document()
+        val doc = createDocument(attributes)
 
         for (k in metadata.names()) {
             val key = k.toLowerCase()
@@ -121,18 +121,25 @@ class IndexManager(val directory: String, val language: String) {
         val ftDate = FieldType()
         ftDate.setStored(true)
         ftDate.setTokenized(false)
-        attributes.fieldNames().forEach {
-            doc.add(when (it) {
-                "_id", "uuid", "birthdate" -> StringField(it, attributes.getString(it), Field.Store.YES)
-                else -> TextField(it, attributes.getString(it), Field.Store.YES)
-            })
-        }
+
         doc.removeFields("parseDate")
         doc.add(StringField("parseDate", TimeTool().toString(TimeTool.DATE_COMPACT), Field.Store.YES))
         doc.add(TextField("text", if (text.isEmpty()) "unparseable" else text, Field.Store.NO))
         updateDocument(doc)
         return doc
     }
+
+    fun createDocument(attributes:JsonObject):Document{
+        val doc=Document()
+        attributes.fieldNames().forEach {
+            doc.add(when (it) {
+                "_id", "uuid", "birthdate" -> StringField(it, attributes.getString(it), Field.Store.YES)
+                else -> TextField(it, attributes.getString(it), Field.Store.YES)
+            })
+        }
+        return doc
+    }
+
 
     /**
      * Update a Document with new metadata.

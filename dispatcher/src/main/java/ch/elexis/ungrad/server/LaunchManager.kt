@@ -50,17 +50,22 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
         val static_config = jo.getJsonObject("config", JsonObject())
         val dynamic_config = restPoint.persist.read(verticle_name)
         val verticle_config = static_config.mergeIn(dynamic_config)
-        val url = if (verticle_url.startsWith("file:") && verticle_url.contains("[\\*\\?]".toRegex())) {
-            val fullname = verticle_url.substring(5)
-            val pname = FileTool.getFilepath(fullname)
-            val fname = FileTool.getFilename(fullname)
-            val dirlist = Files.newDirectoryStream(Paths.get(pname), fname)
-            // if the filespec contains wildcards, we consider only the first match
-            URL("file:" + dirlist.first().toAbsolutePath().toString())
-        } else {
-            URL(verticle_url)
+        var url:URL?=null
+        try {
+            url = if (verticle_url.startsWith("file:") && verticle_url.contains("[\\*\\?]".toRegex())) {
+                val fullname = verticle_url.substring(5)
+                val pname = FileTool.getFilepath(fullname)
+                val fname = FileTool.getFilename(fullname)
+                val dirlist = Files.newDirectoryStream(Paths.get(pname), fname)
+                // if the filespec contains wildcards, we consider only the first match
+                URL("file:" + dirlist.first().toAbsolutePath().toString())
+            } else {
+                URL(verticle_url)
+            }
+        }catch(ex: Exception){
+            log.error("URL not found: $verticle_url")
         }
-        val file = File(url.file)
+        val file = File(url?.file)
         if (!file.exists() || !file.canRead()) {
             ch.elexis.ungrad.server.log.error("can't read ${file.absolutePath}")
         } else {
@@ -80,7 +85,7 @@ class LaunchManager(val restPoint: Restpoint) : Handler<Message<JsonObject>> {
                     }
                 } else {
                     // If we have a class attribute - instantiate the class
-                    val cl = URLClassLoader(Array<URL>(1, { url }))
+                    val cl = URLClassLoader(Array<URL>(1, { url!! }))
                     val clazz = cl.loadClass(verticle_class)
                     val verticle = clazz.newInstance() as? Verticle
                     restPoint.vertx.deployVerticle(verticle, options) { handler ->

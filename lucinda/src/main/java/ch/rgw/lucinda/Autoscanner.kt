@@ -32,10 +32,10 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-const val ADDR_START = BASEADDR+".watcher.start"
-const val ADDR_STOP = BASEADDR+".watcher.stop"
+const val ADDR_WATCHER_START = BASEADDR+".watcher.start"
+const val ADDR_WATCHER_STOP = BASEADDR+".watcher.stop"
 /** Full rescan or first scan of watch directories */
-const val ADDR_RESCAN = BASEADDR+".watcher.rescan"
+const val ADDR_WATCHER_RESCAN = BASEADDR+".watcher.rescan"
 var refiner: Refiner = DefaultRefiner()
 val watchedDirs = ArrayList<Path>()
 fun makeID(file: Path): String = makeHash(file.toFile().absolutePath)
@@ -60,7 +60,7 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
     override fun start(startResult: Future<Void>) {
         super.start()
 
-        eb.consumer<Message<JsonObject>>(ADDR_START) { msg ->
+        eb.consumer<Message<JsonObject>>(ADDR_WATCHER_START) { msg ->
             val j = msg.body() as JsonObject
             if (j.validate("dirs:array", "interval:number")) {
                 log.debug("got start message ${Json.encodePrettily(j)}")
@@ -74,11 +74,11 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
                 msg.fail(0, "bad parameters")
             }
         }
-        eb.consumer<Message<JsonObject>>(ADDR_STOP) {
+        eb.consumer<Message<JsonObject>>(ADDR_WATCHER_STOP) {
             log.info("got stop message")
             running = false
         }
-        eb.consumer<Message<String>>(ADDR_RESCAN) {
+        eb.consumer<Message<String>>(ADDR_WATCHER_RESCAN) {
             log.info("got rescan message")
             watchedDirs.forEach {
                 rescan(it)
@@ -199,7 +199,8 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
     }
 
     private fun exclude(file: Path) =
-            (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L))
+            (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L)
+                    || (file.fileName.endsWith(".meta")))
 
     private fun checkKey(key: WatchKey?) {
         if (key != null) {

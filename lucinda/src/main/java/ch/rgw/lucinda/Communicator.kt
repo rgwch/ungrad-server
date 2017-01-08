@@ -15,6 +15,7 @@
 package ch.rgw.lucinda
 
 import RegSpec
+import ch.rgw.tools.json.get
 import ch.rgw.tools.json.json_create
 import ch.rgw.tools.json.json_error
 import io.vertx.core.AbstractVerticle
@@ -60,7 +61,7 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
             if (!checkRequired(j, "payload")) {
                 message.reply(makeJson("status:error", "message:bad parameters for ${FUNC_IMPORT.addr}"))
             } else {
-                if (j.getBoolean("dry-run")) {
+                if (j.getBoolean("dry-run",false)) {
                     j.put("status", "ok").put("method", "import")
                     message.reply(j)
                 } else {
@@ -86,13 +87,13 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
         eb.consumer<JsonObject>(FUNC_GETFILE.addr) { message ->
             val j = message.body()
             log.info("got message ADDR_GETFILE " + Json.encodePrettily(j))
-            if (checkRequired(j, "_id")) {
-                if (j.getBoolean("dry-run")) {
+            if (checkRequired(j, "id")) {
+                if (j.getBoolean("dry-run",false)) {
                     j.put("status", "ok").put("method", "get")
                     message.reply(j)
                 } else {
                     try {
-                        val bytes = dispatcher.get(j.getString("_id"))
+                        val bytes = dispatcher.get(j["id"]!!)
                         if (bytes == null) {
                             fail("could not read ${j.getString("url")}")
                         } else {
@@ -115,7 +116,7 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
             val j = msg.body()
             log.info("got message ADDR_FINDFILES " + Json.encodePrettily(j))
             if (checkRequired(j, "query")) {
-                if (j.getBoolean("dry-run")) {
+                if (j.getBoolean("dry-run",false)) {
                     j.put("status", "ok").put("method", "find")
                     msg.reply(j)
                 } else {
@@ -135,7 +136,7 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
             val j = msg.body() as JsonObject
             log.info("got message ADDR_UPDATE " + Json.encodePrettily(j))
             if (checkRequired(j, "_id", "payload")) {
-                if (j.getBoolean("dry-run")) {
+                if (j.getBoolean("dry-run",false)) {
                     j.put("status", "ok").put("method", "update")
                     msg.reply(j)
                 } else {
@@ -153,7 +154,16 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
 
             }
         }
-
+        val watchdirs= lucindaConfig.getString("fs_watch")
+        println(watchdirs)
+        lucindaConfig.getString("fs_watch",null)?.let{
+            val dirs=JsonArray(it.split(",".toRegex()))
+            eb.send<JsonObject>(ADDR_WATCHER_START, JsonObject().put("dirs",dirs).put("interval",60)){ result ->
+                if(!result.succeeded()){
+                    log.error("Could not watch dirs $it")
+                }
+            }
+        }
         startResult.complete()
 
     }
@@ -194,7 +204,7 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
         /** Retrieve a file by _id*/
         val FUNC_GETFILE = RegSpec(BASEADDR+".get", "lucinda/get/:id", "user", "get")
         /** Get Metadata of files matching a search query */
-        val FUNC_FINDFILES = RegSpec(BASEADDR+".find", "lucinda/find/:spec", "user", "get")
+        val FUNC_FINDFILES = RegSpec(BASEADDR+".find", "lucinda/find/:query", "user", "get")
         /** Update Metadata of a file by _id*/
         val FUNC_UPDATE = RegSpec(BASEADDR+".update", "lucinda/update", "docmgr", "post")
         /** Connection check */
