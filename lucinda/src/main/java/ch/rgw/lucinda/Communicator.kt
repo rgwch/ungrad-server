@@ -45,7 +45,7 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
                 log.error("could not retrieve configuration")
             }
         }
-        register(serverDesc, FUNC_IMPORT, FUNC_FINDFILES, FUNC_GETFILE, FUNC_UPDATE, FUNC_PING)
+        register(serverDesc, FUNC_IMPORT, FUNC_FINDFILES, FUNC_GETFILE, FUNC_UPDATE, FUNC_PING, FUNC_RESCAN)
         eb.consumer<JsonObject>(CONTROL_ADDR, Admin)
 
         eb.consumer<JsonObject>(FUNC_PING.addr) { reply ->
@@ -209,6 +209,7 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
         val FUNC_UPDATE = RegSpec(BASEADDR+".update", "lucinda/update", "docmgr", "post")
         /** Connection check */
         val FUNC_PING = RegSpec(BASEADDR+".ping", "lucinda/ping/:var", "guest", "get")
+        val FUNC_RESCAN= RegSpec(ADDR_WATCHER_RESCAN,"lucinda/rescan","user","get")
 
         val params = """
         [

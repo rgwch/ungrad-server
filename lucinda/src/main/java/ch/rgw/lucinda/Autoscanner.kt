@@ -32,10 +32,10 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-const val ADDR_WATCHER_START = BASEADDR+".watcher.start"
-const val ADDR_WATCHER_STOP = BASEADDR+".watcher.stop"
+const val ADDR_WATCHER_START = BASEADDR + ".watcher.start"
+const val ADDR_WATCHER_STOP = BASEADDR + ".watcher.stop"
 /** Full rescan or first scan of watch directories */
-const val ADDR_WATCHER_RESCAN = BASEADDR+".watcher.rescan"
+const val ADDR_WATCHER_RESCAN = BASEADDR + ".watcher.rescan"
 var refiner: Refiner = DefaultRefiner()
 val watchedDirs = ArrayList<Path>()
 fun makeID(file: Path): String = makeHash(file.toFile().absolutePath)
@@ -65,10 +65,17 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
             if (j.validate("dirs:array", "interval:number")) {
                 log.debug("got start message ${Json.encodePrettily(j)}")
                 register(j.getJsonArray("dirs"))
-                vertx.setTimer(100L) {
+                vertx.executeBlocking<Unit>({
+                    future ->
                     running = true
                     loop()
-                }
+                    future.complete()
+
+                }, { result ->
+                    if (result.succeeded()) {
+                        running = false
+                    }
+                })
                 msg.reply(json_ok())
             } else {
                 msg.fail(0, "bad parameters")
@@ -93,7 +100,7 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
     fun loop() {
         while (running) {
             // Wait up to a minute for events, then check if we should still be watching
-            watcher.poll(60, TimeUnit.SECONDS)?.let { key ->
+            watcher.poll(10, TimeUnit.SECONDS)?.let { key ->
                 keys[key]?.let { dir ->
                     for (event in key.pollEvents()) {
                         val kind = event.kind()
@@ -102,9 +109,9 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
                         val child = dir.resolve(name)
                         log.debug("Event: ${event.kind().name()}, file: $child")
                         when (kind) {
-                            ENTRY_CREATE -> delay({ addFile(child, key) })
-                            ENTRY_DELETE -> delay({ removeFile(child, key) })
-                            ENTRY_MODIFY -> delay({ checkFile(child, key) })
+                            ENTRY_CREATE -> addFile(child, key)
+                            ENTRY_DELETE -> removeFile(child, key)
+                            ENTRY_MODIFY -> checkFile(child, key)
                             OVERFLOW -> rescan(dir)
                             else -> log.warn("unknown event kind ${kind.name()}")
                         }
@@ -198,9 +205,12 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
         checkKey(watchKey)
     }
 
-    private fun exclude(file: Path) =
-            (file.fileName.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L)
-                    || (file.fileName.endsWith(".meta")))
+    private fun exclude(file: Path):Boolean{
+        val fname=file.fileName.toString()
+        return (fname.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L)
+                || (fname.endsWith(".meta")))
+
+    }
 
     private fun checkKey(key: WatchKey?) {
         if (key != null) {
