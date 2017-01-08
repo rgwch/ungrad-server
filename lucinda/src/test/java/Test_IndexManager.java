@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 public class Test_IndexManager {
     private static IndexManager indexManager;
     private static final String id = "893f8fbfe7b6483a0fa24c97ee18bca98d431e8e";
+    private static final String dummyfile="target/classes/lucinda.xcf";
 
 
     @BeforeClass
@@ -51,7 +52,7 @@ public class Test_IndexManager {
     @Test
     public void add() throws IOException {
 
-        FileInputStream fis = new FileInputStream("target/classes/default.cfg");
+        FileInputStream fis = new FileInputStream(dummyfile);
         indexManager.addDocument(fis, insert());
         fis.close();
         assertEquals(1, indexManager.queryDocuments("BBB: Test*", 100).size());
@@ -62,7 +63,7 @@ public class Test_IndexManager {
     @Test
     public void update() throws IOException {
 
-        FileInputStream fis = new FileInputStream("target/classes/default.cfg");
+        FileInputStream fis = new FileInputStream(dummyfile);
         indexManager.addDocument(fis, insert());
         fis.close();
         assertEquals(1, indexManager.queryDocuments("BBB: Test*", 100).size());
@@ -75,7 +76,7 @@ public class Test_IndexManager {
 
     @Test
     public void delete() throws IOException {
-        FileInputStream fis = new FileInputStream("target/classes/default.cfg");
+        FileInputStream fis = new FileInputStream(dummyfile);
         indexManager.addDocument(fis, insert());
         fis.close();
         assertEquals(1, indexManager.queryDocuments("BBB: Test*", 100).size());
