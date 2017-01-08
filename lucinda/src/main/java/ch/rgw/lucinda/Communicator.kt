@@ -185,7 +185,6 @@ class Communicator(val dispatcher: Dispatcher) : AbstractVerticle() {
 
 
     companion object {
-        const val BASEADDR = "ch.rgw.lucinda"
         const val CONTROL_ADDR = BASEADDR + ".admin"
 
         /** reply address for error messages */

@@ -20,6 +20,8 @@ fun saveConfig() {
 }
 
 const val REGISTER_ADDRESS = "ch.elexis.ungrad.server.register"
+const val BASEADDR = "ch.rgw.lucinda"
+
 
 val lucindaConfig = JsonUtil()
 val log = LoggerFactory.getLogger("Lucinda")

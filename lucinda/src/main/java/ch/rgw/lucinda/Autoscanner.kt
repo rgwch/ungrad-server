@@ -15,8 +15,10 @@
 package ch.rgw.lucinda
 
 import ch.rgw.tools.crypt.makeHash
+import ch.rgw.tools.json.json_ok
 import ch.rgw.tools.json.validate
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.Json
@@ -30,13 +32,14 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-const val ADDR_START = "start"
-const val ADDR_STOP = "stop"
+const val ADDR_START = BASEADDR+".watcher.start"
+const val ADDR_STOP = BASEADDR+".watcher.stop"
 /** Full rescan or first scan of watch directories */
-const val ADDR_RESCAN = "rescan"
+const val ADDR_RESCAN = BASEADDR+".watcher.rescan"
 var refiner: Refiner = DefaultRefiner()
 val watchedDirs = ArrayList<Path>()
 fun makeID(file: Path): String = makeHash(file.toFile().absolutePath)
+
 
 /**
  * Observe one ore more directories for file changes. If such changes occur, add, remove or renew concerned
@@ -51,37 +54,37 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
     }
     val watcher: WatchService = FileSystems.getDefault().newWatchService()
     val keys = HashMap<WatchKey, Path>()
-    val BASEADDR = Communicator.BASEADDR
     var running = false
     val fileImporter = dispatcher.importer
 
-    override fun start() {
+    override fun start(startResult: Future<Void>) {
         super.start()
 
-        eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_START) { msg ->
+        eb.consumer<Message<JsonObject>>(ADDR_START) { msg ->
             val j = msg.body() as JsonObject
-            if (j.validate("dirs:object", "interval:number")) {
+            if (j.validate("dirs:array", "interval:number")) {
                 log.debug("got start message ${Json.encodePrettily(j)}")
                 register(j.getJsonArray("dirs"))
                 vertx.setTimer(100L) {
                     running = true
                     loop()
                 }
-                msg.reply(JsonObject().put("status", "ok"))
+                msg.reply(json_ok())
             } else {
                 msg.fail(0, "bad parameters")
             }
         }
-        eb.consumer<Message<JsonObject>>(BASEADDR + ADDR_STOP) {
+        eb.consumer<Message<JsonObject>>(ADDR_STOP) {
             log.info("got stop message")
             running = false
         }
-        eb.consumer<Message<String>>(BASEADDR + ADDR_RESCAN) {
+        eb.consumer<Message<String>>(ADDR_RESCAN) {
             log.info("got rescan message")
             watchedDirs.forEach {
                 rescan(it)
             }
         }
+        startResult.complete()
     }
 
     /**
