@@ -85,11 +85,12 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
             log.info("got stop message")
             running = false
         }
-        eb.consumer<Message<String>>(ADDR_WATCHER_RESCAN) {
+        eb.consumer<Message<JsonObject>>(ADDR_WATCHER_RESCAN) { msg->
             log.info("got rescan message")
             watchedDirs.forEach {
                 rescan(it)
             }
+            msg.reply(json_ok())
         }
         startResult.complete()
     }
