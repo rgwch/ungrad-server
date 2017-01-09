@@ -60,8 +60,8 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
     override fun start(startResult: Future<Void>) {
         super.start()
 
-        eb.consumer<Message<JsonObject>>(ADDR_WATCHER_START) { msg ->
-            val j = msg.body() as JsonObject
+        eb.consumer<JsonObject>(ADDR_WATCHER_START) { msg ->
+            val j = msg.body()
             if (j.validate("dirs:array", "interval:number")) {
                 log.debug("got start message ${Json.encodePrettily(j)}")
                 register(j.getJsonArray("dirs"))
@@ -81,11 +81,11 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
                 msg.fail(0, "bad parameters")
             }
         }
-        eb.consumer<Message<JsonObject>>(ADDR_WATCHER_STOP) {
+        eb.consumer<JsonObject>(ADDR_WATCHER_STOP) {
             log.info("got stop message")
             running = false
         }
-        eb.consumer<Message<JsonObject>>(ADDR_WATCHER_RESCAN) { msg->
+        eb.consumer<JsonObject>(ADDR_WATCHER_RESCAN) { msg ->
             log.info("got rescan message")
             watchedDirs.forEach {
                 rescan(it)
@@ -149,31 +149,13 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
                 Files.createDirectories(dir)
                 log.info("created directory $dir")
             }
-            rescan(dir)
+            rescan_detached(dir)
         }
     }
 
-    fun rescan(dir: Path) {
+    fun rescan_detached(dir: Path) {
         vertx.executeBlocking<Int>({ future ->
-            Files.walkFileTree(dir, object : SimpleFileVisitor<Path>() {
-                override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
-                    try {
-                        checkFile(file, null)
-                    } catch(e: Exception) {
-                        log.error("Exception while checking ${file.toAbsolutePath()}, ${e.message}")
-                    }
-                    return FileVisitResult.CONTINUE
-                }
-
-                override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-                    if (!(keys.containsValue(dir))) {
-                        val key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
-                        log.info("added watch key for ${dir.toAbsolutePath()}")
-                        keys.put(key, dir)
-                    }
-                    return FileVisitResult.CONTINUE
-                }
-            })
+            rescan(dir)
             future.complete()
         }, { result ->
             if (result.succeeded()) {
@@ -182,6 +164,32 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
                 log.error("import $dir failed (${result.cause().message})")
             }
         })
+
+    }
+
+    fun rescan(dir: Path) {
+        log.debug("Autoscanner: rescan launched")
+
+        Files.walkFileTree(dir, object : SimpleFileVisitor<Path>() {
+            override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+                try {
+                    checkFile(file, null)
+                } catch(e: Exception) {
+                    log.error("Exception while checking ${file.toAbsolutePath()}, ${e.message}")
+                }
+                return FileVisitResult.CONTINUE
+            }
+
+            override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+                if (!(keys.containsValue(dir))) {
+                    val key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
+                    log.info("added watch key for ${dir.toAbsolutePath()}")
+                    keys.put(key, dir)
+                }
+                return FileVisitResult.CONTINUE
+            }
+        })
+        log.debug("Autoscanner rescan finished")
 
     }
 
@@ -206,8 +214,8 @@ class Autoscanner(val dispatcher: Dispatcher) : AbstractVerticle() {
         checkKey(watchKey)
     }
 
-    private fun exclude(file: Path):Boolean{
-        val fname=file.fileName.toString()
+    private fun exclude(file: Path): Boolean {
+        val fname = file.fileName.toString()
         return (fname.startsWith(".") || Files.isHidden(file) || (Files.size(file) == 0L)
                 || (fname.endsWith(".meta")))
 

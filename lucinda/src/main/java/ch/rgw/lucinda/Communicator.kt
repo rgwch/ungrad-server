@@ -18,6 +18,7 @@ import RegSpec
 import ch.rgw.tools.json.get
 import ch.rgw.tools.json.json_create
 import ch.rgw.tools.json.json_error
+import ch.rgw.tools.json.json_ok
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
 import io.vertx.core.eventbus.Message

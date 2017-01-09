@@ -32,8 +32,7 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 /**
- * This is a Handler<Future> which is called from the indexing process to import a new file.
- * Created by gerry on 05.05.16.
+  * Created by gerry on 05.05.16.
  */
 
 class FileImporter(im: IndexManager?) {
@@ -51,20 +50,6 @@ class FileImporter(im: IndexManager?) {
         }
         checkDir.absolutePath
     }
-    val failures: String by lazy {
-        val checkDir = File(lucindaConfig.getString("fs_basedir", "target/store"), "failures")
-        if (checkDir.exists()) {
-            if (checkDir.isFile) {
-                log.error("failure directory $checkDir exists but is a file")
-            }
-        } else {
-            if (!checkDir.mkdirs()) {
-                log.error("Can't create directory $checkDir")
-            }
-        }
-        checkDir.absolutePath
-    }
-
 
     fun process(file: Path, fileMetadata: JsonObject): String {
         val filename = fileMetadata["url"] ?: file.toFile().absolutePath
@@ -98,7 +83,6 @@ class FileImporter(im: IndexManager?) {
                 fileMetadata["_id"] = makeID(file)
             }
             if (checkMeta(filename, fileMetadata)) {
-                indexManager.createDocument(fileMetadata)
                 return ""
             } else {
                 val doc = indexManager.addDocument(ByteArrayInputStream(payload), fileMetadata)
@@ -134,10 +118,13 @@ class FileImporter(im: IndexManager?) {
             try {
                 val metadata = JsonUtil.createFromFile(metafile, false)
                 metadata.mergeIn(newMetaData)
+                val doc=indexManager.createDocument(metadata)
+                indexManager.updateDocument(doc)
                 metadata.flush()
                 return true
             } catch(ex: Exception) {
                 log.error("bad metafile $fn")
+                metafile.delete()
                 return false
             }
         } else {

@@ -62,13 +62,13 @@ class Hub : AbstractVerticle() {
         lucindaConfig.mergeIn(config())
         indexManager = IndexManager(lucindaConfig.getString("fs_indexdir", "target/store"), lucindaConfig.getString("default_language", "de"))
         val dispatcher = Dispatcher(indexManager)
-        vertx.deployVerticle(Autoscanner(dispatcher), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)) { result ->
+        vertx.deployVerticle(Autoscanner(dispatcher), DeploymentOptions().setConfig(lucindaConfig).setWorker(false)) { result ->
             if (result.succeeded()) {
                 autoscannerID = result.result()
                 autoScannerResult.complete()
             }
         }
-        vertx.deployVerticle(Communicator(dispatcher), DeploymentOptions().setConfig(lucindaConfig).setWorker(true)) {
+        vertx.deployVerticle(Communicator(dispatcher), DeploymentOptions().setConfig(lucindaConfig).setWorker(false)) {
             if (it.succeeded()) {
                 communicatorID = it.result()
                 communicatorResult.complete()
